@@ -7,6 +7,20 @@ the app itself (login screen and sidebar footer) — see `APP_VERSION` near the
 top of the `<script>` block in `index.html`. If the number you see in the app
 matches the latest entry below, you're on the current version.
 
+## v1.4.1 — 2026-07-26
+
+- Fixed the real cause of the mobile "cut off" text on Action Items and
+  other table views: a CSS specificity bug meant a mobile-only rule meant
+  to shrink tables to fit the screen was silently losing to a desktop rule
+  that forced a 640px minimum width. Tables now correctly narrow to fit the
+  phone screen instead of overflowing off the right edge.
+- Deferred the xlsx/PDF/Word-document parsing libraries (previously all
+  loaded synchronously before the page could render) so the app paints
+  faster on mobile connections. No user-facing behavior changed — these
+  libraries are only used when you upload a file.
+- Desktop layout and behavior are unchanged in this release — every change
+  above is scoped to the existing mobile-only CSS or is load-timing only.
+
 ## v1.4.0 — 2026-07-26
 
 - Reordered the left sidebar menu: Chat, Daily Activities, Action Items,

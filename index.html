@@ -12,9 +12,9 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth.js/1.6.0/mammoth.browser.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/mammoth.js/1.6.0/mammoth.browser.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Poppins:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -322,7 +322,7 @@ header h1{font-size:16px;}.brand-sub{display:none;}.logo-badge{width:30px;height
    labelled with the column header (set as a data-label attribute by
    applyMobileTableLabels()). The user scrolls the page vertically to see
    every column instead of scrolling the table sideways. */
-.reg-table{min-width:0;}
+table.reg-table{min-width:0;}
 .reg-table thead{display:none;}
 .reg-table,.reg-table tbody,.reg-table tr{display:block;width:100%;}
 .reg-table tbody tr{border:1.5px solid var(--border);border-radius:10px;margin-bottom:10px;padding:4px 10px;background:var(--surface);}
@@ -675,7 +675,7 @@ header h1{font-size:16px;}.brand-sub{display:none;}.logo-badge{width:30px;height
 // redeployed, so the version shown in the app (login screen + sidebar footer)
 // always reflects what's actually live. See CHANGELOG.md for the history
 // behind each version number.
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.4.1';
 const APP_UPDATED = '2026-07-26';
 function renderAppVersion(){
   const [y,m,d] = APP_UPDATED.split('-');
@@ -1630,6 +1630,7 @@ async function extractFileText(file){
     return await file.text();
   }
   if(name.endsWith('.pdf')){
+    if(typeof pdfjsLib !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc){ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }
     const buf = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({data:buf}).promise;
     let out = '';
@@ -1655,7 +1656,6 @@ async function extractFileText(file){
   }
   return ''; // .doc / .pptx not supported yet in-browser
 }
-if(typeof pdfjsLib !== 'undefined'){ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }
 
 // ---------- CHAT MODULE ----------
 function renderChatView(area){
