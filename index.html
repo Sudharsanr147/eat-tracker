@@ -675,7 +675,7 @@ header h1{font-size:16px;}.brand-sub{display:none;}.logo-badge{width:30px;height
 // redeployed, so the version shown in the app (login screen + sidebar footer)
 // always reflects what's actually live. See CHANGELOG.md for the history
 // behind each version number.
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.3.1';
 const APP_UPDATED = '2026-07-26';
 function renderAppVersion(){
   const [y,m,d] = APP_UPDATED.split('-');
@@ -2042,4 +2042,103 @@ function execTool(name,input){
     if(name==='delete_compliance'){const c=state.compliance.find(c=>c.item.toLowerCase().includes(input.match_text.toLowerCase()));if(!c)return 'No matching compliance item found';state.compliance=state.compliance.filter(x=>x.id!==c.id);save();return 'Deleted: '+c.item;}
     if(name==='add_appointment'){state.appointments.push({id:genId(),title:input.title,date:input.date,fromTime:input.fromTime||'',toTime:input.toTime||'',location:input.location||'',notes:input.notes||''});save();return 'Appointment added: '+input.title+' on '+input.date;}
     if(name==='edit_appointment'){const a=state.appointments.find(a=>a.title.toLowerCase().includes(input.match_text.toLowerCase()));if(!a)return 'No matching appointment found';if(input.new_title)a.title=input.new_title;if(input.date)a.date=input.date;if(input.fromTime!==undefined)a.fromTime=input.fromTime;if(input.toTime!==undefined)a.toTime=input.toTime;if(input.location!==undefined)a.location=input.location;if(input.notes!==undefined)a.notes=input.notes;save();return 'Appointment updated: '+a.title;}
-    if(name==='delete_appointment'){const a=state.appointments.find(a=>a.title.toLowerCase().inc
+    if(name==='delete_appointment'){const a=state.appointments.find(a=>a.title.toLowerCase().includes(input.match_text.toLowerCase()));if(!a)return 'No matching appointment found';state.appointments=state.appointments.filter(x=>x.id!==a.id);save();return 'Deleted: '+a.title;}
+    if(name==='search_chat_history'){ return searchChatHistory(input.query); }
+    if(name==='add_note'){state.notes.push({id:genId(),title:input.title||'',content:input.content,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});save();return 'Note saved'+(input.title?': '+input.title:'');}
+    if(name==='edit_note'){const n=state.notes.find(n=>(n.title||'').toLowerCase().includes(input.match_text.toLowerCase())||(n.content||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!n)return 'No matching note found';if(input.new_title!==undefined)n.title=input.new_title;if(input.new_content!==undefined)n.content=input.new_content;n.updatedAt=new Date().toISOString();save();return 'Note updated';}
+    if(name==='delete_note'){const n=state.notes.find(n=>(n.title||'').toLowerCase().includes(input.match_text.toLowerCase())||(n.content||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!n)return 'No matching note found';state.notes=state.notes.filter(x=>x.id!==n.id);save();return 'Note deleted';}
+    if(name==='add_mis_operation'){state.misOps.push({id:genId(),name:input.name,instructions:input.instructions,exampleInput:input.example_input_sample||null,exampleOutput:input.example_output_sample||null,createdAt:today()});save();return 'MIS operation saved: '+input.name+(input.example_input_sample?' (with worked example)':'');}
+    if(name==='edit_mis_operation'){const o=state.misOps.find(o=>(o.name||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!o)return 'No matching MIS operation found';if(input.new_name)o.name=input.new_name;if(input.new_instructions)o.instructions=input.new_instructions;save();return 'MIS operation updated: '+o.name;}
+    if(name==='delete_mis_operation'){const o=state.misOps.find(o=>(o.name||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!o)return 'No matching MIS operation found';state.misOps=state.misOps.filter(x=>x.id!==o.id);save();return 'Deleted MIS operation: '+o.name;}
+    if(name==='add_sop_category'){const id=genId();state.sop.push({id,name:input.name,subcategories:[]});save();return 'SOP category added: '+input.name;}
+    if(name==='edit_sop_category'){const c=sopFindCatQ(input.match_text);if(!c)return 'No matching SOP category found';c.name=input.new_name;save();return 'SOP category renamed to: '+input.new_name;}
+    if(name==='delete_sop_category'){const c=sopFindCatQ(input.match_text);if(!c)return 'No matching SOP category found';state.sop=state.sop.filter(x=>x.id!==c.id);save();return 'Deleted SOP category: '+c.name;}
+    if(name==='add_sop_subcategory'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found for: '+input.category_match;const id=genId();c.subcategories.push({id,name:input.name,practices:[]});save();return 'SOP subcategory added: '+input.name;}
+    if(name==='edit_sop_subcategory'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.match_text);if(!s)return 'No matching SOP subcategory found';s.name=input.new_name;save();return 'SOP subcategory renamed to: '+input.new_name;}
+    if(name==='delete_sop_subcategory'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.match_text);if(!s)return 'No matching SOP subcategory found';c.subcategories=c.subcategories.filter(x=>x.id!==s.id);save();return 'Deleted SOP subcategory: '+s.name;}
+    if(name==='add_sop_practice'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.subcategory_match);if(!s)return 'No matching SOP subcategory found';const id=genId();s.practices.push({id,text:input.text,personResponsible:input.owner||'',frequency:input.frequency||'',issues:[]});save();return 'SOP practice added: '+input.text;}
+    if(name==='edit_sop_practice'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.subcategory_match);if(!s)return 'No matching SOP subcategory found';const p=sopFindPracQ(s,input.match_text);if(!p)return 'No matching SOP practice found';if(input.new_text)p.text=input.new_text;if(input.owner!==undefined)p.personResponsible=input.owner;if(input.frequency!==undefined)p.frequency=input.frequency;save();return 'SOP practice updated';}
+    if(name==='delete_sop_practice'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.subcategory_match);if(!s)return 'No matching SOP subcategory found';const p=sopFindPracQ(s,input.match_text);if(!p)return 'No matching SOP practice found';s.practices=s.practices.filter(x=>x.id!==p.id);save();return 'Deleted SOP practice: '+p.text;}
+    if(name==='add_sop_issue'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.subcategory_match);if(!s)return 'No matching SOP subcategory found';const p=sopFindPracQ(s,input.practice_match);if(!p)return 'No matching SOP practice found';const id=genId();if(!p.issues)p.issues=[];p.issues.push({id,text:input.text});save();return 'SOP issue logged: '+input.text;}
+    if(name==='delete_sop_issue'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.subcategory_match);if(!s)return 'No matching SOP subcategory found';const p=sopFindPracQ(s,input.practice_match);if(!p)return 'No matching SOP practice found';const iss=(p.issues||[]).find(i=>(i.text||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!iss)return 'No matching SOP issue found';p.issues=p.issues.filter(x=>x.id!==iss.id);save();return 'Deleted SOP issue';}
+    if(name==='add_library_category'){if(!state.library.categories.includes(input.name))state.library.categories.push(input.name);save();return 'Library category added: '+input.name;}
+    if(name==='delete_library_category'){const cat=state.library.categories.find(c=>c.toLowerCase().includes(input.match_text.toLowerCase()));if(!cat)return 'No matching Library category found';state.library.categories=state.library.categories.filter(c=>c!==cat);save();return 'Deleted Library category: '+cat;}
+    if(name==='add_library_document'){if(!state.library.categories.includes(input.category))state.library.categories.push(input.category);state.library.files.push({id:genId(),name:input.name,category:input.category,type:'text',sizeKB:(input.content||'').length/1024,uploadedAt:today(),lastModifiedAt:today(),status:'ok',extractedText:(input.content||'').slice(0,12000)});save();return 'Saved to Library: '+input.name+' ('+input.category+')';}
+    if(name==='edit_library_document'){const f=state.library.files.find(f=>(f.name||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!f)return 'No matching Library document found';if(input.new_name)f.name=input.new_name;if(input.new_category){if(!state.library.categories.includes(input.new_category))state.library.categories.push(input.new_category);f.category=input.new_category;}f.lastModifiedAt=today();save();return 'Library document updated: '+f.name;}
+    if(name==='delete_library_document'){const f=state.library.files.find(f=>(f.name||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!f)return 'No matching Library document found';if(f.storagePath && fbStorage){ fbStorage.ref(f.storagePath).delete().catch(err=>console.warn('storage delete error',err)); }state.library.files=state.library.files.filter(x=>x.id!==f.id);save();return 'Deleted from Library: '+f.name;}
+    if(name==='add_participant'){if(state.participants.find(p=>p.name.toLowerCase()===input.name.toLowerCase()))return input.name+' is already a participant';state.participants.push({id:state.nextPartId++,name:input.name});save();return 'Participant added: '+input.name;}
+    if(name==='delete_participant'){const p=state.participants.find(p=>p.name.toLowerCase().includes(input.match_text.toLowerCase()));if(!p)return 'No matching participant found';state.participants=state.participants.filter(x=>x.id!==p.id);save();return 'Removed participant: '+p.name;}
+    if(name==='export_excel'){
+      try{
+        const outWb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(outWb,XLSX.utils.json_to_sheet(input.rows||[]),'Output');
+        XLSX.writeFile(outWb,`${(input.filename||'output').replace(/[^a-z0-9]/gi,'_')}.xlsx`);
+        return `Downloaded ${(input.rows||[]).length} rows as ${input.filename}.xlsx`;
+      }catch(err){ return 'Failed to generate file: '+err.message; }
+    }
+    return 'Unknown tool: '+name;
+  }catch(err){return 'Error executing '+name+': '+err.message;}
+}
+function buildChatHistoryIndex(){
+  const sessions = [...state.chatSessions].sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+  if(!sessions.length) return '(no past chat sessions yet)';
+  return sessions.map(s=>`"${s.title||'Untitled'}" (${(s.updatedAt||'').slice(0,10)}, ${s.messages?.length||0} messages)`).join('; ');
+}
+function searchChatHistory(query){
+  const q = query.toLowerCase();
+  const hits = [];
+  state.chatSessions.forEach(s=>{
+    (s.messages||[]).forEach((m,idx)=>{
+      if(m.text && m.text.toLowerCase().includes(q)){
+        const context = (s.messages||[]).slice(Math.max(0,idx-1), idx+2).map(mm=>`${mm.role==='user'?'Sudharsan':'Sonnet'}: ${mm.text}`).join('\n');
+        hits.push({session:s.title||'Untitled', date:(s.updatedAt||'').slice(0,10), context});
+      }
+    });
+  });
+  if(!hits.length) return `No past chat mentions found for "${query}".`;
+  const capped = hits.slice(0,8);
+  return capped.map(h=>`[Chat: "${h.session}", ${h.date}]\n${h.context}`).join('\n---\n') + (hits.length>8?`\n(${hits.length-8} more matches not shown)`:'');
+}
+function buildStateSummary(){
+  let libExcerpt = state.library.files.filter(f=>f.status==='ok').map(f=>`[${f.category}] ${f.name}:\n${(f.extractedText||'').slice(0,2500)}`).join('\n---\n');
+  if(libExcerpt.length > 40000) libExcerpt = libExcerpt.slice(0,40000) + '\n...(truncated, ask about a specific document to see more)';
+  return JSON.stringify({
+    today: today(),
+    participants: state.participants.map(p=>p.name),
+    meetings: state.meetings.map(m=>({id:m.id,title:m.title,date:m.date,cw:m.cw,participants:m.participants,notes:m.notes,actions:m.actions})),
+    standaloneActions: state.standaloneActions,
+    daily: state.daily,
+    appointments: state.appointments,
+    notes: state.notes.map(n=>({title:n.title,content:n.content,date:(n.updatedAt||n.createdAt||'').slice(0,10)})),
+    workSOP: state.sop.map(c=>({category:c.name,subcategories:c.subcategories.map(s=>({subcategory:s.name,practices:s.practices.map(p=>({practice:p.text,personResponsible:p.personResponsible,frequency:p.frequency,issues:p.issues.map(i=>i.text)}))}))})),
+    compliance: state.compliance,
+    misOps: state.misOps.map(o=>({name:o.name,instructions:o.instructions,exampleInputSample:o.exampleInput?o.exampleInput.slice(0,10):undefined,exampleOutputSample:o.exampleOutput?o.exampleOutput.slice(0,10):undefined})),
+    libraryFileIndex: state.library.files.map(f=>({name:f.name,category:f.category,status:f.status}))
+  }) + '\n\nLIBRARY DOCUMENT CONTENTS:\n' + (libExcerpt || '(no documents indexed yet)') + '\n\nPAST CHAT SESSIONS (titles only — use the search_chat_history tool if the current question might relate to something discussed before answering):\n' + buildChatHistoryIndex();
+}
+
+// ═══════════════════════════════ VOICE INPUT ═══════════════════════════════
+let recognition=null, isListening=false;
+function initVoice(){
+  if(recognition) return;
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR)return;
+  recognition=new SR(); recognition.continuous=false; recognition.interimResults=false; recognition.lang='en-IN';
+  recognition.onresult=(e)=>{const t=e.results[0][0].transcript; const inp=document.getElementById('chat-input'); if(inp) inp.value=(inp.value?inp.value+' ':'')+t;};
+  recognition.onend=()=>{isListening=false;const m=document.getElementById('chat-mic'); if(m)m.classList.remove('listening');};
+  recognition.onerror=()=>{isListening=false;const m=document.getElementById('chat-mic'); if(m)m.classList.remove('listening');};
+}
+function toggleMic(){
+  if(!recognition){showToast('Voice input not supported — use Chrome.','warn');return;}
+  if(isListening){recognition.stop();isListening=false;document.getElementById('chat-mic').classList.remove('listening');}
+  else{recognition.start();isListening=true;document.getElementById('chat-mic').classList.add('listening');}
+}
+
+// ═══════════════════════════════ INIT ═══════════════════════════════
+window.addEventListener('resize',()=>renderView());
+renderAppVersion();
+switchModule('meetings');
+updateMobTopOffset();
+initFirebase();
+</script>
+</body>
+</html>

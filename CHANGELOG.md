@@ -7,6 +7,13 @@ the app itself (login screen and sidebar footer) — see `APP_VERSION` near the
 top of the `<script>` block in `index.html`. If the number you see in the app
 matches the latest entry below, you're on the current version.
 
+## v1.3.1 — 2026-07-26
+
+- Hotfix: the v1.3.0 commit was corrupted in transit (the file got truncated
+  partway through, breaking Sign In and everything else on the live site).
+  This release just restores the complete, correct file — no functional
+  changes beyond v1.3.0's.
+
 ## v1.3.0 — 2026-07-26
 
 - Fixed the left sidebar menu items being invisible (but still clickable) on
