@@ -7,6 +7,16 @@ the app itself (login screen and sidebar footer) — see `APP_VERSION` near the
 top of the `<script>` block in `index.html`. If the number you see in the app
 matches the latest entry below, you're on the current version.
 
+## v1.3.3 — 2026-07-26
+
+- Fixed the real cause of the chat crash: Firebase's database silently
+  drops empty lists (like an empty Library file list) when it saves your
+  data. After a cloud sync, that could leave a piece of app data missing
+  entirely instead of just empty — and the chat assistant crashed instead
+  of handling that gracefully. All data loading paths (opening the app,
+  syncing from the cloud, restoring a backup) now re-fill any missing
+  pieces automatically, so this can't happen again.
+
 ## v1.3.2 — 2026-07-26
 
 - Fixed the AI chat assistant crashing with "Cannot read properties of

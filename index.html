@@ -675,7 +675,7 @@ header h1{font-size:16px;}.brand-sub{display:none;}.logo-badge{width:30px;height
 // redeployed, so the version shown in the app (login screen + sidebar footer)
 // always reflects what's actually live. See CHANGELOG.md for the history
 // behind each version number.
-const APP_VERSION = '1.3.2';
+const APP_VERSION = '1.3.3';
 const APP_UPDATED = '2026-07-26';
 function renderAppVersion(){
   const [y,m,d] = APP_UPDATED.split('-');
@@ -686,20 +686,39 @@ function renderAppVersion(){
 }
 
 // ═══════════════════════════════ STATE ═══════════════════════════════
-let state = JSON.parse(localStorage.getItem('eat-v1')||'null') || {
+// Firebase Realtime Database silently drops empty arrays/objects on save,
+// so any array field can come back missing after a cloud sync even though
+// it was set to [] locally. normalizeState() re-fills every expected field
+// (including nested ones like library.files) every time state is loaded,
+// whether from localStorage, a fresh default, a cloud sync, or an import —
+// so the rest of the app never has to null-check these paths itself.
+function normalizeState(s){
+  s = s || {};
+  if(!s.participants || !s.participants.length) s.participants=[{id:1,name:'Sudharsan'}];
+  if(!s.meetings) s.meetings=[];
+  if(!s.standaloneActions) s.standaloneActions=[];
+  if(!s.daily) s.daily=[];
+  if(!s.notes) s.notes=[];
+  if(!s.compliance) s.compliance=[];
+  if(!s.misOps) s.misOps=[];
+  if(!s.sop) s.sop=[];
+  if(!s.appointments) s.appointments=[];
+  if(!s.auditLog) s.auditLog=[];
+  if(!s.chatSessions) s.chatSessions=[];
+  if(!s.library) s.library={categories:['Legal Documents','Secretarial Documents','Bank Documents','Financials','MIS Data'],files:[]};
+  if(!s.library.categories) s.library.categories=['Legal Documents','Secretarial Documents','Bank Documents','Financials','MIS Data'];
+  if(!s.library.files) s.library.files=[];
+  if(!s.nextPartId) s.nextPartId=(s.participants.length||0)+1;
+  return s;
+}
+let state = normalizeState(JSON.parse(localStorage.getItem('eat-v1')||'null') || {
   participants:[{id:1,name:'Sudharsan'}],
   meetings:[], standaloneActions:[], daily:[], notes:[], compliance:[], misOps:[], sop:[], appointments:[],
   library:{ categories:['Legal Documents','Secretarial Documents','Bank Documents','Financials','MIS Data'], files:[] },
   chatSessions:[],
   auditLog:[],
   nextPartId:2
-};
-if(!state.library) state.library={categories:['Legal Documents','Secretarial Documents','Bank Documents','Financials','MIS Data'],files:[]};
-if(!state.chatSessions) state.chatSessions=[];
-if(!state.notes) state.notes=[];
-if(!state.sop) state.sop=[];
-if(!state.appointments) state.appointments=[];
-if(!state.auditLog) state.auditLog=[];
+});
 let activeModule='meetings', currentFilter='all', editingId=null, selectedId=null, activeLibCategory='all', activeChatSessionId=null;
 
 function _saveLocal(){ localStorage.setItem('eat-v1', JSON.stringify(state)); }
@@ -1901,7 +1920,7 @@ document.addEventListener('DOMContentLoaded', updateMobTopOffset);
 
 // ═══════════════════════════════ EXPORT / IMPORT ═══════════════════════════════
 function exportData(){const obj={version:'eat-v1',exportedAt:new Date().toISOString(),state};const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`eat-backup-${today()}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);showToast('✅ Backup downloaded!','success');}
-function importData(event){const file=event.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{try{const data=JSON.parse(e.target.result);if(!data.state){showToast('❌ Invalid backup','warn');return;}state=data.state;if(!state.library)state.library={categories:['Legal Documents','Secretarial Documents','Bank Documents','Financials','MIS Data'],files:[]};if(!state.chatSessions)state.chatSessions=[];if(!state.notes)state.notes=[];if(!state.sop)state.sop=[];if(!state.appointments)state.appointments=[];_saveLocal();renderView();document.getElementById('import-result').style.display='block';document.getElementById('import-result').textContent='✅ Data restored from backup.';showToast('✅ Imported','success');}catch(err){showToast('❌ Error: '+err.message,'warn');}event.target.value='';};reader.readAsText(file);}
+function importData(event){const file=event.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{try{const data=JSON.parse(e.target.result);if(!data.state){showToast('❌ Invalid backup','warn');return;}state=normalizeState(data.state);_saveLocal();renderView();document.getElementById('import-result').style.display='block';document.getElementById('import-result').textContent='✅ Data restored from backup.';showToast('✅ Imported','success');}catch(err){showToast('❌ Error: '+err.message,'warn');}event.target.value='';};reader.readAsText(file);}
 
 // ═══════════════════════════════ FIREBASE AUTH + SYNC + CLAUDE PROXY ═══════════════════════════════
 // ⚠️ Fill these in after completing the Firebase setup steps in DEPLOYMENT_GUIDE.md
@@ -1967,7 +1986,7 @@ function attachSyncListener(){
 }
 function pushToCloud(){if(!fbDb||!fbSyncPath)return;isSyncing=true;setSyncStatus('syncing','Syncing…');if(window._fbSetJustPushed)window._fbSetJustPushed(true);fbDb.ref(fbSyncPath+'/state').set(state).then(()=>{isSyncing=false;lastSyncTime=Date.now();setSyncStatus('synced','Synced ✓');}).catch(()=>{isSyncing=false;setSyncStatus('offline','Sync failed');});}
 function pullFromCloud(){if(!fbDb||!fbSyncPath){showToast('Sign in first','warn');return;}fbDb.ref(fbSyncPath+'/state').once('value').then(snap=>{if(!snap.exists()){showToast('No cloud data yet','info');return;}applyCloudData(snap.val());showToast('⬇️ Pulled from cloud','success');});}
-function applyCloudData(data){state=data;if(!state.participants)state.participants=[{id:1,name:'Sudharsan'}];if(!state.meetings)state.meetings=[];if(!state.standaloneActions)state.standaloneActions=[];if(!state.daily)state.daily=[];if(!state.notes)state.notes=[];if(!state.sop)state.sop=[];if(!state.appointments)state.appointments=[];if(!state.compliance)state.compliance=[];if(!state.misOps)state.misOps=[];if(!state.library)state.library={categories:['Legal Documents','Secretarial Documents','Bank Documents','Financials','MIS Data'],files:[]};if(!state.chatSessions)state.chatSessions=[];if(!state.nextPartId)state.nextPartId=(state.participants.length||0)+1;_saveLocal();renderView();}
+function applyCloudData(data){state=normalizeState(data);_saveLocal();renderView();}
 
 // All Claude calls go through this Cloud Function proxy — the Anthropic API key lives server-side only,
 // so nothing needs to be entered or stored per-device. Requires sign-in (Firebase ID token).
