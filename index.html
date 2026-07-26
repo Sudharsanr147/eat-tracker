@@ -1735,15 +1735,15 @@ function importData(event){const file=event.target.files[0];if(!file)return;cons
 // ═══════════════════════════════ FIREBASE AUTH + SYNC + CLAUDE PROXY ═══════════════════════════════
 // ⚠️ Fill these in after completing the Firebase setup steps in DEPLOYMENT_GUIDE.md
 const FB_CONFIG = {
-  apiKey: "REPLACE_ME",
-  authDomain: "REPLACE_ME.firebaseapp.com",
-  databaseURL: "REPLACE_ME",
-  projectId: "REPLACE_ME",
-  storageBucket: "REPLACE_ME.appspot.com",
-  appId: "REPLACE_ME"
+  apiKey: "AIzaSyDuvL1mGENpprdBH_TYIPdJIKhClGOUgqU",
+  authDomain: "eat-tracker-d36b3.firebaseapp.com",
+  databaseURL: "https://eat-tracker-d36b3-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "eat-tracker-d36b3",
+  storageBucket: "eat-tracker-d36b3.firebasestorage.app",
+  messagingSenderId: "149982415569",
+  appId: "1:149982415569:web:8908d81c35a87d04d0d3f0"
 };
-// ⚠️ Fill this in after deploying the Cloud Function (see DEPLOYMENT_GUIDE.md)
-const CLOUD_FN_URL = "https://REGION-PROJECTID.cloudfunctions.net/anthropicProxy";
+const CLOUD_FN_URL = "https://us-central1-eat-tracker-d36b3.cloudfunctions.net/anthropicProxy";
 
 let fbApp=null,fbDb=null,fbStorage=null,fbSyncPath=null,fbListener=null,syncEnabled=false,isSyncing=false,lastSyncTime=null,currentUser=null;
 
