@@ -1,0 +1,1976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="EAT"/>
+<link rel="manifest" id="pwa-manifest-link"/>
+<meta name="theme-color" content="#0d0f18"/>
+<title>EAT — Executive Assistant Tracker</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth.js/1.6.0/mammoth.browser.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Poppins:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#000000;--surface:#0c0c0c;--surface2:#161616;--surface3:#202020;
+  --border:#333333;--text:#ffffff;--muted:#9a9a9a;
+  --accent:#f5c518;--green:#e8e8e8;--red:#ff4444;--yellow:#f5c518;--orange:#ff4444;
+  --purple:#f5c518;--teal:#f5c518;--on-accent:#000000;
+  --shadow:0 8px 32px rgba(0,0,0,.7);--card-hover:#141414;--mono:'IBM Plex Mono',monospace;
+}
+body.light{
+  --bg:#ffffff;--surface:#ffffff;--surface2:#f7f8fa;--surface3:#eef0f3;
+  --border:#e3e6eb;--text:#1a1d29;--muted:#6b7280;
+  --accent:#2563eb;--green:#16a34a;--red:#dc2626;--yellow:#b45309;--orange:#c2410c;
+  --purple:#7c3aed;--teal:#0d9488;--on-accent:#ffffff;--shadow:0 4px 20px rgba(0,0,0,.08);--card-hover:#f5f6f9;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;font-size:18px;height:100vh;overflow:hidden;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.pulse{animation:pulse 2s infinite;}
+
+/* ---------- HEADER ---------- */
+header{background:linear-gradient(120deg,var(--surface) 0%,var(--surface2) 100%);border-bottom:2px solid var(--border);padding:11px 20px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;flex-shrink:0;}
+.logo-badge{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-family:'Libre Baskerville',serif;font-weight:700;font-size:20px;color:var(--on-accent);flex-shrink:0;box-shadow:0 3px 10px rgba(0,0,0,.35);}
+.brand-block{display:flex;flex-direction:column;line-height:1.15;}
+header h1{font-family:'Libre Baskerville',serif;font-size:22px;letter-spacing:.3px;}
+header h1 span{color:var(--accent);}
+.brand-sub{font-size:13.5px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.header-stats{display:flex;gap:16px;margin-left:auto;}
+.stat{text-align:center;}
+.stat-num{font-size:19px;font-weight:700;}
+.stat-label{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.sn-red{color:var(--red);}.sn-yellow{color:var(--yellow);}.sn-green{color:var(--green);}.sn-blue{color:var(--accent);}
+.theme-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;}
+.tgl-track{width:34px;height:18px;background:var(--surface3);border:1px solid var(--border);border-radius:9px;position:relative;cursor:pointer;}
+.tgl-track.on{background:var(--accent);}
+.tgl-thumb{width:12px;height:12px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;transition:left .2s;}
+.tgl-track.on .tgl-thumb{left:18px;}
+.sync-bar{display:flex;align-items:center;gap:6px;font-size:15px;padding:3px 10px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;}
+.sync-dot{width:8px;height:8px;border-radius:50%;}
+.sync-dot.synced{background:var(--green);}.sync-dot.syncing{background:var(--yellow);animation:pulse 1s infinite;}
+.sync-dot.offline{background:var(--red);}.sync-dot.local{background:var(--muted);}
+.mob-menu-btn{display:none;background:var(--accent);border:2px solid var(--on-accent);font-size:20px;cursor:pointer;color:var(--on-accent);padding:5px 9px;border-radius:8px;font-weight:900;}
+
+/* ---------- TICKER ---------- */
+.ticker-bar{background:var(--surface2);border-bottom:2px solid var(--border);overflow:hidden;white-space:nowrap;position:sticky;top:57px;z-index:99;padding:6px 0;flex-shrink:0;}
+.ticker-track{display:inline-flex;animation:ticker 40s linear infinite;}
+.ticker-track:hover{animation-play-state:paused;}
+.ticker-item{display:inline-flex;align-items:center;gap:6px;padding:0 22px;font-size:15.5px;border-right:1px solid var(--border);white-space:nowrap;}
+.ticker-item.tk-overdue{color:var(--red);font-weight:700;}
+.ticker-item.tk-due{color:var(--yellow);font-weight:600;}
+.ticker-item.tk-ok{color:var(--muted);}
+
+.app{display:flex;flex:1;overflow:hidden;min-height:0;}
+.sidebar{width:195px;min-width:195px;background:var(--surface);border-right:2px solid var(--border);padding:12px 0;overflow-y:auto;display:flex;flex-direction:column;position:sticky;top:0;}
+.sb-label{font-size:13px;text-transform:uppercase;letter-spacing:1px;padding:0 14px 4px;margin-top:10px;font-weight:700;opacity:.7;}
+.mod-item{display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;border-left:3px solid transparent;font-weight:600;font-size:16.5px;}
+.mod-item:hover,.mod-item.active{background:var(--surface2);}
+.mod-item.active{border-left-color:var(--accent);color:var(--accent);}
+.sb-item{display:flex;align-items:center;gap:7px;padding:6px 14px;cursor:pointer;border-left:3px solid transparent;font-size:15.5px;}
+.sb-item:hover,.sb-item.active{background:var(--surface2);}
+.sb-item.active{border-left-color:var(--accent);}
+.sb-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sb-badge{font-size:13px;padding:1px 5px;border-radius:10px;background:var(--surface3);border:1.5px solid var(--border);font-weight:600;}
+.sb-badge.danger{background:rgba(232,67,67,.15);border-color:var(--red);color:var(--red);}
+.sb-bottom{padding:10px 14px;margin-top:auto;display:flex;flex-direction:column;gap:5px;}
+.sb-btn{display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:8px;background:var(--surface2);border:1.5px solid var(--border);cursor:pointer;font-size:15px;font-weight:500;}
+
+.centre{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.toolbar{padding:9px 16px;display:flex;align-items:center;gap:8px;border-bottom:2px solid var(--border);background:var(--surface);flex-wrap:wrap;}
+.toolbar-title{font-family:'Libre Baskerville',serif;font-size:18px;flex:1;min-width:80px;}
+.search-box{background:var(--surface2);border:1.5px solid var(--border);border-radius:7px;padding:5px 10px;color:var(--text);font-size:16px;width:150px;outline:none;}
+.btn-primary{background:#dc2626;color:#fff!important;border:none;border-radius:7px;padding:6px 14px;font-size:16.5px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.btn-primary.blue{background:var(--accent);color:var(--on-accent)!important;}
+.btn-primary.green{background:var(--green);}
+.btn-primary.purple{background:var(--purple);color:var(--on-accent)!important;}
+.btn-primary:hover{opacity:.88;}
+.btn-ai{background:var(--purple);color:var(--on-accent)!important;border:none;border-radius:7px;padding:8px 14px;font-size:16px;font-weight:700;cursor:pointer;}
+.btn-ai:disabled{opacity:.5;}
+.content-area{flex:1;overflow:auto;}
+
+table.reg-table{width:100%;border-collapse:collapse;min-width:640px;}
+.reg-table thead th{position:sticky;top:0;z-index:5;padding:9px 12px;font-size:14.5px;text-transform:uppercase;letter-spacing:.6px;font-weight:700;border-bottom:2px solid var(--border);border-right:1.5px solid var(--border);white-space:nowrap;cursor:pointer;background:var(--surface);}
+.reg-table thead th:last-child{border-right:none;}
+.reg-table tbody tr{border-bottom:1.5px solid var(--border);transition:background .15s;}
+.reg-table tbody tr:hover{background:var(--card-hover);}
+.reg-table td{padding:10px 12px;border-right:1.5px solid var(--border);vertical-align:middle;font-size:16.5px;}
+.reg-table td:last-child{border-right:none;}
+.cw-tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:14.5px;font-weight:600;border:1px solid;background:rgba(91,141,238,.12);border-color:rgba(91,141,238,.3);color:var(--accent);}
+.pill{display:inline-block;font-family:var(--mono);font-size:14px;padding:2px 8px;border-radius:10px;font-weight:600;border:1px solid;}
+.pill-open{background:rgba(240,190,48,.12);color:var(--yellow);border-color:rgba(240,190,48,.3);}
+.pill-done{background:rgba(39,201,126,.12);color:var(--green);border-color:rgba(39,201,126,.3);}
+.pill-overdue{background:var(--red);color:#fff;border-color:var(--red);}
+.pill-none{background:var(--surface3);color:var(--muted);border-color:var(--border);}
+.row-btn{background:var(--surface2);border:1.5px solid var(--border);border-radius:6px;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;margin:0 2px;}
+.row-btn:hover{border-color:var(--accent);color:var(--accent);}
+.row-btn.rbdel:hover{border-color:var(--red);color:var(--red);}
+.empty-state{text-align:center;color:var(--muted);padding:60px 20px;}
+
+.daily-quickadd{display:flex;gap:8px;padding:14px 16px;border-bottom:2px solid var(--border);background:var(--surface2);}
+.daily-quickadd input{flex:1;background:var(--surface);border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;color:var(--text);font-size:17px;outline:none;}
+.daily-list{padding:12px 16px;display:flex;flex-direction:column;gap:8px;}
+.daily-item{display:flex;align-items:center;gap:10px;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;}
+.daily-check{width:18px;height:18px;border-radius:5px;border:2px solid var(--border);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.daily-check.done{background:var(--green);border-color:var(--green);}
+.daily-check.done::after{content:'✓';color:#fff;font-size:15px;font-weight:700;}
+.daily-txt{flex:1;font-size:17px;}
+.daily-txt.done{text-decoration:line-through;color:var(--muted);}
+
+.mis-grid,.lib-grid{padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.mis-card,.lib-card{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:16px;}
+.mis-name{font-family:'Libre Baskerville',serif;font-size:19px;margin-bottom:6px;}
+.mis-desc{font-size:15.5px;color:var(--muted);line-height:1.5;margin-bottom:12px;max-height:60px;overflow:hidden;text-overflow:ellipsis;}
+.mis-actions{display:flex;gap:6px;}
+.mis-actions .btn-primary{flex:1;font-size:15px;padding:6px 8px;}
+.lib-card{display:flex;flex-direction:column;gap:6px;}
+.lib-icon{font-size:26px;}
+.lib-fname{font-weight:600;font-size:16.5px;word-break:break-word;}
+.lib-meta{font-size:14.5px;color:var(--muted);}
+.lib-status{font-size:14px;font-weight:600;padding:2px 7px;border-radius:8px;display:inline-block;width:fit-content;}
+.lib-status.ok{background:rgba(39,201,126,.12);color:var(--green);}
+.lib-status.pending{background:rgba(240,190,48,.12);color:var(--yellow);}
+.lib-status.fail{background:rgba(232,67,67,.12);color:var(--red);}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(5px);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.overlay.show{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border:2px solid var(--border);border-radius:14px;width:600px;max-width:97vw;max-height:92vh;overflow-y:auto;padding:24px;transform:translateY(12px);transition:transform .22s;}
+.overlay.show .modal{transform:translateY(0);}
+.modal h2{font-family:'Libre Baskerville',serif;font-size:21px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--border);}
+.m-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.m-grid.full{grid-template-columns:1fr;}
+.m-grid.tri{grid-template-columns:1fr 1fr 1fr;}
+.field{display:flex;flex-direction:column;gap:3px;}
+.field label{font-size:14px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;padding:5px 10px;background:var(--surface3);border:1.5px solid var(--border);border-bottom:none;border-radius:6px 6px 0 0;}
+.field input,.field select,.field textarea{background:var(--surface2);border:1.5px solid var(--border);border-radius:0 0 6px 6px;padding:8px 10px;color:var(--text);font-size:16.5px;outline:none;resize:none;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:14px;border-top:2px solid var(--border);}
+.btn-cancel{background:var(--surface2);border:1.5px solid var(--accent);border-radius:7px;padding:7px 16px;color:var(--text);font-size:16.5px;cursor:pointer;font-weight:600;}
+.parts-wrap{display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:var(--surface2);border:1.5px solid var(--border);border-radius:0 0 6px 6px;min-height:38px;}
+.part-chip{display:flex;align-items:center;gap:5px;background:var(--surface3);border:1px solid var(--border);border-radius:14px;padding:3px 10px;font-size:15.5px;}
+.part-chip .x{cursor:pointer;color:var(--muted);font-weight:700;}
+.parts-input{border:none;background:transparent;outline:none;color:var(--text);font-size:16px;flex:1;min-width:100px;}
+.actions-editor{border:1.5px solid var(--border);border-radius:8px;padding:10px;background:var(--surface2);}
+.ae-row{display:grid;grid-template-columns:1fr 110px 110px 30px;gap:6px;margin-bottom:6px;}
+.ae-row input,.ae-row select{background:var(--surface3);border:1.5px solid var(--border);border-radius:5px;padding:6px 8px;color:var(--text);font-size:15.5px;}
+.ae-del{cursor:pointer;color:var(--muted);text-align:center;font-size:20px;}
+.ae-add{background:transparent;border:1.5px dashed var(--accent);border-radius:6px;padding:7px;color:var(--accent);font-size:15.5px;cursor:pointer;width:100%;margin-top:4px;font-weight:600;}
+.ai-note{background:rgba(155,109,232,.1);border:1.5px solid var(--purple);border-radius:8px;padding:10px 12px;font-size:15.5px;margin-bottom:12px;line-height:1.5;}
+
+.view-pane{width:340px;min-width:340px;background:var(--surface);border-left:2px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .25s;}
+.view-pane.hidden{width:0;min-width:0;border:none;}
+.vp-header{padding:12px 14px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:7px;background:var(--surface2);}
+.vp-title{font-family:'Libre Baskerville',serif;font-size:17px;flex:1;}
+.vp-close{cursor:pointer;font-size:22px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:5px;}
+.vp-close:hover{background:var(--surface3);}
+.vp-actions{display:flex;gap:6px;padding:10px 14px;border-bottom:2px solid var(--border);background:var(--surface2);}
+.vp-btn{flex:1;padding:7px 8px;border-radius:7px;font-size:15.5px;font-weight:600;cursor:pointer;border:1.5px solid var(--accent);background:var(--surface2);color:var(--text);text-align:center;}
+.vp-btn.del-btn{border-color:var(--red);color:var(--red);}
+.vp-body{flex:1;overflow-y:auto;padding:14px;}
+.vp-subject{font-family:'Libre Baskerville',serif;font-size:20px;margin-bottom:10px;}
+.vp-field{margin-bottom:8px;border:1.5px solid var(--border);border-radius:7px;overflow:hidden;}
+.vp-field-label{font-size:13.5px;text-transform:uppercase;letter-spacing:.5px;padding:5px 10px;background:var(--surface3);border-bottom:1.5px solid var(--border);font-weight:700;}
+.vp-field-val{font-size:16.5px;line-height:1.6;padding:8px 10px;white-space:pre-wrap;}
+.vp-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;color:var(--muted);gap:8px;padding:30px 16px;text-align:center;font-size:16.5px;}
+.act-row{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-bottom:1px dashed var(--border);}
+.act-check{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);cursor:pointer;flex-shrink:0;margin-top:2px;}
+.act-check.done{background:var(--green);border-color:var(--green);}
+.act-meta-line{font-size:14.5px;color:var(--muted);margin-top:2px;}
+.act-meta-line.overdue{color:var(--red);font-weight:600;}
+
+/* ---------- CHAT MODULE (full page, not popup) ---------- */
+.chat-module{display:flex;height:100%;width:100%;}
+.chat-sessions{width:230px;min-width:230px;background:var(--surface2);border-right:2px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
+.chat-new-btn{margin:10px;background:var(--purple);color:var(--on-accent);border:none;border-radius:8px;padding:9px;font-size:16.5px;font-weight:700;cursor:pointer;}
+.chat-session-item{padding:9px 12px;cursor:pointer;font-size:16px;border-left:3px solid transparent;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.chat-session-item:hover,.chat-session-item.active{background:var(--surface3);}
+.chat-session-item.active{border-left-color:var(--purple);color:var(--purple);}
+.chat-session-date{font-size:13.5px;color:var(--muted);}
+.chat-main{flex:1;display:flex;flex-direction:column;min-width:0;}
+.chat-msgs{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;max-width:760px;margin:0 auto;width:100%;}
+.chat-msg{max-width:85%;padding:10px 14px;border-radius:12px;font-size:17px;line-height:1.55;}
+.chat-msg.user{align-self:flex-end;background:var(--accent);color:var(--on-accent);border-bottom-right-radius:3px;}
+.chat-msg.bot{align-self:flex-start;background:var(--surface2);border:1.5px solid var(--border);border-bottom-left-radius:3px;white-space:pre-wrap;}
+.chat-msg.tool{align-self:flex-start;background:rgba(39,201,126,.1);border:1.5px solid var(--green);color:var(--green);font-family:var(--mono);font-size:14.5px;max-width:95%;}
+.chat-input-row{display:flex;gap:8px;padding:14px 20px;border-top:2px solid var(--border);background:var(--surface);max-width:760px;margin:0 auto;width:100%;}
+.chat-input-row textarea{flex:1;resize:none;background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);font-size:17px;outline:none;max-height:100px;}
+.chat-mic{background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;width:40px;flex-shrink:0;cursor:pointer;font-size:20px;}
+.chat-mic.listening{background:var(--red);border-color:var(--red);color:#fff;animation:pulse 1s infinite;}
+.chat-send{background:var(--purple);color:var(--on-accent);border:none;border-radius:9px;width:40px;flex-shrink:0;cursor:pointer;font-size:20px;}
+.chat-send:disabled{opacity:.5;}
+.attach-chip{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1.5px solid var(--purple);border-radius:16px;padding:4px 10px;font-size:15px;color:var(--text);}
+.attach-chip .x{cursor:pointer;color:var(--muted);font-weight:700;}
+.attach-chip .x:hover{color:var(--red);}
+.chat-fab{position:fixed;bottom:22px;right:22px;width:52px;height:52px;border-radius:50%;background:var(--purple);color:var(--on-accent);border:2px solid var(--on-accent);box-shadow:var(--shadow);cursor:pointer;font-size:24px;display:flex;align-items:center;justify-content:center;z-index:300;}
+.chat-fab:hover{opacity:.9;transform:scale(1.05);}
+
+.sop-wrap{padding:14px 16px;}
+.sop-node{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--surface);cursor:default;transition:border-color .15s,background .15s;}
+.sop-node.drag-over{border-color:var(--purple);background:rgba(155,109,232,.08);}
+.sop-node.dragging{opacity:.4;}
+.sop-drag{cursor:grab;color:var(--muted);font-size:18px;flex-shrink:0;user-select:none;}
+.sop-drag:active{cursor:grabbing;}
+.sop-chevron{cursor:pointer;font-size:15px;color:var(--muted);width:14px;flex-shrink:0;text-align:center;user-select:none;}
+.sop-name{font-weight:700;flex:1;font-size:17px;}
+.sop-cat .sop-name{font-family:'Libre Baskerville',serif;font-size:18.5px;}
+.sop-sub .sop-name{font-size:17px;color:var(--accent);}
+.sop-prac-row{display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap;}
+.sop-prac-text{font-weight:600;font-size:16.5px;min-width:140px;}
+.sop-badge-pr{font-size:14.5px;padding:2px 8px;border-radius:10px;background:rgba(91,141,238,.12);border:1px solid rgba(91,141,238,.3);color:var(--accent);}
+.sop-badge-freq{font-size:14.5px;padding:2px 8px;border-radius:10px;background:rgba(240,190,48,.12);border:1px solid rgba(240,190,48,.3);color:var(--yellow);}
+.sop-count{font-size:14.5px;color:var(--muted);white-space:nowrap;}
+.sop-actions{display:flex;gap:4px;flex-shrink:0;}
+.sop-mini-btn{background:var(--surface2);border:1.5px solid var(--border);border-radius:6px;padding:3px 8px;font-size:14.5px;cursor:pointer;white-space:nowrap;color:var(--text);}
+.sop-mini-btn:hover{border-color:var(--accent);color:var(--accent);}
+.sop-mini-btn.del:hover{border-color:var(--red);color:var(--red);}
+.sop-children{margin-left:26px;padding-left:12px;border-left:2px dashed var(--border);}
+.sop-issue{display:flex;align-items:center;gap:8px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;margin-bottom:4px;background:var(--surface2);font-size:15.5px;}
+.sop-issue-dot{color:var(--red);flex-shrink:0;}
+.sop-empty-hint{font-size:15px;color:var(--muted);padding:6px 10px;font-style:italic;}
+
+.cal-wrap{padding:14px 16px;display:flex;flex-direction:column;height:100%;box-sizing:border-box;}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-shrink:0;}
+.cal-nav-btn{background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--text);}
+.cal-nav-btn:hover{border-color:var(--accent);color:var(--accent);}
+.cal-month-title{font-family:'Libre Baskerville',serif;font-size:18px;font-weight:700;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:10px;flex-shrink:0;}
+.cal-dow{text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;padding-bottom:2px;}
+.cal-day{border:1.5px solid var(--border);border-radius:7px;background:var(--surface);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1px;position:relative;transition:border-color .15s,background .15s;min-height:44px;padding:3px 2px;}
+.cal-day:hover{border-color:var(--accent);}
+.cal-day.blank{visibility:hidden;pointer-events:none;}
+.cal-day.today{border-color:var(--accent);border-width:2px;}
+.cal-day.selected{background:var(--accent);}
+.cal-day.selected .cal-day-num,.cal-day.selected .cal-day-preview{color:var(--on-accent);font-weight:700;}
+.cal-day-num{font-size:12.5px;font-weight:600;}
+.cal-day-preview{font-size:9px;color:var(--muted);text-align:center;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;padding:0 2px;}
+.cal-cols{flex:1;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;min-height:0;overflow:hidden;}
+.cal-col{display:flex;flex-direction:column;border:1.5px solid var(--border);border-radius:8px;background:var(--surface2);min-height:0;overflow:hidden;}
+.cal-col.sel{border-color:var(--accent);}
+.cal-col-head{display:flex;align-items:center;justify-content:space-between;padding:6px 7px;border-bottom:1.5px solid var(--border);cursor:pointer;flex-shrink:0;}
+.cal-col-label{font-size:11px;font-weight:700;color:var(--accent);}
+.cal-col-body{flex:1;overflow-y:auto;padding:5px;display:flex;flex-direction:column;gap:5px;}
+.cal-col-empty{font-size:11px;color:var(--muted);text-align:center;padding-top:8px;font-style:italic;}
+.cal-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 7px;position:relative;cursor:pointer;transition:border-color .15s;}
+.cal-card.active{border-color:var(--accent);}
+.cal-card-time{font-family:var(--mono);font-size:10px;color:var(--accent);font-weight:600;}
+.cal-card-title{font-size:11.5px;font-weight:600;line-height:1.25;word-break:break-word;}
+.cal-card-loc{font-size:10px;color:var(--muted);}
+.cal-card-actions{display:none;gap:3px;margin-top:5px;}
+.cal-card.active .cal-card-actions{display:flex;}
+.cal-card-actions .row-btn{width:20px;height:20px;font-size:10px;}
+.cal-day-add{background:var(--surface2);border:1.5px solid var(--border);border-radius:6px;width:22px;height:22px;cursor:pointer;font-size:12px;color:var(--text);flex-shrink:0;}
+.cal-day-add:hover{border-color:var(--accent);color:var(--accent);}
+@media(max-width:900px){ .cal-cols{grid-template-columns:repeat(2,1fr);grid-auto-rows:1fr;overflow-y:auto;} }
+@media(max-width:768px){ .chat-fab{ bottom:16px; right:16px; width:46px; height:46px; font-size:21px; } }
+.chat-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);gap:8px;text-align:center;padding:30px;}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface);border:2px solid var(--border);border-radius:9px;padding:9px 18px;font-size:16.5px;z-index:999;transition:transform .3s;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.success{border-color:var(--green);color:var(--green);}
+.toast.warn{border-color:var(--yellow);color:var(--yellow);}
+
+@media(max-width:768px){
+header{padding:6px 8px;min-height:50px;overflow:hidden;}
+header h1{font-size:16px;}.brand-sub{display:none;}.logo-badge{width:30px;height:30px;font-size:17px;}
+.header-stats{gap:8px;}.stat-label{display:none;}.stat-num{font-size:16px;}
+.sync-bar{display:none;}.mob-menu-btn{display:flex;align-items:center;justify-content:center;}
+.ticker-bar{top:50px;}
+.app{flex:1;position:relative;min-height:0;}
+.sidebar{position:fixed;top:96px;left:0;bottom:0;z-index:190;width:78vw;max-width:280px;transform:translateX(-110%);transition:transform .28s;background:var(--surface)!important;}
+.sidebar.mob-open{transform:translateX(0);box-shadow:12px 0 40px rgba(0,0,0,.8);}
+.mob-overlay{display:none;position:fixed;top:96px;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:185;}
+.mob-overlay.show{display:block;}
+.view-pane{display:none;}
+.view-pane.mob-show{display:flex;position:fixed;top:96px;left:0;right:0;bottom:0;z-index:150;width:100%!important;border-left:none;}
+.reg-table{min-width:560px;}
+.modal{padding:16px;border-radius:16px 16px 0 0;position:fixed;bottom:0;left:0;right:0;width:100%!important;max-height:88vh;margin:0;}
+.overlay{align-items:flex-end;padding:0;}
+.m-grid.tri{grid-template-columns:1fr 1fr;}
+.chat-sessions{position:fixed;top:96px;left:0;bottom:0;z-index:160;width:78vw;max-width:280px;transform:translateX(-110%);transition:transform .28s;}
+.chat-sessions.mob-open{transform:translateX(0);}
+}
+
+/* ---------- Text wrapping: prefer wrapping over truncation ---------- */
+.reg-table td, .td-title, .td-parts, .mis-desc, .mis-name, .chat-session-item, .mob-mc-title,
+.sop-name, .sop-prac-text, .lib-fname, .toolbar-title, .vp-title, .vp-subject {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+.reg-table { table-layout: auto; }
+.chat-session-item { line-height: 1.4; padding-top: 10px; padding-bottom: 10px; }
+
+/* ---------- LOGIN GATE ---------- */
+.login-gate{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-gate.hidden{display:none;}
+.login-card{width:340px;max-width:100%;background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:28px 24px;box-shadow:var(--shadow);}
+.login-card h2{font-family:'Libre Baskerville',serif;font-size:24px;margin-bottom:6px;text-align:center;}
+.login-card .login-sub{font-size:14.5px;color:var(--muted);text-align:center;margin-bottom:20px;}
+.login-card input{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:16px;outline:none;margin-bottom:10px;}
+.login-card button{width:100%;background:var(--accent);color:var(--on-accent);border:none;border-radius:8px;padding:11px;font-size:16.5px;font-weight:700;cursor:pointer;margin-top:4px;}
+.login-card button:disabled{opacity:.5;}
+.login-error{color:var(--red);font-size:14.5px;margin-top:8px;text-align:center;min-height:18px;}
+</style>
+</head>
+<body>
+
+<div class="login-gate" id="login-gate">
+  <div class="login-card">
+    <h2>EAT</h2>
+    <div class="login-sub">Sign in to access your Executive Assistant Tracker</div>
+    <input type="email" id="login-email" placeholder="Email" autocomplete="username"/>
+    <input type="password" id="login-password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')signInUser()"/>
+    <button id="login-btn" onclick="signInUser()">Sign In</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<header>
+  <button class="mob-menu-btn" onclick="toggleMobSidebar()">☰</button>
+  <div class="logo-badge">EK</div>
+  <div class="brand-block">
+    <h1>EAT</h1>
+    <div class="brand-sub">Executive Assistant Tracker</div>
+  </div>
+  <div class="header-stats">
+    <div class="stat"><div class="stat-num sn-blue" id="stat-meetings">0</div><div class="stat-label">Meetings</div></div>
+    <div class="stat"><div class="stat-num sn-red pulse" id="stat-overdue">0</div><div class="stat-label">Overdue</div></div>
+    <div class="stat"><div class="stat-num sn-yellow" id="stat-daily">0</div><div class="stat-label">Today</div></div>
+    <div class="stat"><div class="stat-num sn-green" id="stat-comp">0</div><div class="stat-label">Comp. 7d</div></div>
+  </div>
+  <div id="sync-bar" class="sync-bar" onclick="openModal('sync-modal')"><div class="sync-dot local" id="sync-dot"></div><span id="sync-label">Local only</span></div>
+  <div class="theme-toggle" onclick="toggleTheme()"><span id="tgl-label">🌙</span><div class="tgl-track" id="tgl-track"><div class="tgl-thumb"></div></div></div>
+</header>
+
+<div class="ticker-bar"><div class="ticker-track" id="ticker-track"></div></div>
+
+<div class="mob-overlay" id="mob-overlay" onclick="closeMobSidebar()"></div>
+<div class="app">
+  <div class="sidebar" id="sidebar">
+    <div class="sb-label">Modules</div>
+    <div class="mod-item" data-mod="chat" onclick="switchModule('chat')">💬 Chat</div>
+    <div class="mod-item active" data-mod="meetings" onclick="switchModule('meetings')">📖 Meetings</div>
+    <div class="mod-item" data-mod="calendar" onclick="switchModule('calendar')">📅 Calendar</div>
+    <div class="mod-item" data-mod="actions" onclick="switchModule('actions')">☑️ Action Items</div>
+    <div class="mod-item" data-mod="daily" onclick="switchModule('daily')">✅ Daily Activities</div>
+    <div class="mod-item" data-mod="notes" onclick="switchModule('notes')">🗒️ Notes</div>
+    <div class="mod-item" data-mod="compliance" onclick="switchModule('compliance')">📋 Compliance Manager</div>
+    <div class="mod-item" data-mod="mis" onclick="switchModule('mis')">📊 MIS Reports</div>
+    <div class="mod-item" data-mod="library" onclick="switchModule('library')">🗄️ Library</div>
+    <div class="mod-item" data-mod="sop" onclick="switchModule('sop')">🌳 Work SOP</div>
+    <div class="sb-label" id="sub-filter-label">Views</div>
+    <div id="sub-filters"></div>
+    <div class="sb-bottom">
+      <div class="sb-btn" onclick="openManageParts()">⚙️ Manage Participants</div>
+      <div class="sb-btn" onclick="openModal('sync-modal')" style="color:var(--accent);border-color:var(--accent)">☁️ Cloud Sync</div>
+      <div class="sb-btn" onclick="openModal('export-modal')" style="color:var(--green);border-color:var(--green)">📦 Export / Import</div>
+      <div class="sb-btn" onclick="openAccountModal()" style="color:var(--purple);border-color:var(--purple)">👤 Account</div>
+    </div>
+  </div>
+
+  <div class="centre">
+    <div class="toolbar" id="main-toolbar">
+      <div class="toolbar-title" id="toolbar-title">Meetings</div>
+      <input class="search-box" type="text" id="search-input" placeholder="Search…" oninput="renderView()"/>
+      <button class="btn-primary blue" id="sop-expand-btn" onclick="sopExpandAll()" style="display:none">⊞ Expand All</button>
+      <button class="btn-primary blue" id="sop-collapse-btn" onclick="sopCollapseAll()" style="display:none">⊟ Collapse All</button>
+      <button class="btn-primary" id="add-btn" onclick="openAddModal()">＋ Add</button>
+    </div>
+    <div class="content-area" id="content-area"></div>
+  </div>
+
+  <div class="view-pane hidden" id="view-pane">
+    <div class="vp-header"><div class="vp-title">Detail</div><div class="vp-close" onclick="closeViewPane()">✕</div></div>
+    <div id="vp-content"><div class="vp-empty">👆<p>Click any item to view details</p></div></div>
+  </div>
+</div>
+
+<button class="chat-fab" id="chat-fab" onclick="quickNewChat()" title="New chat">💬</button>
+
+<!-- MEETING MODAL -->
+<div class="overlay" id="meeting-modal">
+  <div class="modal">
+    <h2 id="meeting-modal-title">Add Meeting</h2>
+    <div class="m-grid tri" style="margin-bottom:10px">
+      <div class="field"><label>📅 Date</label><input type="date" id="f-date"/></div>
+      <div class="field"><label>🕐 Time</label><input type="time" id="f-time"/></div>
+      <div class="field"><label>🏷 Counterparty</label><input type="text" id="f-cw" placeholder="e.g. SBI, Internal"/></div>
+    </div>
+    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Meeting Title</label><input type="text" id="f-title"/></div></div>
+    <div class="m-grid full" style="margin-bottom:10px">
+      <div class="field"><label>👥 Participants</label><div class="parts-wrap" id="parts-wrap"><input class="parts-input" id="parts-input" placeholder="Type name, press Enter…" onkeydown="onPartsKeydown(event)"/></div></div>
+    </div>
+    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>📝 Notes</label><textarea id="f-notes" rows="6"></textarea></div></div>
+    <div class="ai-note">✨ Extract action items from your notes with Sonnet.</div>
+    <button class="btn-ai" id="ai-extract-btn" onclick="extractActionsAI()" style="margin-bottom:14px">✨ Extract Action Items with AI</button>
+    <label style="font-size:14px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;display:block;margin-bottom:6px;">☑️ Action Items</label>
+    <div class="actions-editor" id="actions-editor"></div>
+    <button class="ae-add" onclick="addActionRow()">＋ Add action item</button>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('meeting-modal')">Cancel</button><button class="btn-primary" onclick="saveMeeting()">💾 Save</button></div>
+  </div>
+</div>
+
+<!-- ACTION MODAL -->
+<div class="overlay" id="action-modal">
+  <div class="modal">
+    <h2 id="action-modal-title">Add Action Item</h2>
+    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Action</label><input type="text" id="a-text"/></div></div>
+    <div class="m-grid" style="margin-bottom:10px">
+      <div class="field"><label>Owner</label><select id="a-owner"></select></div>
+      <div class="field"><label>Due Date</label><input type="date" id="a-due"/></div>
+    </div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('action-modal')">Cancel</button><button class="btn-primary" onclick="saveStandaloneAction()">💾 Save</button></div>
+  </div>
+</div>
+
+<!-- COMPLIANCE MODAL -->
+<div class="overlay" id="compliance-modal">
+  <div class="modal">
+    <h2 id="compliance-modal-title">Add Compliance Item</h2>
+    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Item</label><input type="text" id="c-item" placeholder="e.g. GSTR-3B Filing"/></div></div>
+    <div class="m-grid" style="margin-bottom:10px">
+      <div class="field"><label>Frequency</label><select id="c-freq"><option>Monthly</option><option>Quarterly</option><option>Half-Yearly</option><option>Annual</option><option>One-time</option></select></div>
+      <div class="field"><label>Next Due</label><input type="date" id="c-due"/></div>
+    </div>
+    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Notes</label><textarea id="c-notes" rows="3"></textarea></div></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('compliance-modal')">Cancel</button><button class="btn-primary" onclick="saveCompliance()">💾 Save</button></div>
+  </div>
+</div>
+
+<!-- MIS OPERATION MODAL -->
+<div class="overlay" id="mis-modal">
+  <div class="modal">
+    <h2 id="mis-modal-title">New MIS Operation</h2>
+    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Operation Name</label><input type="text" id="mis-name" placeholder="e.g. Vendor Ageing Consolidation"/></div></div>
+    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Instructions for Sonnet</label><textarea id="mis-instructions" rows="6"></textarea></div></div>
+    <div class="ai-note">✨ Optional but recommended: upload one worked example (a raw input file + the correct output file you already produced from it). Sonnet learns the exact transformation pattern from this pair — far more reliable than instructions alone, same as showing Claude a before/after in the app.</div>
+    <div class="m-grid" style="margin-bottom:10px">
+      <div class="field"><label>Example Input File</label><input type="file" id="mis-example-input" accept=".xlsx,.xls,.csv"/></div>
+      <div class="field"><label>Example Output File</label><input type="file" id="mis-example-output" accept=".xlsx,.xls,.csv"/></div>
+    </div>
+    <div id="mis-example-status" style="font-size:15px;color:var(--muted);margin-bottom:10px"></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('mis-modal')">Cancel</button><button class="btn-primary" onclick="saveMisOp()">💾 Save Operation</button></div>
+  </div>
+</div>
+
+<!-- CALENDAR DAY POPUP -->
+<div class="overlay" id="day-popup-modal">
+  <div class="modal">
+    <h2 id="day-popup-title">Appointments</h2>
+    <div id="day-popup-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+    <div class="modal-actions" style="justify-content:space-between">
+      <button class="btn-primary" id="day-popup-add-btn">＋ Add Appointment</button>
+      <button class="btn-cancel" onclick="closeModal('day-popup-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- APPOINTMENT MODAL -->
+<div class="overlay" id="appt-modal">
+  <div class="modal">
+    <h2 id="appt-modal-title">Add Appointment</h2>
+    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Title</label><input type="text" id="appt-title" placeholder="e.g. Dentist appointment"/></div></div>
+    <div class="m-grid" style="margin-bottom:10px;grid-template-columns:1fr 1fr 1fr;">
+      <div class="field"><label>Date</label><input type="date" id="appt-date"/></div>
+      <div class="field"><label>From</label><input type="time" id="appt-from"/></div>
+      <div class="field"><label>To</label><input type="time" id="appt-to"/></div>
+    </div>
+    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Location (optional)</label><input type="text" id="appt-location"/></div></div>
+    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Notes (optional)</label><textarea id="appt-notes" rows="3"></textarea></div></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('appt-modal')">Cancel</button><button class="btn-primary" onclick="saveAppointment()">💾 Save</button></div>
+  </div>
+</div>
+
+<!-- NOTE MODAL -->
+<div class="overlay" id="note-modal">
+  <div class="modal">
+    <h2 id="note-modal-title">Add Note</h2>
+    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Title (optional)</label><input type="text" id="n-title" placeholder="e.g. Bank covenant thresholds"/></div></div>
+    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Note</label><textarea id="n-content" rows="8" placeholder="Facts, figures, anything worth keeping around…"></textarea></div></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('note-modal')">Cancel</button><button class="btn-primary" onclick="saveNote()">💾 Save Note</button></div>
+  </div>
+</div>
+
+<!-- SOP CATEGORY MODAL -->
+<div class="overlay" id="sop-cat-modal">
+  <div class="modal">
+    <h2 id="sop-cat-modal-title">Add Category</h2>
+    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Category Name</label><input type="text" id="sop-cat-name" placeholder="e.g. Finance Operations"/></div></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('sop-cat-modal')">Cancel</button><button class="btn-primary" onclick="saveSopCategory()">💾 Save</button></div>
+  </div>
+</div>
+
+<!-- SOP SUBCATEGORY MODAL -->
+<div class="overlay" id="sop-sub-modal">
+  <div class="modal">
+    <h2 id="sop-sub-modal-title">Add Subcategory</h2>
+    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Subcategory Name</label><input type="text" id="sop-sub-name" placeholder="e.g. Vendor Payments"/></div></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('sop-sub-modal')">Cancel</button><button class="btn-primary" onclick="saveSopSubcategory()">💾 Save</button></div>
+  </div>
+</div>
+
+<!-- SOP PRACTICE MODAL -->
+<div class="overlay" id="sop-prac-modal">
+  <div class="modal">
+    <h2 id="sop-prac-modal-title">Add Practice</h2>
+    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Practice</label><input type="text" id="sop-prac-text" placeholder="e.g. Verify vendor bank details before payment"/></div></div>
+    <div class="m-grid" style="margin-bottom:10px">
+      <div class="field"><label>Person Responsible (optional)</label><select id="sop-prac-owner"><option value="">—</option></select></div>
+      <div class="field"><label>Frequency (optional)</label><select id="sop-prac-freq"><option value="">—</option><option>Daily</option><option>Weekly</option><option>Monthly</option><option>Quarterly</option><option>Annual</option><option>As needed</option></select></div>
+    </div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('sop-prac-modal')">Cancel</button><button class="btn-primary" onclick="saveSopPractice()">💾 Save</button></div>
+  </div>
+</div>
+
+<!-- SOP ISSUE MODAL -->
+<div class="overlay" id="sop-issue-modal">
+  <div class="modal">
+    <h2 id="sop-issue-modal-title">Add Issue</h2>
+    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Issue</label><textarea id="sop-issue-text" rows="3" placeholder="What can go wrong / has gone wrong…"></textarea></div></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('sop-issue-modal')">Cancel</button><button class="btn-primary" onclick="saveSopIssue()">💾 Save</button></div>
+  </div>
+</div>
+
+<!-- LIBRARY CATEGORY MODAL -->
+<div class="overlay" id="lib-cat-modal">
+  <div class="modal">
+    <h2>New Library Category</h2>
+    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Category Name</label><input type="text" id="lib-cat-name" placeholder="e.g. Legal Documents"/></div></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('lib-cat-modal')">Cancel</button><button class="btn-primary" onclick="saveLibCategory()">💾 Add Category</button></div>
+  </div>
+</div>
+
+<!-- MANAGE PARTICIPANTS -->
+<div class="overlay" id="parts-modal">
+  <div class="modal">
+    <h2>Manage Participants</h2>
+    <div id="pl-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;max-height:280px;overflow-y:auto;"></div>
+    <div style="display:flex;gap:7px;">
+      <input type="text" id="new-part-input" placeholder="New participant name…" style="flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:16.5px;outline:none" onkeydown="if(event.key==='Enter')addParticipant()"/>
+      <button class="btn-primary" onclick="addParticipant()">Add</button>
+    </div>
+    <div class="modal-actions"><button class="btn-primary" onclick="closeModal('parts-modal')">Done</button></div>
+  </div>
+</div>
+
+<!-- ACCOUNT MODAL -->
+<div class="overlay" id="account-modal">
+  <div class="modal">
+    <h2>👤 Account</h2>
+    <div style="font-size:16.5px;line-height:1.6;margin-bottom:14px">Signed in as <strong id="account-email">—</strong>. Your data and the AI chat work the same on any device once you sign in with this account — nothing to configure per-device.</div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('account-modal')">Close</button><button class="btn-primary" onclick="signOutUser()" style="background:var(--red)">Sign Out</button></div>
+  </div>
+</div>
+
+<!-- SYNC MODAL -->
+<div class="overlay" id="sync-modal">
+  <div class="modal">
+    <h2>☁️ Cloud Sync</h2>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;padding:14px;font-size:15.5px;line-height:1.6">
+        Signed in as <strong id="sync-account-email">—</strong>. Changes sync automatically and are available on any device you sign into with this account.
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-primary" onclick="pushToCloud()">⬆️ Push to Cloud</button>
+        <button class="btn-primary green" onclick="pullFromCloud()">⬇️ Pull from Cloud</button>
+      </div>
+    </div>
+    <div class="modal-actions"><button class="btn-primary" onclick="closeModal('sync-modal')">Done</button></div>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="overlay" id="export-modal">
+  <div class="modal">
+    <h2>📦 Export / Import Data</h2>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <button class="btn-primary green" onclick="exportData()">⬇️ Download Backup</button>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)"/>
+      <button class="btn-primary blue" onclick="document.getElementById('import-file').click()">⬆️ Select Backup File</button>
+      <div id="import-result" style="display:none;background:rgba(39,201,126,.1);border:1.5px solid var(--green);border-radius:8px;padding:10px;font-size:16.5px;color:var(--green)"></div>
+    </div>
+    <div class="modal-actions"><button class="btn-primary" onclick="closeModal('export-modal')">Close</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════ STATE ═══════════════════════════════
+let state = JSON.parse(localStorage.getItem('eat-v1')||'null') || {
+  participants:[{id:1,name:'Sudharsan'}],
+  meetings:[], standaloneActions:[], daily:[], notes:[], compliance:[], misOps:[], sop:[], appointments:[],
+  library:{ categories:['Legal Documents','Secretarial Documents','Bank Documents','Financials','MIS Data'], files:[] },
+  chatSessions:[],
+  nextPartId:2
+};
+if(!state.library) state.library={categories:['Legal Documents','Secretarial Documents','Bank Documents','Financials','MIS Data'],files:[]};
+if(!state.chatSessions) state.chatSessions=[];
+if(!state.notes) state.notes=[];
+if(!state.sop) state.sop=[];
+if(!state.appointments) state.appointments=[];
+let activeModule='meetings', currentFilter='all', editingId=null, selectedId=null, activeLibCategory='all', activeChatSessionId=null;
+
+function _saveLocal(){ localStorage.setItem('eat-v1', JSON.stringify(state)); }
+function save(){ _saveLocal(); if(syncEnabled && fbDb && fbSyncPath && !isSyncing){ clearTimeout(window._fbSaveTimer); window._fbSaveTimer=setTimeout(()=>pushToCloud(),1500); } }
+function today(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function fmt(s){if(!s)return'—';const[y,m,d]=s.split('-');const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return `${d} ${mo[parseInt(m)-1]}`;}
+function esc(s){return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showToast(msg,type='info'){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast show ${type}`;setTimeout(()=>t.classList.remove('show'),2800);}
+function genId(){ return `id_${Date.now()}_${Math.random().toString(36).slice(2,7)}`; }
+function isThisWeek(d){if(!d)return false;const dt=new Date(d+'T00:00:00');const now=new Date();now.setHours(0,0,0,0);const day=now.getDay();const mon=new Date(now);mon.setDate(now.getDate()-((day+6)%7));const sun=new Date(mon);sun.setDate(mon.getDate()+6);return dt>=mon&&dt<=sun;}
+function isThisMonth(d){if(!d)return false;const dt=new Date(d+'T00:00:00'),now=new Date();return dt.getFullYear()===now.getFullYear()&&dt.getMonth()===now.getMonth();}
+function daysUntil(d){if(!d)return null;const t=new Date();t.setHours(0,0,0,0);const dt=new Date(d+'T00:00:00');return Math.round((dt-t)/86400000);}
+
+// ═══════════════════════════════ THEME ═══════════════════════════════
+let isDark = localStorage.getItem('eat-theme') !== 'light';
+function applyTheme(){document.body.classList.toggle('light',!isDark);const t=document.getElementById('tgl-track'),l=document.getElementById('tgl-label');if(t)t.classList.toggle('on',!isDark);if(l)l.textContent=isDark?'🌙':'☀️';}
+function toggleTheme(){isDark=!isDark;localStorage.setItem('eat-theme',isDark?'dark':'light');applyTheme();}
+applyTheme();
+
+// ═══════════════════════════════ PWA MANIFEST ═══════════════════════════════
+(function(){try{
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="80" fill="#1a1f2e"/><rect x="80" y="80" width="352" height="352" rx="40" fill="#242938"/><rect x="120" y="140" width="272" height="36" rx="8" fill="#5b8dee"/><rect x="120" y="200" width="200" height="28" rx="8" fill="#9b6de8"/><rect x="120" y="248" width="240" height="28" rx="8" fill="#f0be30"/></svg>`;
+  const iconUrl='data:image/svg+xml,'+encodeURIComponent(svg);
+  const basePath=window.location.pathname.endsWith('/')?window.location.pathname:window.location.pathname.substring(0,window.location.pathname.lastIndexOf('/')+1);
+  const m={name:'EAT — Executive Assistant Tracker',short_name:'EAT',start_url:window.location.href,scope:basePath,display:'standalone',background_color:'#0d0f18',theme_color:'#1a1f2e',icons:[{src:iconUrl,sizes:'192x192',type:'image/svg+xml',purpose:'any maskable'},{src:iconUrl,sizes:'512x512',type:'image/svg+xml',purpose:'any maskable'}]};
+  const blob=new Blob([JSON.stringify(m)],{type:'application/manifest+json'});
+  document.getElementById('pwa-manifest-link').href=URL.createObjectURL(blob);
+}catch(e){console.warn(e);}})();
+
+// ═══════════════════════════════ TICKER ═══════════════════════════════
+function renderTicker(){
+  const items=[];
+  state.compliance.forEach(c=>{const d=daysUntil(c.due); if(d===null)return; if(d<0)items.push({t:`🔴 OVERDUE: ${c.item} (${Math.abs(d)}d)`,cls:'tk-overdue'}); else if(d<=7)items.push({t:`⚠ ${c.item} due in ${d}d`,cls:'tk-due'});});
+  getAllActions().forEach(a=>{if(a.done||!a.due)return; const d=daysUntil(a.due); if(d<0)items.push({t:`🔴 OVERDUE ACTION: ${a.text} — ${a.owner||'Unassigned'}`,cls:'tk-overdue'}); else if(d===0)items.push({t:`⚠ DUE TODAY: ${a.text} — ${a.owner||'Unassigned'}`,cls:'tk-due'});});
+  state.appointments.filter(a=>a.date===today()).forEach(a=>{ items.push({t:`📅 TODAY: ${a.title}${a.fromTime?' at '+a.fromTime:''}`,cls:'tk-due'}); });
+  const track=document.getElementById('ticker-track');
+  if(items.length===0){ track.innerHTML='<div class="ticker-item tk-ok">✓ Nothing overdue or due today. All clear.</div>'; track.style.animation='none'; return; }
+  track.style.animation='';
+  const html=items.map(i=>`<div class="ticker-item ${i.cls}">${esc(i.t)}</div>`).join('');
+  track.innerHTML=html+html; // duplicate for seamless loop
+}
+
+// ═══════════════════════════════ MODULE SWITCHING ═══════════════════════════════
+const moduleConfig = {
+  meetings:{title:'Meetings', addLabel:'＋ Add Meeting', filters:[{k:'all',l:'All Meetings',i:'📋'},{k:'week',l:'This Week',i:'📅'},{k:'month',l:'This Month',i:'🗓️'},{k:'overdue-actions',l:'Overdue Actions',i:'🔴'},{k:'open-actions',l:'Open Actions',i:'⚠️'}]},
+  calendar:{title:'Calendar', addLabel:'＋ Add Appointment', filters:[]},
+  actions:{title:'Action Items', addLabel:'＋ Add Action', filters:[{k:'all',l:'All Actions',i:'☑️'},{k:'overdue',l:'Overdue',i:'🔴'},{k:'open',l:'Open',i:'⚠️'},{k:'done',l:'Done',i:'✅'}]},
+  daily:{title:'Daily Activities', addLabel:null, filters:[]},
+  notes:{title:'Notes', addLabel:'＋ Add Note', filters:[]},
+  compliance:{title:'Compliance Manager', addLabel:'＋ Add Compliance Item', filters:[{k:'all',l:'All Items',i:'📋'},{k:'overdue',l:'Overdue',i:'🔴'},{k:'week',l:'Due in 7 Days',i:'⚠️'}]},
+  mis:{title:'MIS Reports', addLabel:'＋ New Operation', filters:[]},
+  library:{title:'Library', addLabel:null, filters:[]},
+  sop:{title:'Work SOP', addLabel:'＋ Add Category', filters:[]},
+  chat:{title:'Chat', addLabel:null, filters:[]}
+};
+
+function switchModule(mod){
+  activeModule=mod; currentFilter='all'; selectedId=null;
+  document.querySelectorAll('.mod-item').forEach(m=>m.classList.toggle('active',m.dataset.mod===mod));
+  const cfg = moduleConfig[mod];
+  document.getElementById('toolbar-title').textContent = cfg.title;
+  const addBtn = document.getElementById('add-btn');
+  const toolbar = document.getElementById('main-toolbar');
+  toolbar.style.display = (mod==='chat') ? 'none' : 'flex';
+  if(cfg.addLabel){ addBtn.style.display='inline-block'; addBtn.textContent=cfg.addLabel; }
+  else addBtn.style.display='none';
+  document.getElementById('sop-expand-btn').style.display = mod==='sop' ? 'inline-block' : 'none';
+  document.getElementById('sop-collapse-btn').style.display = mod==='sop' ? 'inline-block' : 'none';
+  document.getElementById('view-pane').classList.add('hidden');
+  renderSubFilters(); renderView();
+  if(window.innerWidth<=768) closeMobSidebar();
+}
+
+function renderSubFilters(){
+  const cfg = moduleConfig[activeModule];
+  const wrap = document.getElementById('sub-filters');
+  const label = document.getElementById('sub-filter-label');
+  wrap.innerHTML=''; label.style.display = cfg.filters.length ? 'block' : 'none';
+  cfg.filters.forEach(f=>{
+    const div=document.createElement('div');
+    div.className='sb-item'+(currentFilter===f.k?' active':'');
+    div.innerHTML=`<span>${f.i}</span><span class="sb-name">${f.l}</span><span class="sb-badge" data-fk="${f.k}">0</span>`;
+    div.onclick=()=>{currentFilter=f.k; renderSubFilters(); document.getElementById('view-pane').classList.add('hidden'); renderView();};
+    wrap.appendChild(div);
+  });
+  if(activeModule==='actions'){
+    label.textContent='Views'; label.style.display='block';
+    const owners = new Set(getAllActions().map(a=>a.owner).filter(Boolean));
+    if(owners.size){ const hdr=document.createElement('div'); hdr.className='sb-label'; hdr.textContent='By Owner'; wrap.appendChild(hdr); }
+    [...owners].sort().forEach(owner=>{
+      const count = getAllActions().filter(a=>a.owner===owner).length;
+      const div=document.createElement('div'); div.className='sb-item'+(currentFilter===`owner-${owner}`?' active':'');
+      div.innerHTML=`<span>👤</span><span class="sb-name">${esc(owner)}</span><span class="sb-badge">${count}</span>`;
+      div.onclick=()=>{currentFilter=`owner-${owner}`; renderSubFilters(); renderView();};
+      wrap.appendChild(div);
+    });
+  }
+  if(activeModule==='meetings'){
+    const cwSet = new Set(state.meetings.map(m=>m.cw).filter(Boolean));
+    if(cwSet.size){ const hdr=document.createElement('div'); hdr.className='sb-label'; hdr.textContent='By Counterparty'; wrap.appendChild(hdr); }
+    [...cwSet].sort().forEach(cw=>{
+      const count = state.meetings.filter(m=>m.cw===cw).length;
+      const div=document.createElement('div'); div.className='sb-item'+(currentFilter===`cw-${cw}`?' active':'');
+      div.innerHTML=`<span>🏢</span><span class="sb-name">${esc(cw)}</span><span class="sb-badge">${count}</span>`;
+      div.onclick=()=>{currentFilter=`cw-${cw}`; renderSubFilters(); renderView();};
+      wrap.appendChild(div);
+    });
+  }
+  if(activeModule==='library'){
+    label.textContent='Categories'; label.style.display='block';
+    const allDiv=document.createElement('div'); allDiv.className='sb-item'+(activeLibCategory==='all'?' active':'');
+    allDiv.innerHTML=`<span>🗄️</span><span class="sb-name">All Files</span><span class="sb-badge">${state.library.files.length}</span>`;
+    allDiv.onclick=()=>{activeLibCategory='all'; renderSubFilters(); renderView();};
+    wrap.appendChild(allDiv);
+    state.library.categories.forEach(cat=>{
+      const count = state.library.files.filter(f=>f.category===cat).length;
+      const div=document.createElement('div'); div.className='sb-item'+(activeLibCategory===cat?' active':'');
+      div.innerHTML=`<span>📁</span><span class="sb-name">${esc(cat)}</span><span class="sb-badge">${count}</span>`;
+      div.onclick=()=>{activeLibCategory=cat; renderSubFilters(); renderView();};
+      wrap.appendChild(div);
+    });
+    const addCat=document.createElement('div'); addCat.className='sb-btn'; addCat.style.margin='8px 14px'; addCat.innerHTML='＋ New Category';
+    addCat.onclick=()=>openModal('lib-cat-modal'); wrap.appendChild(addCat);
+  }
+  if(activeModule==='chat'){
+    label.style.display='none';
+  }
+}
+
+// ═══════════════════════════════ DERIVED DATA ═══════════════════════════════
+function meetingActionStats(m){const acts=m.actions||[];const open=acts.filter(a=>!a.done);const overdue=open.filter(a=>a.due&&a.due<today());return{total:acts.length,open:open.length,overdue:overdue.length};}
+function getAllActions(){
+  const out=[];
+  state.meetings.forEach(m=>(m.actions||[]).forEach((a,idx)=>out.push({...a,id:a.id||`${m.id}_${idx}`,source:'meeting',meetingId:m.id,meetingTitle:m.title,idx})));
+  state.standaloneActions.forEach(a=>out.push({...a,source:'standalone'}));
+  return out;
+}
+function findActionByMatch(text){const all=getAllActions();const lower=text.toLowerCase();return all.find(a=>a.text.toLowerCase().includes(lower))||null;}
+
+// ═══════════════════════════════ HEADER STATS ═══════════════════════════════
+function renderHeaderStats(){
+  const allActs = getAllActions();
+  document.getElementById('stat-meetings').textContent = state.meetings.length;
+  document.getElementById('stat-overdue').textContent = allActs.filter(a=>!a.done && a.due && a.due<today()).length;
+  document.getElementById('stat-daily').textContent = state.daily.filter(d=>!d.done).length;
+  document.getElementById('stat-comp').textContent = state.compliance.filter(c=>{const d=daysUntil(c.due);return d!==null && d<=7;}).length;
+  document.querySelectorAll('[data-fk]').forEach(el=>{
+    const k = el.dataset.fk; let n=0;
+    if(activeModule==='meetings'){
+      if(k==='all')n=state.meetings.length; else if(k==='week')n=state.meetings.filter(m=>isThisWeek(m.date)).length;
+      else if(k==='month')n=state.meetings.filter(m=>isThisMonth(m.date)).length;
+      else if(k==='overdue-actions')n=state.meetings.filter(m=>meetingActionStats(m).overdue>0).length;
+      else if(k==='open-actions')n=state.meetings.filter(m=>meetingActionStats(m).open>0).length;
+    } else if(activeModule==='actions'){
+      if(k==='all')n=allActs.length; else if(k==='overdue')n=allActs.filter(a=>!a.done&&a.due&&a.due<today()).length;
+      else if(k==='open')n=allActs.filter(a=>!a.done).length; else if(k==='done')n=allActs.filter(a=>a.done).length;
+    } else if(activeModule==='compliance'){
+      if(k==='all')n=state.compliance.length; else if(k==='overdue')n=state.compliance.filter(c=>daysUntil(c.due)<0).length;
+      else if(k==='week')n=state.compliance.filter(c=>{const d=daysUntil(c.due);return d!==null&&d>=0&&d<=7;}).length;
+    }
+    el.textContent=n;
+  });
+}
+
+// ═══════════════════════════════ MAIN RENDER ═══════════════════════════════
+function renderView(){
+  renderHeaderStats(); renderTicker();
+  const area = document.getElementById('content-area');
+  if(activeModule==='meetings') renderMeetingsView(area);
+  else if(activeModule==='calendar') renderCalendarView(area);
+  else if(activeModule==='actions') renderActionsView(area);
+  else if(activeModule==='daily') renderDailyView(area);
+  else if(activeModule==='notes') renderNotesView(area);
+  else if(activeModule==='compliance') renderComplianceView(area);
+  else if(activeModule==='mis') renderMisView(area);
+  else if(activeModule==='library') renderLibraryView(area);
+  else if(activeModule==='sop') renderSopView(area);
+  else if(activeModule==='chat') renderChatView(area);
+}
+
+// ---------- MEETINGS ----------
+function renderMeetingsView(area){
+  const search=document.getElementById('search-input').value.toLowerCase();
+  let list=[...state.meetings];
+  if(currentFilter==='week')list=list.filter(m=>isThisWeek(m.date));
+  else if(currentFilter==='month')list=list.filter(m=>isThisMonth(m.date));
+  else if(currentFilter==='overdue-actions')list=list.filter(m=>meetingActionStats(m).overdue>0);
+  else if(currentFilter==='open-actions')list=list.filter(m=>meetingActionStats(m).open>0);
+  else if(currentFilter.startsWith('cw-')){const cw=currentFilter.slice(3);list=list.filter(m=>m.cw===cw);}
+  if(search)list=list.filter(m=>(m.title||'').toLowerCase().includes(search)||(m.cw||'').toLowerCase().includes(search)||(m.notes||'').toLowerCase().includes(search)||(m.participants||[]).join(' ').toLowerCase().includes(search));
+  list.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  if(list.length===0){area.innerHTML='<div class="empty-state">📖<br>No meetings yet.</div>';return;}
+  function actBadge(m){const s=meetingActionStats(m);if(s.total===0)return'<span class="pill pill-none">No actions</span>';if(s.overdue>0)return`<span class="pill pill-overdue">${s.overdue} overdue</span>`;if(s.open>0)return`<span class="pill pill-open">${s.open} open</span>`;return'<span class="pill pill-done">All done</span>';}
+  let html=`<table class="reg-table"><thead><tr><th>📅 Date</th><th>📝 Meeting</th><th>🏷 Counterparty</th><th>👥 Participants</th><th>☑️ Actions</th></tr></thead><tbody>`;
+  list.forEach(m=>{html+=`<tr onclick="openMeetingView('${m.id}')" style="cursor:pointer">
+    <td style="color:var(--muted);font-size:15.5px;white-space:nowrap">${fmt(m.date)}${m.time?' · '+m.time:''}</td>
+    <td style="font-weight:600">${esc(m.title||'(untitled)')}</td>
+    <td>${m.cw?`<span class="cw-tag">${esc(m.cw)}</span>`:'—'}</td>
+    <td style="color:var(--muted);font-size:15.5px">${esc((m.participants||[]).join(', ')||'—')}</td>
+    <td>${actBadge(m)}</td></tr>`;});
+  html+='</tbody></table>'; area.innerHTML=html;
+}
+
+// ---------- ACTIONS ----------
+function renderActionsView(area){
+  const search=document.getElementById('search-input').value.toLowerCase();
+  let list=getAllActions();
+  if(currentFilter==='overdue')list=list.filter(a=>!a.done&&a.due&&a.due<today());
+  else if(currentFilter==='open')list=list.filter(a=>!a.done);
+  else if(currentFilter==='done')list=list.filter(a=>a.done);
+  else if(currentFilter.startsWith('owner-')){const o=currentFilter.slice(6);list=list.filter(a=>a.owner===o);}
+  if(search)list=list.filter(a=>a.text.toLowerCase().includes(search)||(a.owner||'').toLowerCase().includes(search));
+  list.sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999'));
+  if(list.length===0){area.innerHTML='<div class="empty-state">☑️<br>No action items.</div>';return;}
+  function pill(a){if(a.done)return'<span class="pill pill-done">Done</span>';if(a.due&&a.due<today())return'<span class="pill pill-overdue">Overdue</span>';return'<span class="pill pill-open">Open</span>';}
+  let html=`<table class="reg-table"><thead><tr><th>Action</th><th>Owner</th><th>Linked To</th><th>Due</th><th>Status</th><th></th></tr></thead><tbody>`;
+  list.forEach(a=>{html+=`<tr>
+    <td>${esc(a.text)}</td><td>${esc(a.owner||'Unassigned')}</td>
+    <td style="color:var(--muted);font-size:15.5px">${a.source==='meeting'?esc(a.meetingTitle):'Standalone'}</td>
+    <td>${fmt(a.due)}</td><td>${pill(a)}</td>
+    <td style="white-space:nowrap">
+      <span class="row-btn" onclick='toggleActionDone(${JSON.stringify(a.id)},"${a.source}")'>${a.done?'↺':'✓'}</span>
+      <span class="row-btn rbdel" onclick='deleteActionItem(${JSON.stringify(a.id)},"${a.source}")'>✕</span>
+    </td></tr>`;});
+  html+='</tbody></table>'; area.innerHTML=html;
+}
+function toggleActionDone(id,source){
+  if(source==='meeting'){for(const m of state.meetings){const idx=(m.actions||[]).findIndex((a,i)=>(a.id||`${m.id}_${i}`)===id);if(idx>-1){m.actions[idx].done=!m.actions[idx].done;break;}}}
+  else{const a=state.standaloneActions.find(a=>a.id===id);if(a)a.done=!a.done;}
+  save(); renderView();
+}
+function deleteActionItem(id,source){
+  if(!confirm('Delete this action item?'))return;
+  if(source==='meeting'){for(const m of state.meetings){const idx=(m.actions||[]).findIndex((a,i)=>(a.id||`${m.id}_${i}`)===id);if(idx>-1){m.actions.splice(idx,1);break;}}}
+  else{state.standaloneActions=state.standaloneActions.filter(a=>a.id!==id);}
+  save(); renderView();
+}
+
+// ---------- DAILY ----------
+function renderDailyView(area){
+  area.innerHTML = `<div class="daily-quickadd"><input type="text" id="daily-quick-input" placeholder="What do you need to do today? Press Enter to add…" onkeydown="if(event.key==='Enter')quickAddDaily()"/><button class="btn-primary" onclick="quickAddDaily()">＋ Add</button></div><div class="daily-list" id="daily-list"></div>`;
+  const search=document.getElementById('search-input').value.toLowerCase();
+  let list=[...state.daily]; if(search)list=list.filter(d=>d.text.toLowerCase().includes(search));
+  list.sort((a,b)=>(a.done===b.done)?0:(a.done?1:-1));
+  const dl=document.getElementById('daily-list');
+  if(list.length===0){dl.innerHTML='<div class="empty-state">✅<br>No daily activities yet.</div>';return;}
+  dl.innerHTML = list.map(d=>`<div class="daily-item"><div class="daily-check ${d.done?'done':''}" onclick="toggleDailyDone('${d.id}')"></div><div class="daily-txt ${d.done?'done':''}">${esc(d.text)}</div><span class="row-btn rbdel" onclick="deleteDaily('${d.id}')">✕</span></div>`).join('');
+}
+function quickAddDaily(){const inp=document.getElementById('daily-quick-input');const val=inp.value.trim();if(!val)return;state.daily.push({id:genId(),text:val,done:false,addedAt:today()});inp.value='';save();renderView();}
+function toggleDailyDone(id){const d=state.daily.find(d=>d.id===id);if(d)d.done=!d.done;save();renderView();}
+function deleteDaily(id){state.daily=state.daily.filter(d=>d.id!==id);save();renderView();}
+
+// ---------- NOTES ----------
+function renderNotesView(area){
+  const search=document.getElementById('search-input').value.toLowerCase();
+  let list=[...state.notes];
+  if(search) list=list.filter(n=>(n.title||'').toLowerCase().includes(search)||(n.content||'').toLowerCase().includes(search));
+  list.sort((a,b)=>(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||''));
+  if(list.length===0){area.innerHTML='<div class="empty-state">🗒️<br>No notes yet. Add one above, or just tell Sonnet in Chat to save something as a note.</div>';return;}
+  area.innerHTML = '<div class="mis-grid">' + list.map(n=>`
+    <div class="mis-card">
+      <div class="mis-name">${esc(n.title||'(untitled note)')}</div>
+      <div class="lib-meta" style="margin-bottom:8px">${fmt((n.updatedAt||n.createdAt||'').slice(0,10))}${n.updatedAt&&n.updatedAt!==n.createdAt?' · edited':''}</div>
+      <div class="mis-desc" style="max-height:110px">${esc(n.content||'')}</div>
+      <div class="mis-actions">
+        <button class="btn-primary blue" onclick="editNote('${n.id}')">✎ Edit</button>
+        <button class="btn-primary" style="background:var(--red)" onclick="deleteNote('${n.id}')">✕ Delete</button>
+      </div>
+    </div>`).join('') + '</div>';
+}
+function openAddNoteModal(){
+  editingId=null; document.getElementById('note-modal-title').textContent='Add Note';
+  document.getElementById('n-title').value=''; document.getElementById('n-content').value='';
+  openModal('note-modal');
+}
+function editNote(id){
+  const n=state.notes.find(n=>n.id===id); if(!n)return;
+  editingId=id; document.getElementById('note-modal-title').textContent='Edit Note';
+  document.getElementById('n-title').value=n.title||''; document.getElementById('n-content').value=n.content||'';
+  openModal('note-modal');
+}
+function saveNote(){
+  const title=document.getElementById('n-title').value.trim();
+  const content=document.getElementById('n-content').value.trim();
+  if(!content){alert('Write something in the note.');return;}
+  if(editingId){
+    const n=state.notes.find(n=>n.id===editingId);
+    if(n){ n.title=title; n.content=content; n.updatedAt=new Date().toISOString(); }
+    editingId=null;
+  } else {
+    state.notes.push({id:genId(),title,content,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+  }
+  save(); closeModal('note-modal'); renderView(); showToast('Note saved','success');
+}
+function deleteNote(id){ if(!confirm('Delete this note?'))return; state.notes=state.notes.filter(n=>n.id!==id); save(); renderView(); }
+
+// ---------- COMPLIANCE ----------
+function renderComplianceView(area){
+  const search=document.getElementById('search-input').value.toLowerCase();
+  let list=[...state.compliance];
+  if(currentFilter==='overdue')list=list.filter(c=>daysUntil(c.due)<0);
+  else if(currentFilter==='week')list=list.filter(c=>{const d=daysUntil(c.due);return d!==null&&d>=0&&d<=7;});
+  if(search)list=list.filter(c=>c.item.toLowerCase().includes(search));
+  list.sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999'));
+  if(list.length===0){area.innerHTML='<div class="empty-state">📋<br>No compliance items yet.</div>';return;}
+  let html=`<table class="reg-table"><thead><tr><th>Item</th><th>Frequency</th><th>Due</th><th>Status</th><th></th></tr></thead><tbody>`;
+  list.forEach(c=>{const d=daysUntil(c.due);let pill=d<0?`<span class="pill pill-overdue">${Math.abs(d)}d overdue</span>`:(d<=7?`<span class="pill pill-open">${d}d left</span>`:`<span class="pill pill-none">${d}d</span>`);
+    html+=`<tr><td style="font-weight:600">${esc(c.item)}</td><td style="color:var(--muted);font-size:15.5px">${esc(c.freq)}</td><td>${fmt(c.due)}</td><td>${pill}</td>
+    <td style="white-space:nowrap"><span class="row-btn" onclick="editCompliance('${c.id}')">✎</span><span class="row-btn rbdel" onclick="deleteCompliance('${c.id}')">✕</span></td></tr>`;});
+  html+='</tbody></table>'; area.innerHTML=html;
+}
+function editCompliance(id){const c=state.compliance.find(c=>c.id===id);if(!c)return;editingId=id;document.getElementById('compliance-modal-title').textContent='Edit Compliance Item';document.getElementById('c-item').value=c.item;document.getElementById('c-freq').value=c.freq;document.getElementById('c-due').value=c.due||'';document.getElementById('c-notes').value=c.notes||'';openModal('compliance-modal');}
+function saveCompliance(){const item=document.getElementById('c-item').value.trim();if(!item){alert('Enter item name');return;}const freq=document.getElementById('c-freq').value,due=document.getElementById('c-due').value,notes=document.getElementById('c-notes').value.trim();if(editingId){const c=state.compliance.find(c=>c.id===editingId);if(c)Object.assign(c,{item,freq,due,notes});editingId=null;}else state.compliance.push({id:genId(),item,freq,due,notes});save();closeModal('compliance-modal');renderView();showToast('Compliance item saved','success');}
+function deleteCompliance(id){if(!confirm('Delete this compliance item?'))return;state.compliance=state.compliance.filter(c=>c.id!==id);save();renderView();}
+
+// ---------- MIS ----------
+function renderMisView(area){
+  const search=document.getElementById('search-input').value.toLowerCase();
+  let list=[...state.misOps]; if(search)list=list.filter(o=>o.name.toLowerCase().includes(search));
+  if(list.length===0){area.innerHTML='<div class="empty-state">📊<br>No saved operations yet.</div>';return;}
+  area.innerHTML = `<div class="mis-grid">` + list.map(o=>`
+    <div class="mis-card"><div class="mis-name">${esc(o.name)}</div>${o.exampleInput?'<div class="lib-status ok" style="margin-bottom:6px">✓ Learned from worked example</div>':''}<div class="mis-desc">${esc(o.instructions)}</div>
+      <input type="file" id="mis-file-${o.id}" accept=".xlsx,.xls,.csv" style="display:none" onchange="runMisOp('${o.id}', event)"/>
+      <div class="mis-actions">
+        <button class="btn-primary" onclick="document.getElementById('mis-file-${o.id}').click()">▶ Run</button>
+        <button class="btn-primary blue" onclick="editMisOp('${o.id}')">✎ Edit</button>
+        <button class="btn-primary" style="background:var(--red)" onclick="deleteMisOp('${o.id}')">✕</button>
+      </div></div>`).join('') + `</div>`;
+}
+function editMisOp(id){const o=state.misOps.find(o=>o.id===id);if(!o)return;editingId=id;document.getElementById('mis-modal-title').textContent='Edit MIS Operation';document.getElementById('mis-name').value=o.name;document.getElementById('mis-instructions').value=o.instructions;document.getElementById('mis-example-input').value='';document.getElementById('mis-example-output').value='';document.getElementById('mis-example-status').textContent = o.exampleInput ? '✓ Example pair already saved. Upload new files here only if you want to replace it.' : '';openModal('mis-modal');}
+async function extractSheetJSON(file){
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, {type:'array'});
+  return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:''});
+}
+async function saveMisOp(){
+  const name=document.getElementById('mis-name').value.trim();
+  const instructions=document.getElementById('mis-instructions').value.trim();
+  if(!name||!instructions){alert('Enter both name and instructions');return;}
+  const inFile = document.getElementById('mis-example-input').files[0];
+  const outFile = document.getElementById('mis-example-output').files[0];
+  let exampleInput=null, exampleOutput=null;
+  if(inFile && outFile){
+    document.getElementById('mis-example-status').textContent = 'Reading example files…';
+    try{
+      exampleInput = await extractSheetJSON(inFile);
+      exampleOutput = await extractSheetJSON(outFile);
+    }catch(err){ showToast('Could not read example files: '+err.message,'warn'); }
+  } else if(inFile || outFile){
+    showToast('Upload BOTH example files, or neither.','warn'); return;
+  }
+  if(editingId){
+    const o=state.misOps.find(o=>o.id===editingId);
+    if(o){ Object.assign(o,{name,instructions}); if(exampleInput){ o.exampleInput=exampleInput; o.exampleOutput=exampleOutput; } }
+    editingId=null;
+  } else {
+    state.misOps.push({id:genId(),name,instructions,exampleInput,exampleOutput,createdAt:today()});
+  }
+  save(); closeModal('mis-modal'); renderView(); showToast('Operation saved','success');
+}
+function deleteMisOp(id){if(!confirm('Delete this saved operation?'))return;state.misOps=state.misOps.filter(o=>o.id!==id);save();renderView();}
+async function runMisOp(opId, event){
+  const file=event.target.files[0]; if(!file)return; const op=state.misOps.find(o=>o.id===opId); if(!op)return;
+  if(!currentUser){showToast('Sign in first','warn');return;}
+  showToast('Reading file…','info');
+  const reader=new FileReader();
+  reader.onload=async(e)=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'}); const json=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+      showToast('Sonnet is thinking through the transformation…','info');
+      let systemPrompt = `You transform spreadsheet data with precision and consistency. Written instructions: """${op.instructions}"""`;
+      if(op.exampleInput && op.exampleOutput){
+        systemPrompt += `\n\nYou are also given a WORKED EXAMPLE showing the exact transformation pattern to replicate — treat this as the ground truth for exactly how columns, categories, buckets, and formatting should look. Match this pattern precisely for the new input, even if the written instructions above are less precise than the example.\n\nEXAMPLE INPUT:\n${JSON.stringify(op.exampleInput).slice(0,25000)}\n\nEXAMPLE OUTPUT (this is the correct result for the example input above):\n${JSON.stringify(op.exampleOutput).slice(0,25000)}`;
+      }
+      systemPrompt += `\n\nNow apply the same logic to the NEW input data in the user message. Think carefully step by step about categorization, bucketing, and calculations before producing the final result. Return ONLY a valid JSON array of row objects for the final output — no markdown, no explanation, no code fences, no text before or after the array.`;
+      const data=await callClaude({
+        model:'claude-sonnet-4-6',
+        max_tokens:16000,
+        thinking:{type:'enabled', budget_tokens:10000},
+        system:systemPrompt,
+        messages:[{role:'user',content:'NEW INPUT DATA:\n'+JSON.stringify(json).slice(0,60000)}]
+      });
+      if(data.error){showToast('API error: '+data.error.message,'warn');return;}
+      const textBlock = (data.content||[]).find(c=>c.type==='text');
+      const text = textBlock ? textBlock.text : '[]';
+      const outRows=JSON.parse(text.replace(/```json|```/g,'').trim());
+      const outWb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(outWb,XLSX.utils.json_to_sheet(outRows),'Output');
+      XLSX.writeFile(outWb,`${op.name.replace(/[^a-z0-9]/gi,'_')}_${today()}.xlsx`);
+      showToast('✅ Output downloaded!','success');
+    }catch(err){showToast('Failed: '+err.message,'warn');}
+    event.target.value='';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ---------- LIBRARY ----------
+function renderLibraryView(area){
+  const search=document.getElementById('search-input').value.toLowerCase();
+  let list=[...state.library.files];
+  if(activeLibCategory!=='all') list=list.filter(f=>f.category===activeLibCategory);
+  if(search) list=list.filter(f=>f.name.toLowerCase().includes(search) || (f.extractedText||'').toLowerCase().includes(search));
+  list.sort((a,b)=>(b.uploadedAt||'').localeCompare(a.uploadedAt||''));
+
+  let uploadCat = activeLibCategory==='all' ? (state.library.categories[0]||'') : activeLibCategory;
+
+  // top category tab bar
+  let tabsHtml = `<div style="display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;border-bottom:2px solid var(--border);background:var(--surface2);align-items:center;">`;
+  tabsHtml += `<div class="chip ${activeLibCategory==='all'?'active':''}" onclick="setLibCategory('all')">🗄️ All (${state.library.files.length})</div>`;
+  state.library.categories.forEach(cat=>{
+    const count = state.library.files.filter(f=>f.category===cat).length;
+    tabsHtml += `<div class="chip ${activeLibCategory===cat?'active':''}" onclick="setLibCategory('${cat.replace(/'/g,"\\'")}')">📁 ${esc(cat)} (${count})</div>`;
+  });
+  tabsHtml += `<div class="chip" onclick="openModal('lib-cat-modal')" style="border-style:dashed">＋ New Category</div>`;
+  tabsHtml += `</div>`;
+
+  let html = tabsHtml + `<div style="padding:14px 16px;border-bottom:2px solid var(--border);background:var(--surface2);display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <div class="field" style="flex:1;min-width:160px"><label>Upload to Category</label><select id="lib-upload-cat">${state.library.categories.map(c=>`<option value="${esc(c)}" ${c===uploadCat?'selected':''}>${esc(c)}</option>`).join('')}</select></div>
+    <input type="file" id="lib-file-input" accept=".pdf,.docx,.doc,.xlsx,.xls,.csv,.pptx,.txt" multiple style="display:none" onchange="handleLibUpload(event)"/>
+    <button class="btn-primary purple" onclick="document.getElementById('lib-file-input').click()" style="align-self:flex-end">⬆ Upload Files</button>
+  </div>
+  <div style="padding:8px 16px 0;font-size:14.5px;color:var(--muted)">PDF, Word, Excel, CSV, TXT are read and indexed for Sonnet automatically. PPT is stored but not yet text-extracted.</div>`;
+
+  if(list.length===0){ html += `<div class="empty-state">🗄️<br>No documents in ${activeLibCategory==='all'?'the library':'this category'} yet.</div>`; area.innerHTML=html; return; }
+  const iconFor = t => t.includes('pdf')?'📕':t.includes('sheet')||t.includes('csv')||t.includes('excel')?'📊':t.includes('word')||t.includes('doc')?'📄':t.includes('presentation')||t.includes('ppt')?'📽️':'📁';
+
+  html += `<table class="reg-table"><thead><tr><th></th><th>Name</th>${activeLibCategory==='all'?'<th>Category</th>':''}<th>Uploaded</th><th>Last Modified</th><th>Status</th><th></th></tr></thead><tbody>`;
+  list.forEach(f=>{
+    html += `<tr>
+      <td style="width:30px;text-align:center;font-size:19px">${iconFor(f.type||'')}</td>
+      <td style="font-weight:600">${esc(f.name)}<div style="color:var(--muted);font-size:14.5px;font-weight:400">${(f.sizeKB||0).toFixed(0)} KB</div></td>
+      ${activeLibCategory==='all'?`<td><span class="cw-tag">${esc(f.category)}</span></td>`:''}
+      <td style="color:var(--muted);font-size:15.5px">${fmt(f.uploadedAt)}</td>
+      <td style="color:var(--muted);font-size:15.5px">${fmt(f.lastModifiedAt||f.uploadedAt)}</td>
+      <td>${f.status==='ok'?'<span class="pill pill-done">Indexed</span>':f.status==='pending'?'<span class="pill pill-open">Processing</span>':'<span class="pill pill-none">Not extracted</span>'}</td>
+      <td style="white-space:nowrap">${f.downloadURL?`<a class="row-btn" href="${f.downloadURL}" target="_blank" rel="noopener" title="Download" style="text-decoration:none;color:inherit">⬇</a>`:''}<span class="row-btn rbdel" onclick="deleteLibFile('${f.id}')">✕</span></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  area.innerHTML = html;
+}
+function setLibCategory(cat){ activeLibCategory=cat; renderSubFilters(); renderView(); }
+function saveLibCategory(){const name=document.getElementById('lib-cat-name').value.trim();if(!name){alert('Enter a category name');return;}if(!state.library.categories.includes(name))state.library.categories.push(name);document.getElementById('lib-cat-name').value='';save();closeModal('lib-cat-modal');renderSubFilters();renderView();showToast('Category added','success');}
+function deleteLibFile(id){
+  if(!confirm('Remove this file from the library?'))return;
+  const f=state.library.files.find(f=>f.id===id);
+  if(f && f.storagePath && fbStorage){ fbStorage.ref(f.storagePath).delete().catch(err=>console.warn('storage delete error',err)); }
+  state.library.files=state.library.files.filter(f=>f.id!==id);
+  save();renderView();
+}
+
+// ---------- WORK SOP ----------
+let sopExpanded = new Set(); // node ids currently expanded
+let sopDragInfo = null; // {type:'cat'|'sub'|'prac'|'issue', id, catId, subId, pracId}
+let sopEditCtx = {}; // context for current modal save
+
+function sopToggle(id){ if(sopExpanded.has(id)) sopExpanded.delete(id); else sopExpanded.add(id); renderView(); }
+function sopExpandAll(){
+  state.sop.forEach(cat=>{
+    sopExpanded.add(cat.id);
+    cat.subcategories.forEach(sub=>{
+      sopExpanded.add(sub.id);
+      sub.practices.forEach(prac=>{ sopExpanded.add(prac.id); });
+    });
+  });
+  renderView();
+}
+function sopCollapseAll(){ sopExpanded.clear(); renderView(); }
+function findSopCat(catId){ return state.sop.find(c=>c.id===catId); }
+function findSopSub(catId,subId){ const c=findSopCat(catId); return c ? c.subcategories.find(s=>s.id===subId) : null; }
+function findSopPrac(catId,subId,pracId){ const s=findSopSub(catId,subId); return s ? s.practices.find(p=>p.id===pracId) : null; }
+function sopFindCatQ(q){ return state.sop.find(c=>(c.name||'').toLowerCase().includes((q||'').toLowerCase())); }
+function sopFindSubQ(cat,q){ return cat ? cat.subcategories.find(s=>(s.name||'').toLowerCase().includes((q||'').toLowerCase())) : null; }
+function sopFindPracQ(sub,q){ return sub ? sub.practices.find(p=>(p.text||'').toLowerCase().includes((q||'').toLowerCase())) : null; }
+
+function renderSopView(area){
+  const search=document.getElementById('search-input').value.toLowerCase();
+  if(state.sop.length===0){
+    area.innerHTML='<div class="empty-state">🌳<br>No categories yet. Click "＋ Add Category" above to start building your Work SOP tree.</div>';
+    return;
+  }
+  let html = '<div class="sop-wrap" id="sop-tree">';
+  state.sop.forEach(cat=>{
+    html += renderSopCategoryNode(cat, search);
+  });
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+function matchesSearch(text, search){ return !search || (text||'').toLowerCase().includes(search); }
+
+function renderSopCategoryNode(cat, search){
+  const isOpen = sopExpanded.has(cat.id);
+  let html = `<div class="sop-node sop-cat" draggable="true"
+      ondragstart="sopDragStart(event,'cat','${cat.id}')" ondragover="sopDragOver(event)" ondragleave="sopDragLeave(event)" ondrop="sopDrop(event,'cat','${cat.id}')" ondragend="sopDragEnd(event)">
+    <span class="sop-drag">⠿</span>
+    <span class="sop-chevron" onclick="sopToggle('${cat.id}')">${isOpen?'▾':'▸'}</span>
+    <span class="sop-name" onclick="sopToggle('${cat.id}')">📁 ${esc(cat.name)}</span>
+    <span class="sop-count">${cat.subcategories.length} subcategor${cat.subcategories.length===1?'y':'ies'}</span>
+    <div class="sop-actions">
+      <button class="sop-mini-btn" onclick="openSopSubcategoryModal('${cat.id}')">＋ Subcategory</button>
+      <button class="sop-mini-btn" onclick="openSopCategoryModal('${cat.id}')">✎</button>
+      <button class="sop-mini-btn del" onclick="deleteSopCategory('${cat.id}')">✕</button>
+    </div>
+  </div>`;
+  if(isOpen){
+    html += '<div class="sop-children">';
+    if(cat.subcategories.length===0) html += '<div class="sop-empty-hint">No subcategories yet.</div>';
+    cat.subcategories.forEach(sub=>{ html += renderSopSubNode(cat, sub, search); });
+    html += '</div>';
+  }
+  return html;
+}
+
+function renderSopSubNode(cat, sub, search){
+  const isOpen = sopExpanded.has(sub.id);
+  let html = `<div class="sop-node sop-sub" draggable="true"
+      ondragstart="sopDragStart(event,'sub','${sub.id}','${cat.id}')" ondragover="sopDragOver(event)" ondragleave="sopDragLeave(event)" ondrop="sopDrop(event,'sub','${sub.id}','${cat.id}')" ondragend="sopDragEnd(event)">
+    <span class="sop-drag">⠿</span>
+    <span class="sop-chevron" onclick="sopToggle('${sub.id}')">${isOpen?'▾':'▸'}</span>
+    <span class="sop-name" onclick="sopToggle('${sub.id}')">📂 ${esc(sub.name)}</span>
+    <span class="sop-count">${sub.practices.length} practice${sub.practices.length===1?'':'s'}</span>
+    <div class="sop-actions">
+      <button class="sop-mini-btn" onclick="openSopPracticeModal('${cat.id}','${sub.id}')">＋ Practice</button>
+      <button class="sop-mini-btn" onclick="openSopSubcategoryModal('${cat.id}','${sub.id}')">✎</button>
+      <button class="sop-mini-btn del" onclick="deleteSopSubcategory('${cat.id}','${sub.id}')">✕</button>
+    </div>
+  </div>`;
+  if(isOpen){
+    html += '<div class="sop-children">';
+    if(sub.practices.length===0) html += '<div class="sop-empty-hint">No practices yet.</div>';
+    sub.practices.forEach(prac=>{ html += renderSopPracNode(cat, sub, prac, search); });
+    html += '</div>';
+  }
+  return html;
+}
+
+function renderSopPracNode(cat, sub, prac, search){
+  const isOpen = sopExpanded.has(prac.id);
+  let html = `<div class="sop-node" draggable="true"
+      ondragstart="sopDragStart(event,'prac','${prac.id}','${cat.id}','${sub.id}')" ondragover="sopDragOver(event)" ondragleave="sopDragLeave(event)" ondrop="sopDrop(event,'prac','${prac.id}','${cat.id}','${sub.id}')" ondragend="sopDragEnd(event)">
+    <span class="sop-drag">⠿</span>
+    <span class="sop-chevron" onclick="sopToggle('${prac.id}')">${isOpen?'▾':'▸'}</span>
+    <div class="sop-prac-row">
+      <span class="sop-prac-text">✔ ${esc(prac.text)}</span>
+      ${prac.personResponsible?`<span class="sop-badge-pr">👤 ${esc(prac.personResponsible)}</span>`:''}
+      ${prac.frequency?`<span class="sop-badge-freq">⏱ ${esc(prac.frequency)}</span>`:''}
+      <span class="sop-count">${prac.issues.length} issue${prac.issues.length===1?'':'s'}</span>
+    </div>
+    <div class="sop-actions">
+      <button class="sop-mini-btn" onclick="openSopIssueModal('${cat.id}','${sub.id}','${prac.id}')">＋ Issue</button>
+      <button class="sop-mini-btn" onclick="openSopPracticeModal('${cat.id}','${sub.id}','${prac.id}')">✎</button>
+      <button class="sop-mini-btn del" onclick="deleteSopPractice('${cat.id}','${sub.id}','${prac.id}')">✕</button>
+    </div>
+  </div>`;
+  if(isOpen){
+    html += '<div class="sop-children">';
+    if(prac.issues.length===0) html += '<div class="sop-empty-hint">No issues logged.</div>';
+    prac.issues.forEach(issue=>{
+      html += `<div class="sop-issue" draggable="true"
+          ondragstart="sopDragStart(event,'issue','${issue.id}','${cat.id}','${sub.id}','${prac.id}')" ondragover="sopDragOver(event)" ondragleave="sopDragLeave(event)" ondrop="sopDrop(event,'issue','${issue.id}','${cat.id}','${sub.id}','${prac.id}')" ondragend="sopDragEnd(event)">
+        <span class="sop-drag">⠿</span>
+        <span class="sop-issue-dot">⚠</span>
+        <span style="flex:1">${esc(issue.text)}</span>
+        <div class="sop-actions">
+          <button class="sop-mini-btn" onclick="openSopIssueModal('${cat.id}','${sub.id}','${prac.id}','${issue.id}')">✎</button>
+          <button class="sop-mini-btn del" onclick="deleteSopIssue('${cat.id}','${sub.id}','${prac.id}','${issue.id}')">✕</button>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+  return html;
+}
+
+// ---- CRUD: Category ----
+function openSopCategoryModal(catId){
+  sopEditCtx = {catId: catId||null};
+  document.getElementById('sop-cat-modal-title').textContent = catId ? 'Edit Category' : 'Add Category';
+  document.getElementById('sop-cat-name').value = catId ? (findSopCat(catId)?.name||'') : '';
+  openModal('sop-cat-modal');
+}
+function saveSopCategory(){
+  const name = document.getElementById('sop-cat-name').value.trim(); if(!name){alert('Enter a category name');return;}
+  if(sopEditCtx.catId){ const c=findSopCat(sopEditCtx.catId); if(c) c.name=name; }
+  else { const id=genId(); state.sop.push({id,name,subcategories:[]}); sopExpanded.add(id); }
+  save(); closeModal('sop-cat-modal'); renderView(); showToast('Category saved','success');
+}
+function deleteSopCategory(catId){
+  if(!confirm('Delete this category and everything inside it?'))return;
+  state.sop = state.sop.filter(c=>c.id!==catId); save(); renderView();
+}
+
+// ---- CRUD: Subcategory ----
+function openSopSubcategoryModal(catId, subId){
+  sopEditCtx = {catId, subId: subId||null};
+  document.getElementById('sop-sub-modal-title').textContent = subId ? 'Edit Subcategory' : 'Add Subcategory';
+  document.getElementById('sop-sub-name').value = subId ? (findSopSub(catId,subId)?.name||'') : '';
+  openModal('sop-sub-modal');
+}
+function saveSopSubcategory(){
+  const name = document.getElementById('sop-sub-name').value.trim(); if(!name){alert('Enter a subcategory name');return;}
+  const cat = findSopCat(sopEditCtx.catId); if(!cat) return;
+  if(sopEditCtx.subId){ const s=findSopSub(sopEditCtx.catId, sopEditCtx.subId); if(s) s.name=name; }
+  else { const id=genId(); cat.subcategories.push({id,name,practices:[]}); sopExpanded.add(cat.id); sopExpanded.add(id); }
+  save(); closeModal('sop-sub-modal'); renderView(); showToast('Subcategory saved','success');
+}
+function deleteSopSubcategory(catId, subId){
+  if(!confirm('Delete this subcategory and everything inside it?'))return;
+  const cat = findSopCat(catId); if(!cat) return;
+  cat.subcategories = cat.subcategories.filter(s=>s.id!==subId); save(); renderView();
+}
+
+// ---- CRUD: Practice ----
+function openSopPracticeModal(catId, subId, pracId){
+  sopEditCtx = {catId, subId, pracId: pracId||null};
+  document.getElementById('sop-prac-modal-title').textContent = pracId ? 'Edit Practice' : 'Add Practice';
+  const ownerSel = document.getElementById('sop-prac-owner');
+  ownerSel.innerHTML = '<option value="">—</option>' + state.participants.map(p=>`<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('');
+  if(pracId){
+    const p = findSopPrac(catId,subId,pracId);
+    document.getElementById('sop-prac-text').value = p?.text||'';
+    ownerSel.value = p?.personResponsible||'';
+    document.getElementById('sop-prac-freq').value = p?.frequency||'';
+  } else {
+    document.getElementById('sop-prac-text').value=''; ownerSel.value=''; document.getElementById('sop-prac-freq').value='';
+  }
+  openModal('sop-prac-modal');
+}
+function saveSopPractice(){
+  const text = document.getElementById('sop-prac-text').value.trim(); if(!text){alert('Enter the practice');return;}
+  const personResponsible = document.getElementById('sop-prac-owner').value;
+  const frequency = document.getElementById('sop-prac-freq').value;
+  const sub = findSopSub(sopEditCtx.catId, sopEditCtx.subId); if(!sub) return;
+  if(sopEditCtx.pracId){ const p=findSopPrac(sopEditCtx.catId,sopEditCtx.subId,sopEditCtx.pracId); if(p){ p.text=text; p.personResponsible=personResponsible; p.frequency=frequency; } }
+  else { const id=genId(); sub.practices.push({id,text,personResponsible,frequency,issues:[]}); sopExpanded.add(sub.id); sopExpanded.add(sopEditCtx.catId); }
+  save(); closeModal('sop-prac-modal'); renderView(); showToast('Practice saved','success');
+}
+function deleteSopPractice(catId, subId, pracId){
+  if(!confirm('Delete this practice and its issues?'))return;
+  const sub = findSopSub(catId,subId); if(!sub) return;
+  sub.practices = sub.practices.filter(p=>p.id!==pracId); save(); renderView();
+}
+
+// ---- CRUD: Issue ----
+function openSopIssueModal(catId, subId, pracId, issueId){
+  sopEditCtx = {catId, subId, pracId, issueId: issueId||null};
+  document.getElementById('sop-issue-modal-title').textContent = issueId ? 'Edit Issue' : 'Add Issue';
+  if(issueId){
+    const p = findSopPrac(catId,subId,pracId);
+    const issue = p ? p.issues.find(i=>i.id===issueId) : null;
+    document.getElementById('sop-issue-text').value = issue?.text||'';
+  } else {
+    document.getElementById('sop-issue-text').value='';
+  }
+  openModal('sop-issue-modal');
+}
+function saveSopIssue(){
+  const text = document.getElementById('sop-issue-text').value.trim(); if(!text){alert('Enter the issue');return;}
+  const prac = findSopPrac(sopEditCtx.catId, sopEditCtx.subId, sopEditCtx.pracId); if(!prac) return;
+  if(sopEditCtx.issueId){ const i=prac.issues.find(i=>i.id===sopEditCtx.issueId); if(i) i.text=text; }
+  else { const id=genId(); prac.issues.push({id,text}); sopExpanded.add(prac.id); }
+  save(); closeModal('sop-issue-modal'); renderView(); showToast('Issue saved','success');
+}
+function deleteSopIssue(catId, subId, pracId, issueId){
+  if(!confirm('Delete this issue?'))return;
+  const prac = findSopPrac(catId,subId,pracId); if(!prac) return;
+  prac.issues = prac.issues.filter(i=>i.id!==issueId); save(); renderView();
+}
+
+// ---------- CALENDAR ----------
+let calViewDate = new Date(); calViewDate.setDate(1); // first of currently viewed month
+let calSelectedDate = today();
+function apptsOnDate(dateStr){ return state.appointments.filter(a=>a.date===dateStr).sort((a,b)=>(a.fromTime||'').localeCompare(b.fromTime||'')); }
+function calPrevMonth(){ calViewDate.setMonth(calViewDate.getMonth()-1); renderView(); }
+function calNextMonth(){ calViewDate.setMonth(calViewDate.getMonth()+1); renderView(); }
+function calSelectDay(dateStr){ calSelectedDate = dateStr; renderView(); }
+function dateToStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function addDays(dateStr,n){ const d=new Date(dateStr+'T00:00:00'); d.setDate(d.getDate()+n); return dateToStr(d); }
+function apptTimeLabel(a){ if(!a.fromTime) return ''; return a.toTime ? `${a.fromTime}–${a.toTime}` : a.fromTime; }
+
+function renderCalendarView(area){
+  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dowNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const y=calViewDate.getFullYear(), m=calViewDate.getMonth();
+  const firstDay=new Date(y,m,1), daysInMonth=new Date(y,m+1,0).getDate(), startDow=firstDay.getDay();
+
+  let html = `<div class="cal-wrap">
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="calPrevMonth()">◂</button>
+      <div class="cal-month-title">${monthNames[m]} ${y}</div>
+      <button class="cal-nav-btn" onclick="calNextMonth()">▸</button>
+    </div>
+    <div class="cal-grid">`;
+  dowNames.forEach(d=>{ html+=`<div class="cal-dow">${d}</div>`; });
+  for(let i=0;i<startDow;i++){ html+=`<div class="cal-day blank"></div>`; }
+  for(let day=1; day<=daysInMonth; day++){
+    const dStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const dayAppts = apptsOnDate(dStr);
+    const isToday = dStr===today(), isSel = dStr===calSelectedDate;
+    let preview = '';
+    if(dayAppts.length){
+      const first = dayAppts[0].title.split(' ').slice(0,2).join(' ');
+      preview = `<div class="cal-day-preview">${esc(first)}${dayAppts.length>1?` +${dayAppts.length-1}`:''}</div>`;
+    }
+    html += `<div class="cal-day ${isToday?'today':''} ${isSel?'selected':''}" onclick="calSelectDay('${dStr}')" ondblclick="openDayPopup('${dStr}')">
+      <div class="cal-day-num">${day}</div>
+      ${preview}
+    </div>`;
+  }
+  html += `</div>`;
+
+  // Horizontal day-columns: Today + next 4 days (5 total), sized to fill the screen
+  html += `<div class="cal-cols">`;
+  for(let i=0;i<=4;i++){
+    const dStr = addDays(today(), i);
+    const label = i===0 ? 'Today' : new Date(dStr+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'2-digit',month:'short'});
+    const appts = apptsOnDate(dStr);
+    html += `<div class="cal-col ${dStr===calSelectedDate?'sel':''}">
+      <div class="cal-col-head" onclick="calSelectDay('${dStr}')">
+        <span class="cal-col-label">${label}</span>
+        <button class="cal-day-add" onclick="event.stopPropagation();openAppointmentModal('${dStr}')">＋</button>
+      </div>
+      <div class="cal-col-body">`;
+    if(appts.length===0) html += `<div class="cal-col-empty">—</div>`;
+    else appts.forEach(a=>{ html += renderApptCard(a); });
+    html += `</div></div>`;
+  }
+  html += `</div></div>`;
+  area.innerHTML = html;
+}
+function openDayPopup(dStr){
+  calSelectedDate = dStr;
+  const label = new Date(dStr+'T00:00:00').toLocaleDateString('en-IN',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  document.getElementById('day-popup-title').textContent = label;
+  const appts = apptsOnDate(dStr);
+  const listEl = document.getElementById('day-popup-list');
+  if(appts.length===0){ listEl.innerHTML = '<div class="sop-empty-hint">Nothing planned for this day.</div>'; }
+  else { listEl.innerHTML = appts.map(a=>renderApptCard(a)).join(''); }
+  document.getElementById('day-popup-add-btn').onclick = ()=>{ closeModal('day-popup-modal'); openAppointmentModal(dStr); };
+  openModal('day-popup-modal');
+}
+function renderApptCard(a){
+  return `<div class="cal-card" onclick="toggleApptCard(event,this)">
+    ${apptTimeLabel(a)?`<div class="cal-card-time">${esc(apptTimeLabel(a))}</div>`:''}
+    <div class="cal-card-title">${esc(a.title)}</div>
+    ${a.location?`<div class="cal-card-loc">📍 ${esc(a.location)}</div>`:''}
+    <div class="cal-card-actions">
+      <span class="row-btn" onclick="event.stopPropagation();openAppointmentModal('${a.date}','${a.id}')">✎</span>
+      <span class="row-btn rbdel" onclick="event.stopPropagation();deleteAppointment('${a.id}')">✕</span>
+    </div>
+  </div>`;
+}
+function toggleApptCard(e, el){
+  const wasActive = el.classList.contains('active');
+  document.querySelectorAll('.cal-card.active').forEach(c=>c.classList.remove('active'));
+  if(!wasActive) el.classList.add('active');
+}
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('.cal-card')) document.querySelectorAll('.cal-card.active').forEach(c=>c.classList.remove('active'));
+});
+function openAppointmentModal(dateStr, apptId){
+  sopEditCtx = {apptId: apptId||null};
+  document.getElementById('appt-modal-title').textContent = apptId ? 'Edit Appointment' : 'Add Appointment';
+  if(apptId){
+    const a = state.appointments.find(a=>a.id===apptId);
+    document.getElementById('appt-title').value=a?.title||'';
+    document.getElementById('appt-date').value=a?.date||dateStr||today();
+    document.getElementById('appt-from').value=a?.fromTime||'';
+    document.getElementById('appt-to').value=a?.toTime||'';
+    document.getElementById('appt-location').value=a?.location||'';
+    document.getElementById('appt-notes').value=a?.notes||'';
+  } else {
+    document.getElementById('appt-title').value='';
+    document.getElementById('appt-date').value=dateStr||calSelectedDate||today();
+    document.getElementById('appt-from').value='';
+    document.getElementById('appt-to').value='';
+    document.getElementById('appt-location').value='';
+    document.getElementById('appt-notes').value='';
+  }
+  openModal('appt-modal');
+}
+function saveAppointment(){
+  const title=document.getElementById('appt-title').value.trim(); if(!title){alert('Enter a title');return;}
+  const date=document.getElementById('appt-date').value || today();
+  const fromTime=document.getElementById('appt-from').value;
+  const toTime=document.getElementById('appt-to').value;
+  const location=document.getElementById('appt-location').value.trim();
+  const notes=document.getElementById('appt-notes').value.trim();
+  if(sopEditCtx.apptId){ const a=state.appointments.find(a=>a.id===sopEditCtx.apptId); if(a) Object.assign(a,{title,date,fromTime,toTime,location,notes}); }
+  else state.appointments.push({id:genId(),title,date,fromTime,toTime,location,notes});
+  calSelectedDate = date;
+  save(); closeModal('appt-modal'); renderView(); showToast('Appointment saved','success');
+  if(document.getElementById('day-popup-modal').classList.contains('show')) openDayPopup(date);
+}
+function deleteAppointment(id){
+  if(!confirm('Delete this appointment?'))return;
+  const wasDate = state.appointments.find(a=>a.id===id)?.date;
+  state.appointments=state.appointments.filter(a=>a.id!==id); save(); renderView();
+  if(wasDate && document.getElementById('day-popup-modal').classList.contains('show')) openDayPopup(wasDate);
+}
+
+// ---- Drag & drop reordering ----
+function sopDragStart(e, type, id, catId, subId, pracId){
+  sopDragInfo = {type, id, catId, subId, pracId};
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  try{ e.dataTransfer.setData('text/plain', id); }catch(err){}
+}
+function sopDragOver(e){ e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function sopDragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
+function sopDragEnd(e){ e.currentTarget.classList.remove('dragging'); document.querySelectorAll('.sop-node.drag-over,.sop-issue.drag-over').forEach(el=>el.classList.remove('drag-over')); }
+function sopReorderArray(arr, draggedId, targetId){
+  const di = arr.findIndex(x=>x.id===draggedId), ti = arr.findIndex(x=>x.id===targetId);
+  if(di===-1||ti===-1||di===ti) return false;
+  const [item] = arr.splice(di,1); arr.splice(ti,0,item); return true;
+}
+function sopDrop(e, type, targetId, catId, subId, pracId){
+  e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+  if(!sopDragInfo || sopDragInfo.type!==type || sopDragInfo.id===targetId) return;
+  let changed=false;
+  if(type==='cat'){ changed = sopReorderArray(state.sop, sopDragInfo.id, targetId); }
+  else if(type==='sub'){ if(sopDragInfo.catId!==catId) return; const cat=findSopCat(catId); if(cat) changed=sopReorderArray(cat.subcategories, sopDragInfo.id, targetId); }
+  else if(type==='prac'){ if(sopDragInfo.catId!==catId||sopDragInfo.subId!==subId) return; const sub=findSopSub(catId,subId); if(sub) changed=sopReorderArray(sub.practices, sopDragInfo.id, targetId); }
+  else if(type==='issue'){ if(sopDragInfo.catId!==catId||sopDragInfo.subId!==subId||sopDragInfo.pracId!==pracId) return; const prac=findSopPrac(catId,subId,pracId); if(prac) changed=sopReorderArray(prac.issues, sopDragInfo.id, targetId); }
+  if(changed){ save(); renderView(); }
+  sopDragInfo=null;
+}
+
+async function handleLibUpload(event){
+  const files = [...event.target.files]; if(!files.length) return;
+  const category = document.getElementById('lib-upload-cat').value;
+  for(const file of files){
+    const entry = { id:genId(), name:file.name, category, type:file.type||'', sizeKB:file.size/1024, uploadedAt:today(), lastModifiedAt:today(), status:'pending', extractedText:'', storagePath:'', downloadURL:'' };
+    state.library.files.push(entry); save(); renderView();
+    try{
+      const text = await extractFileText(file);
+      entry.extractedText = (text||'').slice(0, 12000); // cap per-doc for context budget
+      entry.status = text ? 'ok' : 'fail';
+    }catch(err){ console.warn('extract error',err); entry.status='fail'; }
+    if(currentUser && fbStorage){
+      try{
+        const path = `users/${currentUser.uid}/library/${entry.id}/${file.name}`;
+        const ref = fbStorage.ref(path);
+        await ref.put(file, {contentType:file.type||'application/octet-stream'});
+        entry.storagePath = path;
+        entry.downloadURL = await ref.getDownloadURL();
+      }catch(err){ console.warn('storage upload error',err); showToast('File indexed but cloud storage upload failed: '+err.message,'warn'); }
+    }
+    save(); renderView();
+  }
+  event.target.value='';
+}
+
+async function extractFileText(file){
+  const name = file.name.toLowerCase();
+  if(name.endsWith('.txt') || name.endsWith('.csv')){
+    return await file.text();
+  }
+  if(name.endsWith('.pdf')){
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data:buf}).promise;
+    let out = '';
+    const maxPages = Math.min(pdf.numPages, 40);
+    for(let i=1;i<=maxPages;i++){
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      out += content.items.map(it=>it.str).join(' ') + '\n';
+    }
+    return out;
+  }
+  if(name.endsWith('.docx')){
+    const buf = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({arrayBuffer: buf});
+    return result.value;
+  }
+  if(name.endsWith('.xlsx') || name.endsWith('.xls')){
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array'});
+    let out = '';
+    wb.SheetNames.forEach(sn=>{ out += `Sheet: ${sn}\n` + XLSX.utils.sheet_to_csv(wb.Sheets[sn]) + '\n\n'; });
+    return out;
+  }
+  return ''; // .doc / .pptx not supported yet in-browser
+}
+if(typeof pdfjsLib !== 'undefined'){ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }
+
+// ---------- CHAT MODULE ----------
+function renderChatView(area){
+  area.innerHTML = `<div class="chat-module">
+    <div class="chat-sessions" id="chat-sessions">
+      <button class="chat-new-btn" onclick="newChatSession()">＋ New Chat</button>
+      <div id="chat-session-list"></div>
+    </div>
+    <div class="chat-main">
+      <div class="chat-msgs" id="chat-msgs"></div>
+      <div id="chat-attach-chips" style="display:flex;gap:6px;flex-wrap:wrap;padding:0 20px;max-width:760px;margin:0 auto;width:100%;"></div>
+      <div class="chat-input-row">
+        <input type="file" id="chat-file-input" accept=".xlsx,.xls,.csv,.pdf,.docx,.txt" multiple style="display:none" onchange="handleChatAttach(event)"/>
+        <button class="chat-mic" id="chat-attach-btn" onclick="document.getElementById('chat-file-input').click()" title="Attach file">📎</button>
+        <textarea id="chat-input" rows="1" placeholder="Type or tap mic…" onkeydown="onChatKeydown(event)"></textarea>
+        <button class="chat-mic" id="chat-mic" onclick="toggleMic()">🎤</button>
+        <button class="chat-send" id="chat-send" onclick="sendChat()">➤</button>
+      </div>
+    </div>
+  </div>`;
+  renderChatSessionList();
+  if(!activeChatSessionId && state.chatSessions.length) activeChatSessionId = state.chatSessions[0].id;
+  if(activeChatSessionId) renderChatMessages(); else renderChatEmpty();
+  initVoice();
+}
+function renderChatSessionList(){
+  const el = document.getElementById('chat-session-list'); if(!el) return;
+  el.innerHTML = '';
+  [...state.chatSessions].sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||'')).forEach(s=>{
+    const div = document.createElement('div');
+    div.className = 'chat-session-item' + (s.id===activeChatSessionId?' active':'');
+    div.innerHTML = `${esc(s.title||'New chat')}<div class="chat-session-date">${fmt((s.updatedAt||'').slice(0,10))}</div>`;
+    div.onclick = ()=>{ activeChatSessionId = s.id; renderChatSessionList(); renderChatMessages(); };
+    el.appendChild(div);
+  });
+}
+function newChatSession(){
+  const s = { id:genId(), title:'New chat', messages:[], updatedAt:new Date().toISOString() };
+  state.chatSessions.push(s); activeChatSessionId = s.id; save(); renderChatSessionList(); renderChatMessages();
+}
+function quickNewChat(){
+  switchModule('chat');
+  newChatSession();
+}
+function renderChatEmpty(){
+  document.getElementById('chat-msgs').innerHTML = `<div class="chat-empty"><div style="font-size:36px">💬</div><p>No chat yet. Click "New Chat" to start — I can see and act across every module.</p></div>`;
+}
+function renderChatMessages(){
+  const s = state.chatSessions.find(s=>s.id===activeChatSessionId);
+  const msgsEl = document.getElementById('chat-msgs');
+  if(!s){ renderChatEmpty(); return; }
+  msgsEl.innerHTML='';
+  if(s.messages.length===0){
+    msgsEl.innerHTML = `<div class="chat-empty"><div style="font-size:36px">💬</div><p>Hi Sudharsan. I can see Meetings, Actions, Daily, Compliance, MIS, and your Library. Try: "I had a meeting with SBI today, discussed WC renewal, action for Ravi to send stock statement by Friday" — or ask me anything from the library.</p></div>`;
+    return;
+  }
+  s.messages.forEach(m=>{
+    const el=document.createElement('div');
+    el.className='chat-msg '+m.role;
+    el.textContent=m.text;
+    msgsEl.appendChild(el);
+  });
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+}
+function addChatMsgToSession(role,text){
+  const s = state.chatSessions.find(s=>s.id===activeChatSessionId); if(!s) return;
+  s.messages.push({role,text}); s.updatedAt=new Date().toISOString();
+  if(role==='user' && s.title==='New chat') s.title = text.slice(0,40) + (text.length>40?'…':'');
+  save();
+  const msgsEl=document.getElementById('chat-msgs');
+  const el=document.createElement('div'); el.className='chat-msg '+role; el.textContent=text;
+  msgsEl.appendChild(el); msgsEl.scrollTop = msgsEl.scrollHeight;
+  renderChatSessionList();
+}
+function onChatKeydown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
+
+let pendingAttachments = []; // {name, kind:'sheet'|'text', data}
+async function handleChatAttach(event){
+  const files = [...event.target.files]; if(!files.length) return;
+  for(const file of files){
+    showToast('Reading '+file.name+'…','info');
+    try{
+      const name = file.name.toLowerCase();
+      if(name.endsWith('.xlsx')||name.endsWith('.xls')||name.endsWith('.csv')){
+        const rows = await extractSheetJSON(file);
+        pendingAttachments.push({name:file.name, kind:'sheet', data:rows});
+      } else {
+        const text = await extractFileText(file);
+        pendingAttachments.push({name:file.name, kind:'text', data:text});
+      }
+    }catch(err){ showToast('Could not read '+file.name,'warn'); }
+  }
+  event.target.value='';
+  renderAttachChips();
+}
+function removeAttachment(idx){ pendingAttachments.splice(idx,1); renderAttachChips(); }
+function renderAttachChips(){
+  const el = document.getElementById('chat-attach-chips'); if(!el) return;
+  el.innerHTML = pendingAttachments.map((a,i)=>`<div class="attach-chip">📎 ${esc(a.name)}${a.kind==='sheet'?` (${a.data.length} rows)`:''}<span class="x" onclick="removeAttachment(${i})">✕</span></div>`).join('');
+}
+function buildAttachmentText(){
+  if(!pendingAttachments.length) return '';
+  let out = '\n\n[Attached files]\n';
+  pendingAttachments.forEach(a=>{
+    if(a.kind==='sheet'){
+      out += `\n--- ${a.name} (spreadsheet, ${a.data.length} rows) ---\n${JSON.stringify(a.data).slice(0,50000)}\n`;
+    } else {
+      out += `\n--- ${a.name} ---\n${(a.data||'').slice(0,20000)}\n`;
+    }
+  });
+  return out;
+}
+
+let chatApiHistory = {}; // keyed by session id -> array of {role,content} for the API (may include tool blocks)
+async function sendChat(){
+  if(!activeChatSessionId) newChatSession();
+  const input=document.getElementById('chat-input'); const text=input.value.trim();
+  if(!text && !pendingAttachments.length) return;
+  if(!currentUser){showToast('Sign in first (sidebar → Account)','warn');return;}
+  const attachNote = pendingAttachments.length ? ` 📎 ${pendingAttachments.map(a=>a.name).join(', ')}` : '';
+  addChatMsgToSession('user', (text || '(see attached file)') + attachNote);
+  const apiText = (text || 'Please look at the attached file(s).') + buildAttachmentText();
+  input.value='';
+  const sendBtn=document.getElementById('chat-send'); sendBtn.disabled=true;
+  if(!chatApiHistory[activeChatSessionId]) chatApiHistory[activeChatSessionId]=[];
+  chatApiHistory[activeChatSessionId].push({role:'user',content:apiText});
+  pendingAttachments = []; renderAttachChips();
+  try{ await runChatTurn(activeChatSessionId); }
+  catch(err){ addChatMsgToSession('bot','Something went wrong: '+err.message); }
+  finally{ sendBtn.disabled=false; renderView(); }
+}
+async function runChatTurn(sessionId, depth=0){
+  if(depth>4){ addChatMsgToSession('bot','(stopped after several steps — try rephrasing)'); return; }
+  const data=await callClaude({
+    model:'claude-sonnet-4-6',max_tokens:8000,
+    thinking:{type:'enabled', budget_tokens:3000},
+    system:`You are Sonnet, Sudharsan's Executive Assistant, embedded as the chat inside his EAT (Executive Assistant Tracker) portal. You are not just a Q&A layer — you have full read and write control over every module: Meetings, Calendar/Appointments, Action Items, Daily Activities, Notes, Work SOP (categories → subcategories → practices → issues), Compliance Manager, MIS Reports, the Library (uploaded company documents), and Participants. Sudharsan will mostly work through you rather than clicking into modules directly — when he asks you to add, change, remove, reschedule, reassign, or look something up anywhere in the portal, use the tools provided to actually do it rather than telling him to do it himself in the UI. Today's date is ${today()}.
+
+Tool conventions: edit/delete tools find their target by a case-insensitive partial-text match (match_text, or category_match/subcategory_match/practice_match/meeting_match for nested Work SOP and meeting-linked items) against the first matching item. If a request is genuinely ambiguous (e.g. two meetings with very similar titles, or an instruction too vague to tell what should change), ask a brief clarifying question before calling an edit or delete tool rather than guessing — but don't ask for confirmation on ordinary, unambiguous requests. Deletions are permanent (no undo), so if a request sounds like it could be destructive by accident, briefly confirm what you're about to delete in your tool call result rather than silently proceeding on a shaky match.
+
+Attachments: the user can attach spreadsheet or document files directly in this chat — their content appears inline under "[Attached files]". If asked to process/transform an attached spreadsheet, think step by step and use export_excel to deliver a downloadable result. If asked to run/apply a previously saved MIS operation (see misOps below, which includes instructions and, where available, sample input/output rows) on a newly attached file, reuse that operation's instructions and example pattern rather than asking the user to re-explain it. If asked to save a new reusable transformation, use add_mis_operation, including a small sample of input/output rows from the conversation when available. If asked to file away an attached document (not a spreadsheet transform), use add_library_document with the document's extracted text as the content — create a sensible category if none fits.
+
+For questions, think carefully and answer directly and specifically from the state data below — meetings, actions, daily items, appointments, notes, Work SOP, compliance, MIS operations, participants, and Library document excerpts — cross-referencing across modules where relevant. If the question might relate to a fact, figure, or decision discussed in an earlier chat session (not visible below), use search_chat_history first before answering — don't guess or assume it wasn't discussed. Don't call a tool for pure questions. Be concise in your final answer even if your reasoning is thorough. Current state:\n${buildStateSummary()}`,
+    tools: CHAT_TOOLS, messages: chatApiHistory[sessionId]
+  });
+  if(data.error){ addChatMsgToSession('bot','API error: '+(data.error.message||JSON.stringify(data.error))); return; }
+  chatApiHistory[sessionId].push({role:'assistant',content:data.content});
+  const textBlocks=data.content.filter(c=>c.type==='text').map(c=>c.text).join('\n');
+  if(textBlocks) addChatMsgToSession('bot',textBlocks);
+  const toolBlocks=data.content.filter(c=>c.type==='tool_use');
+  if(toolBlocks.length){
+    const toolResults=[];
+    for(const tb of toolBlocks){
+      const result=execTool(tb.name,tb.input);
+      addChatMsgToSession('tool','⚙ '+tb.name+' → '+result);
+      toolResults.push({type:'tool_result',tool_use_id:tb.id,content:result});
+    }
+    chatApiHistory[sessionId].push({role:'user',content:toolResults});
+    await runChatTurn(sessionId, depth+1);
+  }
+}
+
+// ═══════════════════════════════ MEETING ADD/EDIT ═══════════════════════════════
+let currentParticipants=[];
+function openAddModal(){
+  if(activeModule==='meetings')openAddMeetingModal();
+  else if(activeModule==='calendar'){openAppointmentModal(calSelectedDate);}
+  else if(activeModule==='actions'){editingId=null;document.getElementById('action-modal-title').textContent='Add Action Item';document.getElementById('a-text').value='';populateOwnerSelect();document.getElementById('a-due').value='';openModal('action-modal');}
+  else if(activeModule==='compliance'){editingId=null;document.getElementById('compliance-modal-title').textContent='Add Compliance Item';document.getElementById('c-item').value='';document.getElementById('c-freq').value='Monthly';document.getElementById('c-due').value='';document.getElementById('c-notes').value='';openModal('compliance-modal');}
+  else if(activeModule==='mis'){editingId=null;document.getElementById('mis-modal-title').textContent='New MIS Operation';document.getElementById('mis-name').value='';document.getElementById('mis-instructions').value='';openModal('mis-modal');}
+  else if(activeModule==='notes'){openAddNoteModal();}
+  else if(activeModule==='sop'){openSopCategoryModal();}
+}
+function openAddMeetingModal(){editingId=null;document.getElementById('meeting-modal-title').textContent='Add Meeting';document.getElementById('f-date').value=today();document.getElementById('f-time').value='';document.getElementById('f-cw').value='';document.getElementById('f-title').value='';document.getElementById('f-notes').value='';currentParticipants=[];renderPartsChips();document.getElementById('actions-editor').innerHTML='';addActionRow();openModal('meeting-modal');}
+function openEditMeetingModal(id){const m=state.meetings.find(m=>m.id===id);if(!m)return;editingId=id;document.getElementById('meeting-modal-title').textContent='Edit Meeting';document.getElementById('f-date').value=m.date||today();document.getElementById('f-time').value=m.time||'';document.getElementById('f-cw').value=m.cw||'';document.getElementById('f-title').value=m.title||'';document.getElementById('f-notes').value=m.notes||'';currentParticipants=[...(m.participants||[])];renderPartsChips();document.getElementById('actions-editor').innerHTML='';(m.actions&&m.actions.length?m.actions:[{}]).forEach(a=>addActionRow(a));openModal('meeting-modal');}
+function renderPartsChips(){const wrap=document.getElementById('parts-wrap');wrap.querySelectorAll('.part-chip').forEach(c=>c.remove());const input=document.getElementById('parts-input');currentParticipants.forEach(name=>{const chip=document.createElement('div');chip.className='part-chip';chip.innerHTML=`<span>${esc(name)}</span><span class="x" onclick="removePartChip('${name.replace(/'/g,"\\'")}')">✕</span>`;wrap.insertBefore(chip,input);});}
+function removePartChip(name){currentParticipants=currentParticipants.filter(n=>n!==name);renderPartsChips();}
+function onPartsKeydown(e){if(e.key==='Enter'){e.preventDefault();const val=e.target.value.trim();if(val&&!currentParticipants.includes(val)){currentParticipants.push(val);if(!state.participants.find(p=>p.name.toLowerCase()===val.toLowerCase()))state.participants.push({id:state.nextPartId++,name:val});}e.target.value='';renderPartsChips();}}
+function addActionRow(data){data=data||{};const editor=document.getElementById('actions-editor');const row=document.createElement('div');row.className='ae-row';const ownerOpts=state.participants.map(p=>`<option value="${esc(p.name)}" ${data.owner===p.name?'selected':''}>${esc(p.name)}</option>`).join('');row.innerHTML=`<input type="text" placeholder="Action item…" class="ae-text" value="${esc(data.text||'')}"/><select class="ae-owner"><option value="">Owner…</option>${ownerOpts}</select><input type="date" class="ae-due" value="${data.due||''}"/><div class="ae-del" onclick="this.parentElement.remove()">✕</div>`;editor.appendChild(row);}
+function readActionRows(){return [...document.querySelectorAll('#actions-editor .ae-row')].map(row=>({text:row.querySelector('.ae-text').value.trim(),owner:row.querySelector('.ae-owner').value,due:row.querySelector('.ae-due').value,done:false})).filter(a=>a.text);}
+function saveMeeting(){const title=document.getElementById('f-title').value.trim();if(!title){alert('Enter a meeting title.');return;}const date=document.getElementById('f-date').value,time=document.getElementById('f-time').value,cw=document.getElementById('f-cw').value.trim(),notes=document.getElementById('f-notes').value.trim();const actions=readActionRows();if(editingId){const m=state.meetings.find(m=>m.id===editingId);if(m){const prev=m.actions||[];actions.forEach(a=>{const p=prev.find(p=>p.text===a.text);if(p)a.done=p.done;});Object.assign(m,{title,date,time,cw,notes,participants:[...currentParticipants],actions});}}else state.meetings.push({id:genId(),title,date,time,cw,notes,participants:[...currentParticipants],actions,addedAt:today()});save();closeModal('meeting-modal');renderView();if(selectedId===editingId)renderMeetingViewPane();showToast('Meeting saved!','success');}
+function deleteMeeting(id){if(!confirm('Delete this meeting and its action items?'))return;state.meetings=state.meetings.filter(m=>m.id!==id);if(selectedId===id)closeViewPane();save();renderView();}
+async function extractActionsAI(){const notes=document.getElementById('f-notes').value.trim();if(!notes){showToast('Write meeting notes first.','warn');return;}if(!currentUser){showToast('Sign in first','warn');return;}const btn=document.getElementById('ai-extract-btn');btn.disabled=true;btn.textContent='✨ Extracting…';const names=currentParticipants.length?currentParticipants.join(', '):state.participants.map(p=>p.name).join(', ');try{const data=await callClaude({model:'claude-sonnet-4-6',max_tokens:1000,system:`Extract action items from meeting notes. Today: ${today()}. Participants: ${names||'none'}. Return ONLY a JSON array, no markdown. Each: {"text":"...","owner":"name or empty","due":"YYYY-MM-DD or empty"}.`,messages:[{role:'user',content:notes}]});if(data.error){showToast('API error: '+data.error.message,'warn');return;}const text=data.content?.[0]?.text||'[]';const parsed=JSON.parse(text.replace(/```json|```/g,'').trim());if(!Array.isArray(parsed)||parsed.length===0)showToast('No action items detected.','info');else{const existing=readActionRows().map(a=>a.text);parsed.forEach(a=>{if(!existing.includes(a.text))addActionRow(a);});showToast(`✅ Extracted ${parsed.length} item(s)`,'success');}}catch(err){showToast('AI extraction failed: '+err.message,'warn');}finally{btn.disabled=false;btn.textContent='✨ Extract Action Items with AI';}}
+
+// ═══════════════════════════════ VIEW PANE (Meetings) ═══════════════════════════════
+function openMeetingView(id){selectedId=id;const pane=document.getElementById('view-pane');pane.classList.remove('hidden');if(window.innerWidth<=768)pane.classList.add('mob-show');renderMeetingViewPane();}
+function closeViewPane(){selectedId=null;const pane=document.getElementById('view-pane');pane.classList.add('hidden');pane.classList.remove('mob-show');document.getElementById('vp-content').innerHTML='<div class="vp-empty">👆<p>Click any item to view details</p></div>';}
+function renderMeetingViewPane(){
+  const m=state.meetings.find(m=>m.id===selectedId); if(!m){closeViewPane();return;}
+  const content=document.getElementById('vp-content'); content.innerHTML='';
+  const actionsBar=document.createElement('div'); actionsBar.className='vp-actions';
+  actionsBar.innerHTML=`<div class="vp-btn" onclick="openEditMeetingModal('${m.id}')">✏️ Edit</div><div class="vp-btn del-btn" onclick="deleteMeeting('${m.id}')">🗑 Delete</div>`;
+  const body=document.createElement('div'); body.className='vp-body';
+  let html=`<div class="vp-subject">${esc(m.title||'(untitled)')}</div>`;
+  html+=`<div class="vp-field"><div class="vp-field-label">When</div><div class="vp-field-val">${fmt(m.date)}${m.time?' · '+m.time:''}</div></div>`;
+  if(m.cw)html+=`<div class="vp-field"><div class="vp-field-label">Counterparty</div><div class="vp-field-val">${esc(m.cw)}</div></div>`;
+  html+=`<div class="vp-field"><div class="vp-field-label">Participants</div><div class="vp-field-val">${esc((m.participants||[]).join(', ')||'—')}</div></div>`;
+  if(m.notes)html+=`<div class="vp-field"><div class="vp-field-label">Notes</div><div class="vp-field-val">${esc(m.notes)}</div></div>`;
+  const acts=m.actions||[];
+  html+=`<div class="vp-field"><div class="vp-field-label">Action Items (${acts.length})</div><div class="vp-field-val" style="padding:0">`;
+  if(acts.length===0)html+='<div style="padding:10px;color:var(--muted);font-size:16px">None logged.</div>';
+  else acts.forEach((a,idx)=>{const overdue=!a.done&&a.due&&a.due<today();html+=`<div class="act-row"><div class="act-check ${a.done?'done':''}" onclick="toggleMeetingAction('${m.id}',${idx})"></div><div style="flex:1"><div style="${a.done?'text-decoration:line-through;color:var(--muted)':''}">${esc(a.text)}</div><div class="act-meta-line ${overdue?'overdue':''}">${a.owner?esc(a.owner):'Unassigned'}${a.due?' · Due '+fmt(a.due):''}${overdue?' · OVERDUE':''}</div></div></div>`;});
+  html+='</div></div>'; body.innerHTML=html; content.appendChild(actionsBar); content.appendChild(body);
+}
+function toggleMeetingAction(mid,idx){const m=state.meetings.find(m=>m.id===mid);if(m&&m.actions&&m.actions[idx]){m.actions[idx].done=!m.actions[idx].done;save();renderMeetingViewPane();renderView();}}
+
+// ═══════════════════════════════ STANDALONE ACTIONS ═══════════════════════════════
+function populateOwnerSelect(){document.getElementById('a-owner').innerHTML='<option value="">Owner…</option>'+state.participants.map(p=>`<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('');}
+function saveStandaloneAction(){const text=document.getElementById('a-text').value.trim();if(!text){alert('Enter action text');return;}const owner=document.getElementById('a-owner').value,due=document.getElementById('a-due').value;state.standaloneActions.push({id:genId(),text,owner,due,done:false});save();closeModal('action-modal');renderView();showToast('Action added','success');}
+
+// ═══════════════════════════════ PARTICIPANTS ═══════════════════════════════
+function openManageParts(){renderManageParts();openModal('parts-modal');}
+function renderManageParts(){const el=document.getElementById('pl-list');el.innerHTML='';state.participants.forEach(p=>{const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;background:var(--surface2);padding:8px 10px;border-radius:7px;border:1.5px solid var(--border);';row.innerHTML=`<span style="flex:1;font-size:16.5px">${esc(p.name)}</span><div class="row-btn rbdel" onclick="removeParticipant(${p.id})">✕</div>`;el.appendChild(row);});}
+function addParticipant(){const inp=document.getElementById('new-part-input'),name=inp.value.trim();if(!name)return;state.participants.push({id:state.nextPartId++,name});inp.value='';save();renderManageParts();}
+function removeParticipant(id){state.participants=state.participants.filter(p=>p.id!==id);save();renderManageParts();}
+
+// ═══════════════════════════════ MODALS / MOBILE ═══════════════════════════════
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');}));
+function toggleMobSidebar(){const sb=document.getElementById('sidebar'),ov=document.getElementById('mob-overlay');const open=sb.classList.toggle('mob-open');if(ov)ov.classList.toggle('show',open);}
+function closeMobSidebar(){document.getElementById('sidebar').classList.remove('mob-open');const ov=document.getElementById('mob-overlay');if(ov)ov.classList.remove('show');}
+
+// ═══════════════════════════════ EXPORT / IMPORT ═══════════════════════════════
+function exportData(){const obj={version:'eat-v1',exportedAt:new Date().toISOString(),state};const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`eat-backup-${today()}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);showToast('✅ Backup downloaded!','success');}
+function importData(event){const file=event.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{try{const data=JSON.parse(e.target.result);if(!data.state){showToast('❌ Invalid backup','warn');return;}state=data.state;if(!state.library)state.library={categories:['Legal Documents','Secretarial Documents','Bank Documents','Financials','MIS Data'],files:[]};if(!state.chatSessions)state.chatSessions=[];if(!state.notes)state.notes=[];if(!state.sop)state.sop=[];if(!state.appointments)state.appointments=[];_saveLocal();renderView();document.getElementById('import-result').style.display='block';document.getElementById('import-result').textContent='✅ Data restored from backup.';showToast('✅ Imported','success');}catch(err){showToast('❌ Error: '+err.message,'warn');}event.target.value='';};reader.readAsText(file);}
+
+// ═══════════════════════════════ FIREBASE AUTH + SYNC + CLAUDE PROXY ═══════════════════════════════
+// ⚠️ Fill these in after completing the Firebase setup steps in DEPLOYMENT_GUIDE.md
+const FB_CONFIG = {
+  apiKey: "REPLACE_ME",
+  authDomain: "REPLACE_ME.firebaseapp.com",
+  databaseURL: "REPLACE_ME",
+  projectId: "REPLACE_ME",
+  storageBucket: "REPLACE_ME.appspot.com",
+  appId: "REPLACE_ME"
+};
+// ⚠️ Fill this in after deploying the Cloud Function (see DEPLOYMENT_GUIDE.md)
+const CLOUD_FN_URL = "https://REGION-PROJECTID.cloudfunctions.net/anthropicProxy";
+
+let fbApp=null,fbDb=null,fbStorage=null,fbSyncPath=null,fbListener=null,syncEnabled=false,isSyncing=false,lastSyncTime=null,currentUser=null;
+
+function initFirebase(){
+  try{
+    fbApp=firebase.initializeApp(FB_CONFIG);
+    fbDb=fbApp.database();
+    fbStorage=fbApp.storage();
+    firebase.auth().onAuthStateChanged(user=>{
+      currentUser=user;
+      if(user){
+        document.getElementById('login-gate').classList.add('hidden');
+        const errEl=document.getElementById('login-error'); if(errEl)errEl.textContent='';
+        [document.getElementById('account-email'),document.getElementById('sync-account-email')].forEach(el=>{if(el)el.textContent=user.email;});
+        fbSyncPath='users/'+user.uid;
+        attachSyncListener();
+      } else {
+        document.getElementById('login-gate').classList.remove('hidden');
+        syncEnabled=false;
+        if(fbListener&&fbSyncPath){ fbDb.ref(fbSyncPath+'/state').off('value',fbListener); fbListener=null; }
+        setSyncStatus('local','Signed out');
+      }
+    });
+  }catch(e){console.warn(e);setSyncStatus('offline','Sync unavailable');}
+}
+async function signInUser(){
+  const email=document.getElementById('login-email').value.trim();
+  const pwd=document.getElementById('login-password').value;
+  const btn=document.getElementById('login-btn'), err=document.getElementById('login-error');
+  if(!email||!pwd){ err.textContent='Enter email and password.'; return; }
+  btn.disabled=true; btn.textContent='Signing in…'; err.textContent='';
+  try{ await firebase.auth().signInWithEmailAndPassword(email,pwd); }
+  catch(e){ err.textContent = (e.message||'Sign in failed').replace('Firebase: ',''); }
+  finally{ btn.disabled=false; btn.textContent='Sign In'; }
+}
+function signOutUser(){ firebase.auth().signOut(); closeModal('account-modal'); }
+function openAccountModal(){ if(currentUser){ document.getElementById('account-email').textContent=currentUser.email; } openModal('account-modal'); }
+function setSyncStatus(st,label){const dot=document.getElementById('sync-dot'),lbl=document.getElementById('sync-label');if(dot)dot.className='sync-dot '+st;if(lbl)lbl.textContent=label;}
+function attachSyncListener(){
+  if(!fbDb||!fbSyncPath)return;
+  syncEnabled=true;
+  let justPushed=false;
+  fbListener=fbDb.ref(fbSyncPath+'/state').on('value',snap=>{
+    if(justPushed)return;
+    if(!snap.exists()){ pushToCloud(); return; }
+    applyCloudData(snap.val());
+  },err=>{ setSyncStatus('offline','Offline'); });
+  fbDb.ref('.info/connected').on('value',s=>{ if(s.val()===true)setSyncStatus('synced',lastSyncTime?'Synced':'Connected ✓'); else setSyncStatus('offline','Offline'); });
+  window._fbSetJustPushed=(v)=>{ justPushed=v; if(v)setTimeout(()=>{justPushed=false;},3000); };
+}
+function pushToCloud(){if(!fbDb||!fbSyncPath)return;isSyncing=true;setSyncStatus('syncing','Syncing…');if(window._fbSetJustPushed)window._fbSetJustPushed(true);fbDb.ref(fbSyncPath+'/state').set(state).then(()=>{isSyncing=false;lastSyncTime=Date.now();setSyncStatus('synced','Synced ✓');}).catch(()=>{isSyncing=false;setSyncStatus('offline','Sync failed');});}
+function pullFromCloud(){if(!fbDb||!fbSyncPath){showToast('Sign in first','warn');return;}fbDb.ref(fbSyncPath+'/state').once('value').then(snap=>{if(!snap.exists()){showToast('No cloud data yet','info');return;}applyCloudData(snap.val());showToast('⬇️ Pulled from cloud','success');});}
+function applyCloudData(data){state=data;if(!state.participants)state.participants=[{id:1,name:'Sudharsan'}];if(!state.meetings)state.meetings=[];if(!state.standaloneActions)state.standaloneActions=[];if(!state.daily)state.daily=[];if(!state.notes)state.notes=[];if(!state.sop)state.sop=[];if(!state.appointments)state.appointments=[];if(!state.compliance)state.compliance=[];if(!state.misOps)state.misOps=[];if(!state.library)state.library={categories:['Legal Documents','Secretarial Documents','Bank Documents','Financials','MIS Data'],files:[]};if(!state.chatSessions)state.chatSessions=[];if(!state.nextPartId)state.nextPartId=(state.participants.length||0)+1;_saveLocal();renderView();}
+
+// All Claude calls go through this Cloud Function proxy — the Anthropic API key lives server-side only,
+// so nothing needs to be entered or stored per-device. Requires sign-in (Firebase ID token).
+async function callClaude(body){
+  if(!currentUser){ throw new Error('Please sign in first'); }
+  const token = await currentUser.getIdToken();
+  const resp = await fetch(CLOUD_FN_URL, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body: JSON.stringify(body)
+  });
+  return await resp.json();
+}
+
+// ═══════════════════════════════ SONNET TOOLS ═══════════════════════════════
+const CHAT_TOOLS=[
+  {name:'add_meeting',description:'Add a new meeting with optional notes, participants, and action items',input_schema:{type:'object',properties:{title:{type:'string'},date:{type:'string',description:'YYYY-MM-DD, default today'},time:{type:'string'},cw:{type:'string',description:'counterparty or meeting type'},participants:{type:'array',items:{type:'string'}},notes:{type:'string'},actions:{type:'array',items:{type:'object',properties:{text:{type:'string'},owner:{type:'string'},due:{type:'string'}}}}},required:['title']}},
+  {name:'edit_meeting',description:'Edit an existing meeting\'s title, date, time, counterparty, notes, or participant list, by matching part of its current title',input_schema:{type:'object',properties:{match_text:{type:'string'},new_title:{type:'string'},date:{type:'string',description:'YYYY-MM-DD'},time:{type:'string'},cw:{type:'string'},notes:{type:'string'},participants:{type:'array',items:{type:'string'},description:'If provided, replaces the full participant list'}},required:['match_text']}},
+  {name:'delete_meeting',description:'Delete a meeting and all of its action items, by matching part of its title',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
+  {name:'add_meeting_action',description:'Add a new action item to an existing meeting (found by matching part of its title) — use this instead of add_action when the action belongs to a specific meeting rather than being standalone',input_schema:{type:'object',properties:{meeting_match:{type:'string'},text:{type:'string'},owner:{type:'string'},due:{type:'string',description:'YYYY-MM-DD'}},required:['meeting_match','text']}},
+  {name:'add_action',description:'Add a standalone action item (not linked to a specific meeting)',input_schema:{type:'object',properties:{text:{type:'string'},owner:{type:'string'},due:{type:'string',description:'YYYY-MM-DD'}},required:['text']}},
+  {name:'edit_action',description:'Edit an existing action item by matching part of its text',input_schema:{type:'object',properties:{match_text:{type:'string'},new_text:{type:'string'},owner:{type:'string'},due:{type:'string'},done:{type:'boolean'}},required:['match_text']}},
+  {name:'delete_action',description:'Delete an action item by matching part of its text',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
+  {name:'add_daily',description:'Add a daily activity/todo item',input_schema:{type:'object',properties:{text:{type:'string'}},required:['text']}},
+  {name:'toggle_daily',description:'Mark a daily activity done/undone by matching its text',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
+  {name:'delete_daily',description:'Delete a daily activity by matching its text',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
+  {name:'add_compliance',description:'Add a compliance/statutory deadline item',input_schema:{type:'object',properties:{item:{type:'string'},freq:{type:'string'},due:{type:'string'},notes:{type:'string'}},required:['item']}},
+  {name:'edit_compliance',description:'Edit a compliance item by matching its name',input_schema:{type:'object',properties:{match_text:{type:'string'},item:{type:'string'},freq:{type:'string'},due:{type:'string'},notes:{type:'string'}},required:['match_text']}},
+  {name:'delete_compliance',description:'Delete a compliance item by matching its name',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
+  {name:'add_appointment',description:'Add a calendar appointment',input_schema:{type:'object',properties:{title:{type:'string'},date:{type:'string',description:'YYYY-MM-DD'},fromTime:{type:'string',description:'HH:MM 24-hour'},toTime:{type:'string',description:'HH:MM 24-hour'},location:{type:'string'},notes:{type:'string'}},required:['title','date']}},
+  {name:'edit_appointment',description:'Edit or reschedule an existing calendar appointment by matching part of its title',input_schema:{type:'object',properties:{match_text:{type:'string'},new_title:{type:'string'},date:{type:'string',description:'YYYY-MM-DD'},fromTime:{type:'string'},toTime:{type:'string'},location:{type:'string'},notes:{type:'string'}},required:['match_text']}},
+  {name:'delete_appointment',description:'Delete an appointment by matching part of its title',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
+  {name:'search_chat_history',description:'Search past chat sessions for a topic or keyword before answering, if the current question might relate to something discussed previously (e.g. a figure, decision, or fact mentioned in an earlier conversation). Use this proactively when relevant rather than answering from assumption.',input_schema:{type:'object',properties:{query:{type:'string',description:'Keywords to search for, e.g. "SBI interest rate"'}},required:['query']}},
+  {name:'add_note',description:'Save a fact, figure, or detail as a note for later reference',input_schema:{type:'object',properties:{title:{type:'string',description:'Short title, optional'},content:{type:'string',description:'The note content — facts, figures, details'}},required:['content']}},
+  {name:'edit_note',description:'Edit an existing note by matching part of its title or content',input_schema:{type:'object',properties:{match_text:{type:'string'},new_title:{type:'string'},new_content:{type:'string'}},required:['match_text']}},
+  {name:'delete_note',description:'Delete a note by matching part of its title or content',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
+  {name:'add_mis_operation',description:'Save a new reusable MIS report transformation operation. If the conversation includes an attached input file and you produced (or were shown) a corresponding output, include a small representative sample (max ~15 rows) of each so future runs can match the exact pattern.',input_schema:{type:'object',properties:{name:{type:'string'},instructions:{type:'string',description:'Clear written description of the transformation steps'},example_input_sample:{type:'array',description:'Up to ~15 representative rows from the input file, as objects',items:{type:'object'}},example_output_sample:{type:'array',description:'The matching ~15 output rows demonstrating the correct transformation',items:{type:'object'}}},required:['name','instructions']}},
+  {name:'edit_mis_operation',description:'Edit a saved MIS operation\'s name or instructions, by matching its current name',input_schema:{type:'object',properties:{match_text:{type:'string'},new_name:{type:'string'},new_instructions:{type:'string'}},required:['match_text']}},
+  {name:'delete_mis_operation',description:'Delete a saved MIS operation by matching its name',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
+  {name:'export_excel',description:'Generate and download an Excel file for the user from row data you have produced (e.g. after processing an attached file per their instructions in chat, including applying a saved MIS operation by name)',input_schema:{type:'object',properties:{filename:{type:'string',description:'File name without extension'},rows:{type:'array',description:'Array of row objects to write as the output spreadsheet',items:{type:'object'}}},required:['filename','rows']}},
+  {name:'add_sop_category',description:'Add a new Work SOP category',input_schema:{type:'object',properties:{name:{type:'string'}},required:['name']}},
+  {name:'edit_sop_category',description:'Rename a Work SOP category, by matching its current name',input_schema:{type:'object',properties:{match_text:{type:'string'},new_name:{type:'string'}},required:['match_text','new_name']}},
+  {name:'delete_sop_category',description:'Delete a Work SOP category and everything inside it, by matching its name',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
+  {name:'add_sop_subcategory',description:'Add a subcategory under an existing Work SOP category',input_schema:{type:'object',properties:{category_match:{type:'string'},name:{type:'string'}},required:['category_match','name']}},
+  {name:'edit_sop_subcategory',description:'Rename a Work SOP subcategory',input_schema:{type:'object',properties:{category_match:{type:'string'},match_text:{type:'string'},new_name:{type:'string'}},required:['category_match','match_text','new_name']}},
+  {name:'delete_sop_subcategory',description:'Delete a Work SOP subcategory and everything inside it',input_schema:{type:'object',properties:{category_match:{type:'string'},match_text:{type:'string'}},required:['category_match','match_text']}},
+  {name:'add_sop_practice',description:'Add a practice/procedure under a Work SOP subcategory, with optional person responsible and frequency',input_schema:{type:'object',properties:{category_match:{type:'string'},subcategory_match:{type:'string'},text:{type:'string'},owner:{type:'string'},frequency:{type:'string'}},required:['category_match','subcategory_match','text']}},
+  {name:'edit_sop_practice',description:'Edit a Work SOP practice\'s text, person responsible, or frequency',input_schema:{type:'object',properties:{category_match:{type:'string'},subcategory_match:{type:'string'},match_text:{type:'string'},new_text:{type:'string'},owner:{type:'string'},frequency:{type:'string'}},required:['category_match','subcategory_match','match_text']}},
+  {name:'delete_sop_practice',description:'Delete a Work SOP practice and its logged issues',input_schema:{type:'object',properties:{category_match:{type:'string'},subcategory_match:{type:'string'},match_text:{type:'string'}},required:['category_match','subcategory_match','match_text']}},
+  {name:'add_sop_issue',description:'Log an issue/problem under a specific Work SOP practice',input_schema:{type:'object',properties:{category_match:{type:'string'},subcategory_match:{type:'string'},practice_match:{type:'string'},text:{type:'string'}},required:['category_match','subcategory_match','practice_match','text']}},
+  {name:'delete_sop_issue',description:'Delete a logged issue under a Work SOP practice, by matching part of its text',input_schema:{type:'object',properties:{category_match:{type:'string'},subcategory_match:{type:'string'},practice_match:{type:'string'},match_text:{type:'string'}},required:['category_match','subcategory_match','practice_match','match_text']}},
+  {name:'add_library_category',description:'Add a new category to the Library',input_schema:{type:'object',properties:{name:{type:'string'}},required:['name']}},
+  {name:'delete_library_category',description:'Delete a Library category by matching its name (documents in it are not deleted)',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
+  {name:'add_library_document',description:'File away a document in the Library using text content you already have — typically the extracted text of a file the user just attached in this chat. Use this to save/organize documents the user shares, separate from the export_excel workflow used for generated spreadsheets.',input_schema:{type:'object',properties:{name:{type:'string',description:'File name, e.g. "Board Resolution Mar 2026.docx"'},category:{type:'string',description:'Existing or new Library category'},content:{type:'string',description:'The document\'s text content'}},required:['name','category','content']}},
+  {name:'edit_library_document',description:'Rename or re-categorize an existing Library document, by matching part of its current name',input_schema:{type:'object',properties:{match_text:{type:'string'},new_name:{type:'string'},new_category:{type:'string'}},required:['match_text']}},
+  {name:'delete_library_document',description:'Delete a document from the Library, by matching part of its name',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
+  {name:'add_participant',description:'Add a new participant/person to the system — becomes available as a meeting participant, action owner, or SOP person responsible',input_schema:{type:'object',properties:{name:{type:'string'}},required:['name']}},
+  {name:'delete_participant',description:'Remove a participant, by matching part of their name',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
+];
+function execTool(name,input){
+  try{
+    if(name==='add_meeting'){const parts=input.participants||[];parts.forEach(nm=>{if(!state.participants.find(p=>p.name.toLowerCase()===nm.toLowerCase()))state.participants.push({id:state.nextPartId++,name:nm});});state.meetings.push({id:genId(),title:input.title,date:input.date||today(),time:input.time||'',cw:input.cw||'',notes:input.notes||'',participants:parts,actions:(input.actions||[]).map(a=>({...a,done:false})),addedAt:today()});save();return 'Meeting added: '+input.title;}
+    if(name==='edit_meeting'){const m=state.meetings.find(m=>(m.title||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!m)return 'No matching meeting found for: '+input.match_text;if(input.new_title)m.title=input.new_title;if(input.date)m.date=input.date;if(input.time!==undefined)m.time=input.time;if(input.cw!==undefined)m.cw=input.cw;if(input.notes!==undefined)m.notes=input.notes;if(input.participants){m.participants=input.participants;input.participants.forEach(nm=>{if(!state.participants.find(p=>p.name.toLowerCase()===nm.toLowerCase()))state.participants.push({id:state.nextPartId++,name:nm});});}save();return 'Meeting updated: '+m.title;}
+    if(name==='delete_meeting'){const m=state.meetings.find(m=>(m.title||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!m)return 'No matching meeting found for: '+input.match_text;state.meetings=state.meetings.filter(x=>x.id!==m.id);save();return 'Deleted meeting: '+m.title;}
+    if(name==='add_meeting_action'){const m=state.meetings.find(m=>(m.title||'').toLowerCase().includes(input.meeting_match.toLowerCase()));if(!m)return 'No matching meeting found for: '+input.meeting_match;if(!m.actions)m.actions=[];m.actions.push({text:input.text,owner:input.owner||'',due:input.due||'',done:false});save();return 'Action added to meeting "'+m.title+'": '+input.text;}
+    if(name==='add_action'){state.standaloneActions.push({id:genId(),text:input.text,owner:input.owner||'',due:input.due||'',done:false});save();return 'Action added: '+input.text;}
+    if(name==='edit_action'){const a=findActionByMatch(input.match_text);if(!a)return 'No matching action found for: '+input.match_text;
+      if(a.source==='standalone'){const s=state.standaloneActions.find(s=>s.id===a.id);if(input.new_text)s.text=input.new_text;if(input.owner!==undefined)s.owner=input.owner;if(input.due!==undefined)s.due=input.due;if(input.done!==undefined)s.done=input.done;}
+      else{const m=state.meetings.find(m=>m.id===a.meetingId);const act=m.actions[a.idx];if(input.new_text)act.text=input.new_text;if(input.owner!==undefined)act.owner=input.owner;if(input.due!==undefined)act.due=input.due;if(input.done!==undefined)act.done=input.done;}
+      save();return 'Action updated: '+(input.new_text||a.text);}
+    if(name==='delete_action'){const a=findActionByMatch(input.match_text);if(!a)return 'No matching action found';if(a.source==='standalone')state.standaloneActions=state.standaloneActions.filter(s=>s.id!==a.id);else{const m=state.meetings.find(m=>m.id===a.meetingId);m.actions.splice(a.idx,1);}save();return 'Action deleted: '+a.text;}
+    if(name==='add_daily'){state.daily.push({id:genId(),text:input.text,done:false,addedAt:today()});save();return 'Daily activity added: '+input.text;}
+    if(name==='toggle_daily'){const d=state.daily.find(d=>d.text.toLowerCase().includes(input.match_text.toLowerCase()));if(!d)return 'No matching daily item found';d.done=!d.done;save();return 'Toggled: '+d.text;}
+    if(name==='delete_daily'){const d=state.daily.find(d=>d.text.toLowerCase().includes(input.match_text.toLowerCase()));if(!d)return 'No matching daily item found';state.daily=state.daily.filter(x=>x.id!==d.id);save();return 'Deleted: '+d.text;}
+    if(name==='add_compliance'){state.compliance.push({id:genId(),item:input.item,freq:input.freq||'Monthly',due:input.due||'',notes:input.notes||''});save();return 'Compliance item added: '+input.item;}
+    if(name==='edit_compliance'){const c=state.compliance.find(c=>c.item.toLowerCase().includes(input.match_text.toLowerCase()));if(!c)return 'No matching compliance item found';if(input.item)c.item=input.item;if(input.freq)c.freq=input.freq;if(input.due!==undefined)c.due=input.due;if(input.notes!==undefined)c.notes=input.notes;save();return 'Compliance item updated';}
+    if(name==='delete_compliance'){const c=state.compliance.find(c=>c.item.toLowerCase().includes(input.match_text.toLowerCase()));if(!c)return 'No matching compliance item found';state.compliance=state.compliance.filter(x=>x.id!==c.id);save();return 'Deleted: '+c.item;}
+    if(name==='add_appointment'){state.appointments.push({id:genId(),title:input.title,date:input.date,fromTime:input.fromTime||'',toTime:input.toTime||'',location:input.location||'',notes:input.notes||''});save();return 'Appointment added: '+input.title+' on '+input.date;}
+    if(name==='edit_appointment'){const a=state.appointments.find(a=>a.title.toLowerCase().includes(input.match_text.toLowerCase()));if(!a)return 'No matching appointment found';if(input.new_title)a.title=input.new_title;if(input.date)a.date=input.date;if(input.fromTime!==undefined)a.fromTime=input.fromTime;if(input.toTime!==undefined)a.toTime=input.toTime;if(input.location!==undefined)a.location=input.location;if(input.notes!==undefined)a.notes=input.notes;save();return 'Appointment updated: '+a.title;}
+    if(name==='delete_appointment'){const a=state.appointments.find(a=>a.title.toLowerCase().includes(input.match_text.toLowerCase()));if(!a)return 'No matching appointment found';state.appointments=state.appointments.filter(x=>x.id!==a.id);save();return 'Deleted: '+a.title;}
+    if(name==='search_chat_history'){ return searchChatHistory(input.query); }
+    if(name==='add_note'){state.notes.push({id:genId(),title:input.title||'',content:input.content,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});save();return 'Note saved'+(input.title?': '+input.title:'');}
+    if(name==='edit_note'){const n=state.notes.find(n=>(n.title||'').toLowerCase().includes(input.match_text.toLowerCase())||(n.content||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!n)return 'No matching note found';if(input.new_title!==undefined)n.title=input.new_title;if(input.new_content!==undefined)n.content=input.new_content;n.updatedAt=new Date().toISOString();save();return 'Note updated';}
+    if(name==='delete_note'){const n=state.notes.find(n=>(n.title||'').toLowerCase().includes(input.match_text.toLowerCase())||(n.content||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!n)return 'No matching note found';state.notes=state.notes.filter(x=>x.id!==n.id);save();return 'Note deleted';}
+    if(name==='add_mis_operation'){state.misOps.push({id:genId(),name:input.name,instructions:input.instructions,exampleInput:input.example_input_sample||null,exampleOutput:input.example_output_sample||null,createdAt:today()});save();return 'MIS operation saved: '+input.name+(input.example_input_sample?' (with worked example)':'');}
+    if(name==='edit_mis_operation'){const o=state.misOps.find(o=>(o.name||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!o)return 'No matching MIS operation found';if(input.new_name)o.name=input.new_name;if(input.new_instructions)o.instructions=input.new_instructions;save();return 'MIS operation updated: '+o.name;}
+    if(name==='delete_mis_operation'){const o=state.misOps.find(o=>(o.name||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!o)return 'No matching MIS operation found';state.misOps=state.misOps.filter(x=>x.id!==o.id);save();return 'Deleted MIS operation: '+o.name;}
+    if(name==='add_sop_category'){const id=genId();state.sop.push({id,name:input.name,subcategories:[]});save();return 'SOP category added: '+input.name;}
+    if(name==='edit_sop_category'){const c=sopFindCatQ(input.match_text);if(!c)return 'No matching SOP category found';c.name=input.new_name;save();return 'SOP category renamed to: '+input.new_name;}
+    if(name==='delete_sop_category'){const c=sopFindCatQ(input.match_text);if(!c)return 'No matching SOP category found';state.sop=state.sop.filter(x=>x.id!==c.id);save();return 'Deleted SOP category: '+c.name;}
+    if(name==='add_sop_subcategory'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found for: '+input.category_match;const id=genId();c.subcategories.push({id,name:input.name,practices:[]});save();return 'SOP subcategory added: '+input.name;}
+    if(name==='edit_sop_subcategory'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.match_text);if(!s)return 'No matching SOP subcategory found';s.name=input.new_name;save();return 'SOP subcategory renamed to: '+input.new_name;}
+    if(name==='delete_sop_subcategory'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.match_text);if(!s)return 'No matching SOP subcategory found';c.subcategories=c.subcategories.filter(x=>x.id!==s.id);save();return 'Deleted SOP subcategory: '+s.name;}
+    if(name==='add_sop_practice'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.subcategory_match);if(!s)return 'No matching SOP subcategory found';const id=genId();s.practices.push({id,text:input.text,personResponsible:input.owner||'',frequency:input.frequency||'',issues:[]});save();return 'SOP practice added: '+input.text;}
+    if(name==='edit_sop_practice'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.subcategory_match);if(!s)return 'No matching SOP subcategory found';const p=sopFindPracQ(s,input.match_text);if(!p)return 'No matching SOP practice found';if(input.new_text)p.text=input.new_text;if(input.owner!==undefined)p.personResponsible=input.owner;if(input.frequency!==undefined)p.frequency=input.frequency;save();return 'SOP practice updated';}
+    if(name==='delete_sop_practice'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.subcategory_match);if(!s)return 'No matching SOP subcategory found';const p=sopFindPracQ(s,input.match_text);if(!p)return 'No matching SOP practice found';s.practices=s.practices.filter(x=>x.id!==p.id);save();return 'Deleted SOP practice: '+p.text;}
+    if(name==='add_sop_issue'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.subcategory_match);if(!s)return 'No matching SOP subcategory found';const p=sopFindPracQ(s,input.practice_match);if(!p)return 'No matching SOP practice found';const id=genId();if(!p.issues)p.issues=[];p.issues.push({id,text:input.text});save();return 'SOP issue logged: '+input.text;}
+    if(name==='delete_sop_issue'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.subcategory_match);if(!s)return 'No matching SOP subcategory found';const p=sopFindPracQ(s,input.practice_match);if(!p)return 'No matching SOP practice found';const iss=(p.issues||[]).find(i=>(i.text||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!iss)return 'No matching SOP issue found';p.issues=p.issues.filter(x=>x.id!==iss.id);save();return 'Deleted SOP issue';}
+    if(name==='add_library_category'){if(!state.library.categories.includes(input.name))state.library.categories.push(input.name);save();return 'Library category added: '+input.name;}
+    if(name==='delete_library_category'){const cat=state.library.categories.find(c=>c.toLowerCase().includes(input.match_text.toLowerCase()));if(!cat)return 'No matching Library category found';state.library.categories=state.library.categories.filter(c=>c!==cat);save();return 'Deleted Library category: '+cat;}
+    if(name==='add_library_document'){if(!state.library.categories.includes(input.category))state.library.categories.push(input.category);state.library.files.push({id:genId(),name:input.name,category:input.category,type:'text',sizeKB:(input.content||'').length/1024,uploadedAt:today(),lastModifiedAt:today(),status:'ok',extractedText:(input.content||'').slice(0,12000)});save();return 'Saved to Library: '+input.name+' ('+input.category+')';}
+    if(name==='edit_library_document'){const f=state.library.files.find(f=>(f.name||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!f)return 'No matching Library document found';if(input.new_name)f.name=input.new_name;if(input.new_category){if(!state.library.categories.includes(input.new_category))state.library.categories.push(input.new_category);f.category=input.new_category;}f.lastModifiedAt=today();save();return 'Library document updated: '+f.name;}
+    if(name==='delete_library_document'){const f=state.library.files.find(f=>(f.name||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!f)return 'No matching Library document found';if(f.storagePath && fbStorage){ fbStorage.ref(f.storagePath).delete().catch(err=>console.warn('storage delete error',err)); }state.library.files=state.library.files.filter(x=>x.id!==f.id);save();return 'Deleted from Library: '+f.name;}
+    if(name==='add_participant'){if(state.participants.find(p=>p.name.toLowerCase()===input.name.toLowerCase()))return input.name+' is already a participant';state.participants.push({id:state.nextPartId++,name:input.name});save();return 'Participant added: '+input.name;}
+    if(name==='delete_participant'){const p=state.participants.find(p=>p.name.toLowerCase().includes(input.match_text.toLowerCase()));if(!p)return 'No matching participant found';state.participants=state.participants.filter(x=>x.id!==p.id);save();return 'Removed participant: '+p.name;}
+    if(name==='export_excel'){
+      try{
+        const outWb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(outWb,XLSX.utils.json_to_sheet(input.rows||[]),'Output');
+        XLSX.writeFile(outWb,`${(input.filename||'output').replace(/[^a-z0-9]/gi,'_')}.xlsx`);
+        return `Downloaded ${(input.rows||[]).length} rows as ${input.filename}.xlsx`;
+      }catch(err){ return 'Failed to generate file: '+err.message; }
+    }
+    return 'Unknown tool: '+name;
+  }catch(err){return 'Error executing '+name+': '+err.message;}
+}
+function buildChatHistoryIndex(){
+  const sessions = [...state.chatSessions].sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+  if(!sessions.length) return '(no past chat sessions yet)';
+  return sessions.map(s=>`"${s.title||'Untitled'}" (${(s.updatedAt||'').slice(0,10)}, ${s.messages?.length||0} messages)`).join('; ');
+}
+function searchChatHistory(query){
+  const q = query.toLowerCase();
+  const hits = [];
+  state.chatSessions.forEach(s=>{
+    (s.messages||[]).forEach((m,idx)=>{
+      if(m.text && m.text.toLowerCase().includes(q)){
+        const context = (s.messages||[]).slice(Math.max(0,idx-1), idx+2).map(mm=>`${mm.role==='user'?'Sudharsan':'Sonnet'}: ${mm.text}`).join('\n');
+        hits.push({session:s.title||'Untitled', date:(s.updatedAt||'').slice(0,10), context});
+      }
+    });
+  });
+  if(!hits.length) return `No past chat mentions found for "${query}".`;
+  const capped = hits.slice(0,8);
+  return capped.map(h=>`[Chat: "${h.session}", ${h.date}]\n${h.context}`).join('\n---\n') + (hits.length>8?`\n(${hits.length-8} more matches not shown)`:'');
+}
+function buildStateSummary(){
+  let libExcerpt = state.library.files.filter(f=>f.status==='ok').map(f=>`[${f.category}] ${f.name}:\n${(f.extractedText||'').slice(0,2500)}`).join('\n---\n');
+  if(libExcerpt.length > 40000) libExcerpt = libExcerpt.slice(0,40000) + '\n...(truncated, ask about a specific document to see more)';
+  return JSON.stringify({
+    today: today(),
+    participants: state.participants.map(p=>p.name),
+    meetings: state.meetings.map(m=>({id:m.id,title:m.title,date:m.date,cw:m.cw,participants:m.participants,notes:m.notes,actions:m.actions})),
+    standaloneActions: state.standaloneActions,
+    daily: state.daily,
+    appointments: state.appointments,
+    notes: state.notes.map(n=>({title:n.title,content:n.content,date:(n.updatedAt||n.createdAt||'').slice(0,10)})),
+    workSOP: state.sop.map(c=>({category:c.name,subcategories:c.subcategories.map(s=>({subcategory:s.name,practices:s.practices.map(p=>({practice:p.text,personResponsible:p.personResponsible,frequency:p.frequency,issues:p.issues.map(i=>i.text)}))}))})),
+    compliance: state.compliance,
+    misOps: state.misOps.map(o=>({name:o.name,instructions:o.instructions,exampleInputSample:o.exampleInput?o.exampleInput.slice(0,10):undefined,exampleOutputSample:o.exampleOutput?o.exampleOutput.slice(0,10):undefined})),
+    libraryFileIndex: state.library.files.map(f=>({name:f.name,category:f.category,status:f.status}))
+  }) + '\n\nLIBRARY DOCUMENT CONTENTS:\n' + (libExcerpt || '(no documents indexed yet)') + '\n\nPAST CHAT SESSIONS (titles only — use the search_chat_history tool if the current question might relate to something discussed before answering):\n' + buildChatHistoryIndex();
+}
+
+// ═══════════════════════════════ VOICE INPUT ═══════════════════════════════
+let recognition=null, isListening=false;
+function initVoice(){
+  if(recognition) return;
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR)return;
+  recognition=new SR(); recognition.continuous=false; recognition.interimResults=false; recognition.lang='en-IN';
+  recognition.onresult=(e)=>{const t=e.results[0][0].transcript; const inp=document.getElementById('chat-input'); if(inp) inp.value=(inp.value?inp.value+' ':'')+t;};
+  recognition.onend=()=>{isListening=false;const m=document.getElementById('chat-mic'); if(m)m.classList.remove('listening');};
+  recognition.onerror=()=>{isListening=false;const m=document.getElementById('chat-mic'); if(m)m.classList.remove('listening');};
+}
+function toggleMic(){
+  if(!recognition){showToast('Voice input not supported — use Chrome.','warn');return;}
+  if(isListening){recognition.stop();isListening=false;document.getElementById('chat-mic').classList.remove('listening');}
+  else{recognition.start();isListening=true;document.getElementById('chat-mic').classList.add('listening');}
+}
+
+// ═══════════════════════════════ INIT ═══════════════════════════════
+window.addEventListener('resize',()=>renderView());
+switchModule('meetings');
+initFirebase();
+</script>
+</body>
+</html>
