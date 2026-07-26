@@ -7,6 +7,16 @@ the app itself (login screen and sidebar footer) — see `APP_VERSION` near the
 top of the `<script>` block in `index.html`. If the number you see in the app
 matches the latest entry below, you're on the current version.
 
+## v1.3.2 — 2026-07-26
+
+- Fixed the AI chat assistant crashing with "Cannot read properties of
+  undefined (reading 'filter')" on every message. The chat code assumed the
+  AI service's response always included a `content` array; when it didn't
+  (and wasn't a recognized error shape either), it crashed instead of
+  telling you what actually came back. It now shows the raw response in the
+  chat instead of crashing, so if this happens again we can see the real
+  cause immediately.
+
 ## v1.3.1 — 2026-07-26
 
 - Hotfix: the v1.3.0 commit was corrupted in transit (the file got truncated
