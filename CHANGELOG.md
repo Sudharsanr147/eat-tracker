@@ -7,6 +7,19 @@ the app itself (login screen and sidebar footer) — see `APP_VERSION` near the
 top of the `<script>` block in `index.html`. If the number you see in the app
 matches the latest entry below, you're on the current version.
 
+## v1.4.0 — 2026-07-26
+
+- Reordered the left sidebar menu: Chat, Daily Activities, Action Items,
+  Notes, Calendar, Meetings, Work SOP, Compliance Manager, MIS Reports,
+  Library.
+- Added an edit (✎) option to Action Items — works for both standalone
+  actions and actions linked to a meeting.
+- Added an edit (✎) option to Daily Activities — click it to edit the
+  activity text in place.
+- The AI chat assistant can now edit Daily Activities too (it already could
+  edit Action Items) — e.g. "change 'call vendor' to 'call vendor about
+  invoice'".
+
 ## v1.3.3 — 2026-07-26
 
 - Fixed the real cause of the chat crash: Firebase's database silently

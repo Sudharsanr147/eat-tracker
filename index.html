@@ -411,15 +411,15 @@ header h1{font-size:16px;}.brand-sub{display:none;}.logo-badge{width:30px;height
     <div class="mob-drawer-head">Menu <span class="vp-close" onclick="closeAllMobDrawers()">✕</span></div>
     <div class="sb-label">Modules</div>
     <div class="mod-item" data-mod="chat" onclick="switchModule('chat')">💬 Chat</div>
-    <div class="mod-item active" data-mod="meetings" onclick="switchModule('meetings')">📖 Meetings</div>
-    <div class="mod-item" data-mod="calendar" onclick="switchModule('calendar')">📅 Calendar</div>
-    <div class="mod-item" data-mod="actions" onclick="switchModule('actions')">☑️ Action Items</div>
     <div class="mod-item" data-mod="daily" onclick="switchModule('daily')">✅ Daily Activities</div>
+    <div class="mod-item" data-mod="actions" onclick="switchModule('actions')">☑️ Action Items</div>
     <div class="mod-item" data-mod="notes" onclick="switchModule('notes')">🗒️ Notes</div>
+    <div class="mod-item" data-mod="calendar" onclick="switchModule('calendar')">📅 Calendar</div>
+    <div class="mod-item active" data-mod="meetings" onclick="switchModule('meetings')">📖 Meetings</div>
+    <div class="mod-item" data-mod="sop" onclick="switchModule('sop')">🌳 Work SOP</div>
     <div class="mod-item" data-mod="compliance" onclick="switchModule('compliance')">📋 Compliance Manager</div>
     <div class="mod-item" data-mod="mis" onclick="switchModule('mis')">📊 MIS Reports</div>
     <div class="mod-item" data-mod="library" onclick="switchModule('library')">🗄️ Library</div>
-    <div class="mod-item" data-mod="sop" onclick="switchModule('sop')">🌳 Work SOP</div>
     <div class="sb-label" id="sub-filter-label">Views</div>
     <div id="sub-filters"></div>
     <div class="sb-bottom">
@@ -675,7 +675,7 @@ header h1{font-size:16px;}.brand-sub{display:none;}.logo-badge{width:30px;height
 // redeployed, so the version shown in the app (login screen + sidebar footer)
 // always reflects what's actually live. See CHANGELOG.md for the history
 // behind each version number.
-const APP_VERSION = '1.3.3';
+const APP_VERSION = '1.4.0';
 const APP_UPDATED = '2026-07-26';
 function renderAppVersion(){
   const [y,m,d] = APP_UPDATED.split('-');
@@ -719,7 +719,7 @@ let state = normalizeState(JSON.parse(localStorage.getItem('eat-v1')||'null') ||
   auditLog:[],
   nextPartId:2
 });
-let activeModule='meetings', currentFilter='all', editingId=null, selectedId=null, activeLibCategory='all', activeChatSessionId=null;
+let activeModule='meetings', currentFilter='all', editingId=null, selectedId=null, activeLibCategory='all', activeChatSessionId=null, editingActionSource=null, editingDailyId=null;
 
 function _saveLocal(){ localStorage.setItem('eat-v1', JSON.stringify(state)); }
 function save(){ _saveLocal(); if(syncEnabled && fbDb && fbSyncPath && !isSyncing){ clearTimeout(window._fbSaveTimer); window._fbSaveTimer=setTimeout(()=>pushToCloud(),1500); } }
@@ -946,10 +946,24 @@ function renderActionsView(area){
     <td style="color:var(--muted);font-size:15.5px">${a.source==='meeting'?esc(a.meetingTitle):'Standalone'}</td>
     <td>${fmt(a.due)}</td><td>${pill(a)}</td>
     <td style="white-space:nowrap">
+      <span class="row-btn" onclick='editActionItem(${JSON.stringify(a.id)},"${a.source}")'>✎</span>
       <span class="row-btn" onclick='toggleActionDone(${JSON.stringify(a.id)},"${a.source}")'>${a.done?'↺':'✓'}</span>
       <span class="row-btn rbdel" onclick='deleteActionItem(${JSON.stringify(a.id)},"${a.source}")'>✕</span>
     </td></tr>`;});
   html+='</tbody></table>'; area.innerHTML=html;
+}
+function editActionItem(id,source){
+  let a=null;
+  if(source==='meeting'){for(const m of state.meetings){const idx=(m.actions||[]).findIndex((x,i)=>(x.id||`${m.id}_${i}`)===id);if(idx>-1){a=m.actions[idx];break;}}}
+  else{a=state.standaloneActions.find(a=>a.id===id);}
+  if(!a)return;
+  editingId=id; editingActionSource=source;
+  document.getElementById('action-modal-title').textContent='Edit Action Item';
+  document.getElementById('a-text').value=a.text||'';
+  populateOwnerSelect();
+  document.getElementById('a-owner').value=a.owner||'';
+  document.getElementById('a-due').value=a.due||'';
+  openModal('action-modal');
 }
 function toggleActionDone(id,source){
   let txt='';
@@ -975,10 +989,18 @@ function renderDailyView(area){
   list.sort((a,b)=>(a.done===b.done)?0:(a.done?1:-1));
   const dl=document.getElementById('daily-list');
   if(list.length===0){dl.innerHTML='<div class="empty-state">✅<br>No daily activities yet.</div>';return;}
-  dl.innerHTML = list.map(d=>`<div class="daily-item"><div class="daily-check ${d.done?'done':''}" onclick="toggleDailyDone('${d.id}')"></div><div class="daily-txt ${d.done?'done':''}">${esc(d.text)}</div><span class="row-btn rbdel" onclick="deleteDaily('${d.id}')">✕</span></div>`).join('');
+  dl.innerHTML = list.map(d=>{
+    if(d.id===editingDailyId){
+      return `<div class="daily-item"><input type="text" id="daily-edit-input-${d.id}" value="${esc(d.text)}" style="flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;color:var(--text);font-size:17px;outline:none;" onkeydown="if(event.key==='Enter')saveDailyEdit('${d.id}');if(event.key==='Escape')cancelDailyEdit();"/><span class="row-btn" onclick="saveDailyEdit('${d.id}')">💾</span><span class="row-btn rbdel" onclick="cancelDailyEdit()">✕</span></div>`;
+    }
+    return `<div class="daily-item"><div class="daily-check ${d.done?'done':''}" onclick="toggleDailyDone('${d.id}')"></div><div class="daily-txt ${d.done?'done':''}">${esc(d.text)}</div><span class="row-btn" onclick="editDaily('${d.id}')">✎</span><span class="row-btn rbdel" onclick="deleteDaily('${d.id}')">✕</span></div>`;
+  }).join('');
 }
 function quickAddDaily(){const inp=document.getElementById('daily-quick-input');const val=inp.value.trim();if(!val)return;state.daily.push({id:genId(),text:val,done:false,addedAt:today()});inp.value='';save();renderView();}
 function toggleDailyDone(id){const d=state.daily.find(d=>d.id===id);if(d){d.done=!d.done;logAudit('Daily Activities','edit','Toggled status: '+(d.text||''));}save();renderView();}
+function editDaily(id){editingDailyId=id;renderView();setTimeout(()=>{const el=document.getElementById('daily-edit-input-'+id);if(el){el.focus();el.select();}},0);}
+function saveDailyEdit(id){const inp=document.getElementById('daily-edit-input-'+id);const val=inp?inp.value.trim():'';if(!val){alert('Enter activity text');return;}const d=state.daily.find(d=>d.id===id);if(d){d.text=val;logAudit('Daily Activities','edit','Edited activity: '+val);}editingDailyId=null;save();renderView();}
+function cancelDailyEdit(){editingDailyId=null;renderView();}
 function deleteDaily(id){const d=state.daily.find(d=>d.id===id);state.daily=state.daily.filter(d=>d.id!==id);logAudit('Daily Activities','delete','Deleted activity: '+(d?d.text||'':''));save();renderView();}
 
 // ---------- NOTES ----------
@@ -1822,7 +1844,7 @@ let currentParticipants=[];
 function openAddModal(){
   if(activeModule==='meetings')openAddMeetingModal();
   else if(activeModule==='calendar'){openAppointmentModal(calSelectedDate);}
-  else if(activeModule==='actions'){editingId=null;document.getElementById('action-modal-title').textContent='Add Action Item';document.getElementById('a-text').value='';populateOwnerSelect();document.getElementById('a-due').value='';openModal('action-modal');}
+  else if(activeModule==='actions'){editingId=null;editingActionSource=null;document.getElementById('action-modal-title').textContent='Add Action Item';document.getElementById('a-text').value='';populateOwnerSelect();document.getElementById('a-due').value='';openModal('action-modal');}
   else if(activeModule==='compliance'){editingId=null;document.getElementById('compliance-modal-title').textContent='Add Compliance Item';document.getElementById('c-item').value='';document.getElementById('c-freq').value='Monthly';document.getElementById('c-due').value='';document.getElementById('c-notes').value='';openModal('compliance-modal');}
   else if(activeModule==='mis'){editingId=null;document.getElementById('mis-modal-title').textContent='New MIS Operation';document.getElementById('mis-name').value='';document.getElementById('mis-instructions').value='';openModal('mis-modal');}
   else if(activeModule==='notes'){openAddNoteModal();}
@@ -1863,7 +1885,24 @@ function toggleMeetingAction(mid,idx){const m=state.meetings.find(m=>m.id===mid)
 
 // ═══════════════════════════════ STANDALONE ACTIONS ═══════════════════════════════
 function populateOwnerSelect(){document.getElementById('a-owner').innerHTML='<option value="">Owner…</option>'+state.participants.map(p=>`<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('');}
-function saveStandaloneAction(){const text=document.getElementById('a-text').value.trim();if(!text){alert('Enter action text');return;}const owner=document.getElementById('a-owner').value,due=document.getElementById('a-due').value;state.standaloneActions.push({id:genId(),text,owner,due,done:false});save();closeModal('action-modal');renderView();showToast('Action added','success');}
+function saveStandaloneAction(){
+  const text=document.getElementById('a-text').value.trim();
+  if(!text){alert('Enter action text');return;}
+  const owner=document.getElementById('a-owner').value,due=document.getElementById('a-due').value;
+  if(editingId){
+    let a=null;
+    if(editingActionSource==='meeting'){for(const m of state.meetings){const idx=(m.actions||[]).findIndex((x,i)=>(x.id||`${m.id}_${i}`)===editingId);if(idx>-1){a=m.actions[idx];break;}}}
+    else{a=state.standaloneActions.find(a=>a.id===editingId);}
+    if(a)Object.assign(a,{text,owner,due});
+    logAudit('Action Items','edit','Edited action: '+text);
+    editingId=null; editingActionSource=null;
+    save();closeModal('action-modal');renderView();showToast('Action updated','success');
+  }else{
+    state.standaloneActions.push({id:genId(),text,owner,due,done:false});
+    logAudit('Action Items','create','Created action: '+text);
+    save();closeModal('action-modal');renderView();showToast('Action added','success');
+  }
+}
 
 // ═══════════════════════════════ PARTICIPANTS ═══════════════════════════════
 function openManageParts(){renderManageParts();openModal('parts-modal');}
@@ -2011,6 +2050,7 @@ const CHAT_TOOLS=[
   {name:'edit_action',description:'Edit an existing action item by matching part of its text',input_schema:{type:'object',properties:{match_text:{type:'string'},new_text:{type:'string'},owner:{type:'string'},due:{type:'string'},done:{type:'boolean'}},required:['match_text']}},
   {name:'delete_action',description:'Delete an action item by matching part of its text',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
   {name:'add_daily',description:'Add a daily activity/todo item',input_schema:{type:'object',properties:{text:{type:'string'}},required:['text']}},
+  {name:'edit_daily',description:'Edit an existing daily activity/todo item by matching part of its text',input_schema:{type:'object',properties:{match_text:{type:'string'},new_text:{type:'string'},done:{type:'boolean'}},required:['match_text']}},
   {name:'toggle_daily',description:'Mark a daily activity done/undone by matching its text',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
   {name:'delete_daily',description:'Delete a daily activity by matching its text',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
   {name:'add_compliance',description:'Add a compliance/statutory deadline item',input_schema:{type:'object',properties:{item:{type:'string'},freq:{type:'string'},due:{type:'string'},notes:{type:'string'}},required:['item']}},
@@ -2059,6 +2099,7 @@ function execTool(name,input){
       save();return 'Action updated: '+(input.new_text||a.text);}
     if(name==='delete_action'){const a=findActionByMatch(input.match_text);if(!a)return 'No matching action found';if(a.source==='standalone')state.standaloneActions=state.standaloneActions.filter(s=>s.id!==a.id);else{const m=state.meetings.find(m=>m.id===a.meetingId);m.actions.splice(a.idx,1);}save();return 'Action deleted: '+a.text;}
     if(name==='add_daily'){state.daily.push({id:genId(),text:input.text,done:false,addedAt:today()});save();return 'Daily activity added: '+input.text;}
+    if(name==='edit_daily'){const d=state.daily.find(d=>d.text.toLowerCase().includes(input.match_text.toLowerCase()));if(!d)return 'No matching daily item found for: '+input.match_text;if(input.new_text)d.text=input.new_text;if(input.done!==undefined)d.done=input.done;save();return 'Daily activity updated: '+(input.new_text||d.text);}
     if(name==='toggle_daily'){const d=state.daily.find(d=>d.text.toLowerCase().includes(input.match_text.toLowerCase()));if(!d)return 'No matching daily item found';d.done=!d.done;save();return 'Toggled: '+d.text;}
     if(name==='delete_daily'){const d=state.daily.find(d=>d.text.toLowerCase().includes(input.match_text.toLowerCase()));if(!d)return 'No matching daily item found';state.daily=state.daily.filter(x=>x.id!==d.id);save();return 'Deleted: '+d.text;}
     if(name==='add_compliance'){state.compliance.push({id:genId(),item:input.item,freq:input.freq||'Monthly',due:input.due||'',notes:input.notes||''});save();return 'Compliance item added: '+input.item;}
