@@ -1,0 +1,49 @@
+# Changelog
+
+All notable changes to the EAT (Executive Assistant Tracker) app are recorded here.
+
+The version number shown in this file always matches what's displayed inside
+the app itself (login screen and sidebar footer) — see `APP_VERSION` near the
+top of the `<script>` block in `index.html`. If the number you see in the app
+matches the latest entry below, you're on the current version.
+
+## v1.3.0 — 2026-07-26
+
+- Fixed the left sidebar menu items being invisible (but still clickable) on
+  phones — sidebar, chat history, and detail pane are now full-viewport
+  drawers instead of relying on a fragile measured offset.
+- Tables (Meetings, Action Items, Compliance, Library) no longer scroll
+  sideways on narrow screens — rows now stack into cards that wrap and
+  scroll vertically.
+- Calendar day boxes now stack full-width, one below another, with room for
+  2–4 lines of preview text, instead of a cramped grid.
+- Fixed landscape orientation and tablet/iPad sizes falling through to the
+  desktop layout with no visible menu or detail pane — the mobile layout now
+  triggers on short height as well as narrow width.
+- Added a "☰ Chat History" button so the mobile chat-session drawer (which
+  had no way to open it) is now reachable.
+- Added this changelog and an in-app version indicator.
+
+## v1.2.0 — 2026-07-26 (`9e68d45`)
+
+- Fixed mobile menu bar and chat input row layout bugs.
+- Added a delete-chat option to the web UI.
+- Added an audit log for deletions and edits.
+
+## v1.1.1 — 2026-07-26 (`8ff713e`)
+
+- Added a service worker for Android "install to home screen" support.
+
+## v1.1.0 — 2026-07-26 (`5666950`)
+
+- Added Firebase project config and wired up the Cloud Function URL.
+
+## v1.0.1 — 2026-07-26 (`091353b`)
+
+- Renamed `EAT.html` to `index.html`.
+
+## v1.0.0 — 2026-07-26 (`7c19fe0`)
+
+- Initial commit: meetings, action items, daily activities, notes,
+  compliance, MIS reports, library, Work SOP, and the embedded AI chat
+  assistant, backed by Firebase Auth/Realtime Database/Storage.

@@ -85,6 +85,9 @@ header h1 span{color:var(--accent);}
 .sb-badge.danger{background:rgba(232,67,67,.15);border-color:var(--red);color:var(--red);}
 .sb-bottom{padding:10px 14px;margin-top:auto;display:flex;flex-direction:column;gap:5px;}
 .sb-btn{display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:8px;background:var(--surface2);border:1.5px solid var(--border);cursor:pointer;font-size:15px;font-weight:500;}
+.mob-drawer-head{display:none;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:2px solid var(--border);background:var(--surface2);font-family:'Libre Baskerville',serif;font-size:17px;flex-shrink:0;color:var(--text);}
+.mob-drawer-head .vp-close{color:var(--text);}
+.chat-mob-topbar{display:none;align-items:center;gap:8px;padding:10px 14px;border-bottom:2px solid var(--border);background:var(--surface2);cursor:pointer;font-weight:600;font-size:15.5px;flex-shrink:0;color:var(--text);}
 
 .centre{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
 .toolbar{padding:9px 16px;display:flex;align-items:center;gap:8px;border-bottom:2px solid var(--border);background:var(--surface);flex-wrap:wrap;}
@@ -271,8 +274,7 @@ table.reg-table{width:100%;border-collapse:collapse;min-width:640px;}
 .cal-card-actions .row-btn{width:20px;height:20px;font-size:10px;}
 .cal-day-add{background:var(--surface2);border:1.5px solid var(--border);border-radius:6px;width:22px;height:22px;cursor:pointer;font-size:12px;color:var(--text);flex-shrink:0;}
 .cal-day-add:hover{border-color:var(--accent);color:var(--accent);}
-@media(max-width:900px){ .cal-cols{grid-template-columns:repeat(2,1fr);grid-auto-rows:1fr;overflow-y:auto;} }
-@media(max-width:768px){ .chat-fab{ bottom:16px; right:16px; width:46px; height:46px; font-size:21px; } }
+@media(max-width:1000px){ .cal-cols{grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;overflow-y:auto;} }
 .chat-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);gap:8px;text-align:center;padding:30px;}
 
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface);border:2px solid var(--border);border-radius:9px;padding:9px 18px;font-size:16.5px;z-index:999;transition:transform .3s;white-space:nowrap;}
@@ -280,25 +282,67 @@ table.reg-table{width:100%;border-collapse:collapse;min-width:640px;}
 .toast.success{border-color:var(--green);color:var(--green);}
 .toast.warn{border-color:var(--yellow);color:var(--yellow);}
 
-@media(max-width:768px){
+/* ---------- COMPACT MODE ----------
+   Triggers on narrow widths (phones in portrait, small tablets) AND on short
+   heights (phones in landscape, where width alone can exceed a "mobile"
+   threshold). Using max-width OR max-height together means this applies
+   consistently across portrait, landscape, and small tablet/iPad sizes,
+   instead of only ever matching one fixed portrait phone width. */
+@media(max-width:820px),(max-height:560px){
+.chat-fab{ bottom:16px; right:16px; width:46px; height:46px; font-size:21px; }
 header{padding:6px 8px;min-height:50px;overflow:hidden;}
 header h1{font-size:16px;}.brand-sub{display:none;}.logo-badge{width:30px;height:30px;font-size:17px;}
 .header-stats{gap:8px;}.stat-label{display:none;}.stat-num{font-size:16px;}
 .sync-bar{display:none;}.mob-menu-btn{display:flex;align-items:center;justify-content:center;}
 .ticker-bar{top:50px;}
 .app{flex:1;position:relative;min-height:0;}
-.sidebar{position:fixed;top:var(--mob-top,96px);left:0;bottom:0;z-index:190;width:78vw;max-width:280px;transform:translateX(-110%);transition:transform .28s;background:var(--surface)!important;}
+/* Sidebar / chat-sessions / view-pane are pinned to the full viewport
+   (top:0, full height) rather than to a JS-measured offset below the header.
+   This is deliberate: measuring the header's height and feeding it into a
+   CSS variable was fragile (wrong/late measurements, especially right after
+   an orientation change) and could push these panels partly or fully
+   off-screen, which is what made the sidebar look "empty" while still being
+   clickable underneath. Full-viewport drawers can't be mispositioned. */
+.sidebar{position:fixed;top:0;left:0;height:100vh;height:100dvh;bottom:auto;z-index:9000;width:82vw;max-width:300px;transform:translateX(-105%);transition:transform .25s ease;background:var(--surface)!important;box-shadow:none;}
 .sidebar.mob-open{transform:translateX(0);box-shadow:12px 0 40px rgba(0,0,0,.8);}
-.mob-overlay{display:none;position:fixed;top:var(--mob-top,96px);left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:185;}
+.mob-drawer-head{display:flex!important;}
+.mob-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:8990;}
 .mob-overlay.show{display:block;}
 .view-pane{display:none;}
-.view-pane.mob-show{display:flex;position:fixed;top:var(--mob-top,96px);left:0;right:0;bottom:0;z-index:150;width:100%!important;border-left:none;}
-.reg-table{min-width:560px;}
+.view-pane.mob-show{display:flex;position:fixed;top:0;left:0;right:0;bottom:0;height:100vh;height:100dvh;z-index:8995;width:100%!important;border-left:none;}
 .modal{padding:16px;border-radius:16px 16px 0 0;position:fixed;bottom:0;left:0;right:0;width:100%!important;max-height:88vh;margin:0;}
 .overlay{align-items:flex-end;padding:0;}
 .m-grid.tri{grid-template-columns:1fr 1fr;}
-.chat-sessions{position:fixed;top:var(--mob-top,96px);left:0;bottom:0;z-index:160;width:78vw;max-width:280px;transform:translateX(-110%);transition:transform .28s;}
-.chat-sessions.mob-open{transform:translateX(0);}
+.chat-sessions{position:fixed;top:0;left:0;height:100vh;height:100dvh;bottom:auto;z-index:8997;width:82vw;max-width:300px;transform:translateX(-105%);transition:transform .25s ease;}
+.chat-sessions.mob-open{transform:translateX(0);box-shadow:12px 0 40px rgba(0,0,0,.8);}
+.chat-mob-topbar{display:flex!important;}
+
+/* ---- Tables: fit the screen width, no horizontal scrolling ----
+   Each row becomes a stacked "card" and each cell becomes its own line,
+   labelled with the column header (set as a data-label attribute by
+   applyMobileTableLabels()). The user scrolls the page vertically to see
+   every column instead of scrolling the table sideways. */
+.reg-table{min-width:0;}
+.reg-table thead{display:none;}
+.reg-table,.reg-table tbody,.reg-table tr{display:block;width:100%;}
+.reg-table tbody tr{border:1.5px solid var(--border);border-radius:10px;margin-bottom:10px;padding:4px 10px;background:var(--surface);}
+.reg-table td{display:flex;align-items:flex-start;gap:10px;border-right:none;border-bottom:1px dashed var(--border);padding:8px 2px;}
+.reg-table td:last-child{border-bottom:none;}
+.reg-table td::before{content:attr(data-label);flex:0 0 96px;min-width:96px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding-top:1px;}
+.reg-table td:not([data-label]),.reg-table td[data-label=""]{padding-left:2px;}
+.reg-table td:not([data-label])::before,.reg-table td[data-label=""]::before{content:none;flex:0;min-width:0;}
+
+/* ---- Calendar: full-width stacked day boxes instead of a cramped 7-col grid ---- */
+.cal-wrap{height:auto;overflow-y:visible;}
+.cal-dow{display:none;}
+.cal-grid{grid-template-columns:1fr;gap:8px;}
+.cal-day.blank{display:none;}
+.cal-day{flex-direction:row;align-items:center;justify-content:flex-start;text-align:left;min-height:56px;padding:8px 12px;gap:10px;}
+.cal-day-num{font-size:16px;min-width:26px;}
+.cal-day-preview{font-size:13px;white-space:normal;text-align:left;line-height:1.3;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;max-height:none;}
+.cal-cols{grid-template-columns:1fr;overflow:visible;}
+.cal-col{min-height:130px;}
+.cal-col-body{overflow:visible;}
 }
 
 /* ---------- Text wrapping: prefer wrapping over truncation ---------- */
@@ -323,6 +367,9 @@ header h1{font-size:16px;}.brand-sub{display:none;}.logo-badge{width:30px;height
 .login-card button{width:100%;background:var(--accent);color:var(--on-accent);border:none;border-radius:8px;padding:11px;font-size:16.5px;font-weight:700;cursor:pointer;margin-top:4px;}
 .login-card button:disabled{opacity:.5;}
 .login-error{color:var(--red);font-size:14.5px;margin-top:8px;text-align:center;min-height:18px;}
+.app-version{font-size:12px;color:var(--muted);text-align:center;letter-spacing:.3px;}
+.app-version.sb-version{padding:8px 14px 4px;margin-top:2px;border-top:1px dashed var(--border);}
+.login-card .app-version{margin-top:14px;}
 </style>
 </head>
 <body>
@@ -335,6 +382,7 @@ header h1{font-size:16px;}.brand-sub{display:none;}.logo-badge{width:30px;height
     <input type="password" id="login-password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')signInUser()"/>
     <button id="login-btn" onclick="signInUser()">Sign In</button>
     <div class="login-error" id="login-error"></div>
+    <div class="app-version" id="app-version-login"></div>
   </div>
 </div>
 
@@ -357,9 +405,10 @@ header h1{font-size:16px;}.brand-sub{display:none;}.logo-badge{width:30px;height
 
 <div class="ticker-bar"><div class="ticker-track" id="ticker-track"></div></div>
 
-<div class="mob-overlay" id="mob-overlay" onclick="closeMobSidebar()"></div>
+<div class="mob-overlay" id="mob-overlay" onclick="closeAllMobDrawers()"></div>
 <div class="app">
   <div class="sidebar" id="sidebar">
+    <div class="mob-drawer-head">Menu <span class="vp-close" onclick="closeAllMobDrawers()">✕</span></div>
     <div class="sb-label">Modules</div>
     <div class="mod-item" data-mod="chat" onclick="switchModule('chat')">💬 Chat</div>
     <div class="mod-item active" data-mod="meetings" onclick="switchModule('meetings')">📖 Meetings</div>
@@ -379,6 +428,7 @@ header h1{font-size:16px;}.brand-sub{display:none;}.logo-badge{width:30px;height
       <div class="sb-btn" onclick="openModal('sync-modal')" style="color:var(--accent);border-color:var(--accent)">☁️ Cloud Sync</div>
       <div class="sb-btn" onclick="openModal('export-modal')" style="color:var(--green);border-color:var(--green)">📦 Export / Import</div>
       <div class="sb-btn" onclick="openAccountModal()" style="color:var(--purple);border-color:var(--purple)">👤 Account</div>
+      <div class="app-version sb-version" id="app-version-sidebar"></div>
     </div>
   </div>
 
@@ -620,6 +670,21 @@ header h1{font-size:16px;}.brand-sub{display:none;}.logo-badge{width:30px;height
 <div class="toast" id="toast"></div>
 
 <script>
+// ═══════════════════════════════ APP VERSION ═══════════════════════════════
+// Bump APP_VERSION and update APP_UPDATED any time index.html is changed and
+// redeployed, so the version shown in the app (login screen + sidebar footer)
+// always reflects what's actually live. See CHANGELOG.md for the history
+// behind each version number.
+const APP_VERSION = '1.3.0';
+const APP_UPDATED = '2026-07-26';
+function renderAppVersion(){
+  const [y,m,d] = APP_UPDATED.split('-');
+  const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const label = 'v'+APP_VERSION+' · Updated '+parseInt(d)+' '+mo[parseInt(m)-1]+' '+y;
+  const a = document.getElementById('app-version-login'); if(a) a.textContent = label;
+  const b = document.getElementById('app-version-sidebar'); if(b) b.textContent = label;
+}
+
 // ═══════════════════════════════ STATE ═══════════════════════════════
 let state = JSON.parse(localStorage.getItem('eat-v1')||'null') || {
   participants:[{id:1,name:'Sudharsan'}],
@@ -710,7 +775,7 @@ function switchModule(mod){
   document.getElementById('view-pane').classList.add('hidden');
   renderSubFilters(); renderView();
   const fab=document.getElementById('chat-fab'); if(fab) fab.style.display = (mod==='chat') ? 'none' : 'flex';
-  if(window.innerWidth<=768) closeMobSidebar();
+  if(isCompactView()) closeAllMobDrawers();
 }
 
 function renderSubFilters(){
@@ -818,6 +883,7 @@ function renderView(){
   else if(activeModule==='library') renderLibraryView(area);
   else if(activeModule==='sop') renderSopView(area);
   else if(activeModule==='chat') renderChatView(area);
+  applyMobileTableLabels(area);
 }
 
 // ---------- MEETINGS ----------
@@ -1554,10 +1620,12 @@ if(typeof pdfjsLib !== 'undefined'){ pdfjsLib.GlobalWorkerOptions.workerSrc = 'h
 function renderChatView(area){
   area.innerHTML = `<div class="chat-module">
     <div class="chat-sessions" id="chat-sessions">
+      <div class="mob-drawer-head">Chats <span class="vp-close" onclick="closeAllMobDrawers()">✕</span></div>
       <button class="chat-new-btn" onclick="newChatSession()">＋ New Chat</button>
       <div id="chat-session-list"></div>
     </div>
     <div class="chat-main">
+      <div class="chat-mob-topbar" onclick="toggleChatSessions()">☰ Chat History</div>
       <div class="chat-msgs" id="chat-msgs"></div>
       <div id="chat-attach-chips" style="display:flex;gap:6px;flex-wrap:wrap;padding:0 20px;max-width:760px;margin:0 auto;width:100%;"></div>
       <div class="chat-input-row">
@@ -1748,7 +1816,7 @@ function deleteMeeting(id){if(!confirm('Delete this meeting and its action items
 async function extractActionsAI(){const notes=document.getElementById('f-notes').value.trim();if(!notes){showToast('Write meeting notes first.','warn');return;}if(!currentUser){showToast('Sign in first','warn');return;}const btn=document.getElementById('ai-extract-btn');btn.disabled=true;btn.textContent='✨ Extracting…';const names=currentParticipants.length?currentParticipants.join(', '):state.participants.map(p=>p.name).join(', ');try{const data=await callClaude({model:'claude-sonnet-4-6',max_tokens:1000,system:`Extract action items from meeting notes. Today: ${today()}. Participants: ${names||'none'}. Return ONLY a JSON array, no markdown. Each: {"text":"...","owner":"name or empty","due":"YYYY-MM-DD or empty"}.`,messages:[{role:'user',content:notes}]});if(data.error){showToast('API error: '+data.error.message,'warn');return;}const text=data.content?.[0]?.text||'[]';const parsed=JSON.parse(text.replace(/```json|```/g,'').trim());if(!Array.isArray(parsed)||parsed.length===0)showToast('No action items detected.','info');else{const existing=readActionRows().map(a=>a.text);parsed.forEach(a=>{if(!existing.includes(a.text))addActionRow(a);});showToast(`✅ Extracted ${parsed.length} item(s)`,'success');}}catch(err){showToast('AI extraction failed: '+err.message,'warn');}finally{btn.disabled=false;btn.textContent='✨ Extract Action Items with AI';}}
 
 // ═══════════════════════════════ VIEW PANE (Meetings) ═══════════════════════════════
-function openMeetingView(id){selectedId=id;const pane=document.getElementById('view-pane');pane.classList.remove('hidden');if(window.innerWidth<=768)pane.classList.add('mob-show');renderMeetingViewPane();}
+function openMeetingView(id){selectedId=id;const pane=document.getElementById('view-pane');pane.classList.remove('hidden');if(isCompactView())pane.classList.add('mob-show');renderMeetingViewPane();}
 function closeViewPane(){selectedId=null;const pane=document.getElementById('view-pane');pane.classList.add('hidden');pane.classList.remove('mob-show');document.getElementById('vp-content').innerHTML='<div class="vp-empty">👆<p>Click any item to view details</p></div>';}
 function renderMeetingViewPane(){
   const m=state.meetings.find(m=>m.id===selectedId); if(!m){closeViewPane();return;}
@@ -1795,8 +1863,26 @@ function renderAuditLog(){
 function openModal(id){document.getElementById(id).classList.add('show');}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
 document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');}));
-function toggleMobSidebar(){const sb=document.getElementById('sidebar'),ov=document.getElementById('mob-overlay');const open=sb.classList.toggle('mob-open');if(ov)ov.classList.toggle('show',open);}
+function isCompactView(){ return window.matchMedia('(max-width:820px),(max-height:560px)').matches; }
+function toggleMobSidebar(){const sb=document.getElementById('sidebar'),ov=document.getElementById('mob-overlay');const cs=document.getElementById('chat-sessions');if(cs)cs.classList.remove('mob-open');const open=sb.classList.toggle('mob-open');if(ov)ov.classList.toggle('show',open);}
 function closeMobSidebar(){document.getElementById('sidebar').classList.remove('mob-open');const ov=document.getElementById('mob-overlay');if(ov)ov.classList.remove('show');}
+function toggleChatSessions(){const cs=document.getElementById('chat-sessions');if(!cs)return;const sb=document.getElementById('sidebar'),ov=document.getElementById('mob-overlay');if(sb)sb.classList.remove('mob-open');const open=cs.classList.toggle('mob-open');if(ov)ov.classList.toggle('show',open);}
+function closeAllMobDrawers(){
+  const sb=document.getElementById('sidebar'); if(sb)sb.classList.remove('mob-open');
+  const cs=document.getElementById('chat-sessions'); if(cs)cs.classList.remove('mob-open');
+  const ov=document.getElementById('mob-overlay'); if(ov)ov.classList.remove('show');
+}
+// Reads the header text of a .reg-table and stamps each <td> with a
+// data-label attribute so the compact/mobile CSS can show "Label: value"
+// stacked cards instead of a table that scrolls sideways off-screen.
+function applyMobileTableLabels(root){
+  root.querySelectorAll('table.reg-table').forEach(table=>{
+    const headers=[...table.querySelectorAll('thead th')].map(th=>th.textContent.replace(/[^\w\s./-]/g,'').trim());
+    table.querySelectorAll('tbody tr').forEach(tr=>{
+      [...tr.children].forEach((td,i)=>{ if(headers[i]) td.setAttribute('data-label',headers[i]); });
+    });
+  });
+}
 function updateMobTopOffset(){
   try{
     const hdr=document.querySelector('header'), tick=document.querySelector('.ticker-bar');
@@ -1956,102 +2042,4 @@ function execTool(name,input){
     if(name==='delete_compliance'){const c=state.compliance.find(c=>c.item.toLowerCase().includes(input.match_text.toLowerCase()));if(!c)return 'No matching compliance item found';state.compliance=state.compliance.filter(x=>x.id!==c.id);save();return 'Deleted: '+c.item;}
     if(name==='add_appointment'){state.appointments.push({id:genId(),title:input.title,date:input.date,fromTime:input.fromTime||'',toTime:input.toTime||'',location:input.location||'',notes:input.notes||''});save();return 'Appointment added: '+input.title+' on '+input.date;}
     if(name==='edit_appointment'){const a=state.appointments.find(a=>a.title.toLowerCase().includes(input.match_text.toLowerCase()));if(!a)return 'No matching appointment found';if(input.new_title)a.title=input.new_title;if(input.date)a.date=input.date;if(input.fromTime!==undefined)a.fromTime=input.fromTime;if(input.toTime!==undefined)a.toTime=input.toTime;if(input.location!==undefined)a.location=input.location;if(input.notes!==undefined)a.notes=input.notes;save();return 'Appointment updated: '+a.title;}
-    if(name==='delete_appointment'){const a=state.appointments.find(a=>a.title.toLowerCase().includes(input.match_text.toLowerCase()));if(!a)return 'No matching appointment found';state.appointments=state.appointments.filter(x=>x.id!==a.id);save();return 'Deleted: '+a.title;}
-    if(name==='search_chat_history'){ return searchChatHistory(input.query); }
-    if(name==='add_note'){state.notes.push({id:genId(),title:input.title||'',content:input.content,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});save();return 'Note saved'+(input.title?': '+input.title:'');}
-    if(name==='edit_note'){const n=state.notes.find(n=>(n.title||'').toLowerCase().includes(input.match_text.toLowerCase())||(n.content||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!n)return 'No matching note found';if(input.new_title!==undefined)n.title=input.new_title;if(input.new_content!==undefined)n.content=input.new_content;n.updatedAt=new Date().toISOString();save();return 'Note updated';}
-    if(name==='delete_note'){const n=state.notes.find(n=>(n.title||'').toLowerCase().includes(input.match_text.toLowerCase())||(n.content||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!n)return 'No matching note found';state.notes=state.notes.filter(x=>x.id!==n.id);save();return 'Note deleted';}
-    if(name==='add_mis_operation'){state.misOps.push({id:genId(),name:input.name,instructions:input.instructions,exampleInput:input.example_input_sample||null,exampleOutput:input.example_output_sample||null,createdAt:today()});save();return 'MIS operation saved: '+input.name+(input.example_input_sample?' (with worked example)':'');}
-    if(name==='edit_mis_operation'){const o=state.misOps.find(o=>(o.name||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!o)return 'No matching MIS operation found';if(input.new_name)o.name=input.new_name;if(input.new_instructions)o.instructions=input.new_instructions;save();return 'MIS operation updated: '+o.name;}
-    if(name==='delete_mis_operation'){const o=state.misOps.find(o=>(o.name||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!o)return 'No matching MIS operation found';state.misOps=state.misOps.filter(x=>x.id!==o.id);save();return 'Deleted MIS operation: '+o.name;}
-    if(name==='add_sop_category'){const id=genId();state.sop.push({id,name:input.name,subcategories:[]});save();return 'SOP category added: '+input.name;}
-    if(name==='edit_sop_category'){const c=sopFindCatQ(input.match_text);if(!c)return 'No matching SOP category found';c.name=input.new_name;save();return 'SOP category renamed to: '+input.new_name;}
-    if(name==='delete_sop_category'){const c=sopFindCatQ(input.match_text);if(!c)return 'No matching SOP category found';state.sop=state.sop.filter(x=>x.id!==c.id);save();return 'Deleted SOP category: '+c.name;}
-    if(name==='add_sop_subcategory'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found for: '+input.category_match;const id=genId();c.subcategories.push({id,name:input.name,practices:[]});save();return 'SOP subcategory added: '+input.name;}
-    if(name==='edit_sop_subcategory'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.match_text);if(!s)return 'No matching SOP subcategory found';s.name=input.new_name;save();return 'SOP subcategory renamed to: '+input.new_name;}
-    if(name==='delete_sop_subcategory'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.match_text);if(!s)return 'No matching SOP subcategory found';c.subcategories=c.subcategories.filter(x=>x.id!==s.id);save();return 'Deleted SOP subcategory: '+s.name;}
-    if(name==='add_sop_practice'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.subcategory_match);if(!s)return 'No matching SOP subcategory found';const id=genId();s.practices.push({id,text:input.text,personResponsible:input.owner||'',frequency:input.frequency||'',issues:[]});save();return 'SOP practice added: '+input.text;}
-    if(name==='edit_sop_practice'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.subcategory_match);if(!s)return 'No matching SOP subcategory found';const p=sopFindPracQ(s,input.match_text);if(!p)return 'No matching SOP practice found';if(input.new_text)p.text=input.new_text;if(input.owner!==undefined)p.personResponsible=input.owner;if(input.frequency!==undefined)p.frequency=input.frequency;save();return 'SOP practice updated';}
-    if(name==='delete_sop_practice'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.subcategory_match);if(!s)return 'No matching SOP subcategory found';const p=sopFindPracQ(s,input.match_text);if(!p)return 'No matching SOP practice found';s.practices=s.practices.filter(x=>x.id!==p.id);save();return 'Deleted SOP practice: '+p.text;}
-    if(name==='add_sop_issue'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.subcategory_match);if(!s)return 'No matching SOP subcategory found';const p=sopFindPracQ(s,input.practice_match);if(!p)return 'No matching SOP practice found';const id=genId();if(!p.issues)p.issues=[];p.issues.push({id,text:input.text});save();return 'SOP issue logged: '+input.text;}
-    if(name==='delete_sop_issue'){const c=sopFindCatQ(input.category_match);if(!c)return 'No matching SOP category found';const s=sopFindSubQ(c,input.subcategory_match);if(!s)return 'No matching SOP subcategory found';const p=sopFindPracQ(s,input.practice_match);if(!p)return 'No matching SOP practice found';const iss=(p.issues||[]).find(i=>(i.text||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!iss)return 'No matching SOP issue found';p.issues=p.issues.filter(x=>x.id!==iss.id);save();return 'Deleted SOP issue';}
-    if(name==='add_library_category'){if(!state.library.categories.includes(input.name))state.library.categories.push(input.name);save();return 'Library category added: '+input.name;}
-    if(name==='delete_library_category'){const cat=state.library.categories.find(c=>c.toLowerCase().includes(input.match_text.toLowerCase()));if(!cat)return 'No matching Library category found';state.library.categories=state.library.categories.filter(c=>c!==cat);save();return 'Deleted Library category: '+cat;}
-    if(name==='add_library_document'){if(!state.library.categories.includes(input.category))state.library.categories.push(input.category);state.library.files.push({id:genId(),name:input.name,category:input.category,type:'text',sizeKB:(input.content||'').length/1024,uploadedAt:today(),lastModifiedAt:today(),status:'ok',extractedText:(input.content||'').slice(0,12000)});save();return 'Saved to Library: '+input.name+' ('+input.category+')';}
-    if(name==='edit_library_document'){const f=state.library.files.find(f=>(f.name||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!f)return 'No matching Library document found';if(input.new_name)f.name=input.new_name;if(input.new_category){if(!state.library.categories.includes(input.new_category))state.library.categories.push(input.new_category);f.category=input.new_category;}f.lastModifiedAt=today();save();return 'Library document updated: '+f.name;}
-    if(name==='delete_library_document'){const f=state.library.files.find(f=>(f.name||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!f)return 'No matching Library document found';if(f.storagePath && fbStorage){ fbStorage.ref(f.storagePath).delete().catch(err=>console.warn('storage delete error',err)); }state.library.files=state.library.files.filter(x=>x.id!==f.id);save();return 'Deleted from Library: '+f.name;}
-    if(name==='add_participant'){if(state.participants.find(p=>p.name.toLowerCase()===input.name.toLowerCase()))return input.name+' is already a participant';state.participants.push({id:state.nextPartId++,name:input.name});save();return 'Participant added: '+input.name;}
-    if(name==='delete_participant'){const p=state.participants.find(p=>p.name.toLowerCase().includes(input.match_text.toLowerCase()));if(!p)return 'No matching participant found';state.participants=state.participants.filter(x=>x.id!==p.id);save();return 'Removed participant: '+p.name;}
-    if(name==='export_excel'){
-      try{
-        const outWb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(outWb,XLSX.utils.json_to_sheet(input.rows||[]),'Output');
-        XLSX.writeFile(outWb,`${(input.filename||'output').replace(/[^a-z0-9]/gi,'_')}.xlsx`);
-        return `Downloaded ${(input.rows||[]).length} rows as ${input.filename}.xlsx`;
-      }catch(err){ return 'Failed to generate file: '+err.message; }
-    }
-    return 'Unknown tool: '+name;
-  }catch(err){return 'Error executing '+name+': '+err.message;}
-}
-function buildChatHistoryIndex(){
-  const sessions = [...state.chatSessions].sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
-  if(!sessions.length) return '(no past chat sessions yet)';
-  return sessions.map(s=>`"${s.title||'Untitled'}" (${(s.updatedAt||'').slice(0,10)}, ${s.messages?.length||0} messages)`).join('; ');
-}
-function searchChatHistory(query){
-  const q = query.toLowerCase();
-  const hits = [];
-  state.chatSessions.forEach(s=>{
-    (s.messages||[]).forEach((m,idx)=>{
-      if(m.text && m.text.toLowerCase().includes(q)){
-        const context = (s.messages||[]).slice(Math.max(0,idx-1), idx+2).map(mm=>`${mm.role==='user'?'Sudharsan':'Sonnet'}: ${mm.text}`).join('\n');
-        hits.push({session:s.title||'Untitled', date:(s.updatedAt||'').slice(0,10), context});
-      }
-    });
-  });
-  if(!hits.length) return `No past chat mentions found for "${query}".`;
-  const capped = hits.slice(0,8);
-  return capped.map(h=>`[Chat: "${h.session}", ${h.date}]\n${h.context}`).join('\n---\n') + (hits.length>8?`\n(${hits.length-8} more matches not shown)`:'');
-}
-function buildStateSummary(){
-  let libExcerpt = state.library.files.filter(f=>f.status==='ok').map(f=>`[${f.category}] ${f.name}:\n${(f.extractedText||'').slice(0,2500)}`).join('\n---\n');
-  if(libExcerpt.length > 40000) libExcerpt = libExcerpt.slice(0,40000) + '\n...(truncated, ask about a specific document to see more)';
-  return JSON.stringify({
-    today: today(),
-    participants: state.participants.map(p=>p.name),
-    meetings: state.meetings.map(m=>({id:m.id,title:m.title,date:m.date,cw:m.cw,participants:m.participants,notes:m.notes,actions:m.actions})),
-    standaloneActions: state.standaloneActions,
-    daily: state.daily,
-    appointments: state.appointments,
-    notes: state.notes.map(n=>({title:n.title,content:n.content,date:(n.updatedAt||n.createdAt||'').slice(0,10)})),
-    workSOP: state.sop.map(c=>({category:c.name,subcategories:c.subcategories.map(s=>({subcategory:s.name,practices:s.practices.map(p=>({practice:p.text,personResponsible:p.personResponsible,frequency:p.frequency,issues:p.issues.map(i=>i.text)}))}))})),
-    compliance: state.compliance,
-    misOps: state.misOps.map(o=>({name:o.name,instructions:o.instructions,exampleInputSample:o.exampleInput?o.exampleInput.slice(0,10):undefined,exampleOutputSample:o.exampleOutput?o.exampleOutput.slice(0,10):undefined})),
-    libraryFileIndex: state.library.files.map(f=>({name:f.name,category:f.category,status:f.status}))
-  }) + '\n\nLIBRARY DOCUMENT CONTENTS:\n' + (libExcerpt || '(no documents indexed yet)') + '\n\nPAST CHAT SESSIONS (titles only — use the search_chat_history tool if the current question might relate to something discussed before answering):\n' + buildChatHistoryIndex();
-}
-
-// ═══════════════════════════════ VOICE INPUT ═══════════════════════════════
-let recognition=null, isListening=false;
-function initVoice(){
-  if(recognition) return;
-  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR)return;
-  recognition=new SR(); recognition.continuous=false; recognition.interimResults=false; recognition.lang='en-IN';
-  recognition.onresult=(e)=>{const t=e.results[0][0].transcript; const inp=document.getElementById('chat-input'); if(inp) inp.value=(inp.value?inp.value+' ':'')+t;};
-  recognition.onend=()=>{isListening=false;const m=document.getElementById('chat-mic'); if(m)m.classList.remove('listening');};
-  recognition.onerror=()=>{isListening=false;const m=document.getElementById('chat-mic'); if(m)m.classList.remove('listening');};
-}
-function toggleMic(){
-  if(!recognition){showToast('Voice input not supported — use Chrome.','warn');return;}
-  if(isListening){recognition.stop();isListening=false;document.getElementById('chat-mic').classList.remove('listening');}
-  else{recognition.start();isListening=true;document.getElementById('chat-mic').classList.add('listening');}
-}
-
-// ═══════════════════════════════ INIT ═══════════════════════════════
-window.addEventListener('resize',()=>renderView());
-switchModule('meetings');
-updateMobTopOffset();
-initFirebase();
-</script>
-</body>
-</html>
+    if(name==='delete_appointment'){const a=state.appointments.find(a=>a.title.toLowerCase().inc
