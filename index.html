@@ -191,9 +191,11 @@ table.reg-table{width:100%;border-collapse:collapse;min-width:640px;}
 .chat-module{display:flex;height:100%;width:100%;}
 .chat-sessions{width:230px;min-width:230px;background:var(--surface2);border-right:2px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
 .chat-new-btn{margin:10px;background:var(--purple);color:var(--on-accent);border:none;border-radius:8px;padding:9px;font-size:16.5px;font-weight:700;cursor:pointer;}
-.chat-session-item{padding:9px 12px;cursor:pointer;font-size:16px;border-left:3px solid transparent;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.chat-session-item{padding:9px 12px;cursor:pointer;font-size:16px;border-left:3px solid transparent;display:flex;align-items:center;justify-content:space-between;gap:6px;}
 .chat-session-item:hover,.chat-session-item.active{background:var(--surface3);}
 .chat-session-item.active{border-left-color:var(--purple);color:var(--purple);}
+.chat-session-item-main{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.chat-session-item .row-btn{width:24px;height:24px;font-size:14px;flex-shrink:0;}
 .chat-session-date{font-size:13.5px;color:var(--muted);}
 .chat-main{flex:1;display:flex;flex-direction:column;min-width:0;}
 .chat-msgs{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;max-width:760px;margin:0 auto;width:100%;}
@@ -285,17 +287,17 @@ header h1{font-size:16px;}.brand-sub{display:none;}.logo-badge{width:30px;height
 .sync-bar{display:none;}.mob-menu-btn{display:flex;align-items:center;justify-content:center;}
 .ticker-bar{top:50px;}
 .app{flex:1;position:relative;min-height:0;}
-.sidebar{position:fixed;top:96px;left:0;bottom:0;z-index:190;width:78vw;max-width:280px;transform:translateX(-110%);transition:transform .28s;background:var(--surface)!important;}
+.sidebar{position:fixed;top:var(--mob-top,96px);left:0;bottom:0;z-index:190;width:78vw;max-width:280px;transform:translateX(-110%);transition:transform .28s;background:var(--surface)!important;}
 .sidebar.mob-open{transform:translateX(0);box-shadow:12px 0 40px rgba(0,0,0,.8);}
-.mob-overlay{display:none;position:fixed;top:96px;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:185;}
+.mob-overlay{display:none;position:fixed;top:var(--mob-top,96px);left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:185;}
 .mob-overlay.show{display:block;}
 .view-pane{display:none;}
-.view-pane.mob-show{display:flex;position:fixed;top:96px;left:0;right:0;bottom:0;z-index:150;width:100%!important;border-left:none;}
+.view-pane.mob-show{display:flex;position:fixed;top:var(--mob-top,96px);left:0;right:0;bottom:0;z-index:150;width:100%!important;border-left:none;}
 .reg-table{min-width:560px;}
 .modal{padding:16px;border-radius:16px 16px 0 0;position:fixed;bottom:0;left:0;right:0;width:100%!important;max-height:88vh;margin:0;}
 .overlay{align-items:flex-end;padding:0;}
 .m-grid.tri{grid-template-columns:1fr 1fr;}
-.chat-sessions{position:fixed;top:96px;left:0;bottom:0;z-index:160;width:78vw;max-width:280px;transform:translateX(-110%);transition:transform .28s;}
+.chat-sessions{position:fixed;top:var(--mob-top,96px);left:0;bottom:0;z-index:160;width:78vw;max-width:280px;transform:translateX(-110%);transition:transform .28s;}
 .chat-sessions.mob-open{transform:translateX(0);}
 }
 
@@ -373,6 +375,7 @@ header h1{font-size:16px;}.brand-sub{display:none;}.logo-badge{width:30px;height
     <div id="sub-filters"></div>
     <div class="sb-bottom">
       <div class="sb-btn" onclick="openManageParts()">⚙️ Manage Participants</div>
+      <div class="sb-btn" onclick="openAuditLog()">🕵️ Audit Log</div>
       <div class="sb-btn" onclick="openModal('sync-modal')" style="color:var(--accent);border-color:var(--accent)">☁️ Cloud Sync</div>
       <div class="sb-btn" onclick="openModal('export-modal')" style="color:var(--green);border-color:var(--green)">📦 Export / Import</div>
       <div class="sb-btn" onclick="openAccountModal()" style="color:var(--purple);border-color:var(--purple)">👤 Account</div>
@@ -564,6 +567,16 @@ header h1{font-size:16px;}.brand-sub{display:none;}.logo-badge{width:30px;height
   </div>
 </div>
 
+<!-- AUDIT LOG -->
+<div class="overlay" id="audit-modal">
+  <div class="modal" style="max-width:640px">
+    <h2>Audit Log</h2>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:10px">Every edit and deletion across the app, most recent first.</div>
+    <div id="audit-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;max-height:400px;overflow-y:auto;"></div>
+    <div class="modal-actions"><button class="btn-primary" onclick="closeModal('audit-modal')">Close</button></div>
+  </div>
+</div>
+
 <!-- ACCOUNT MODAL -->
 <div class="overlay" id="account-modal">
   <div class="modal">
@@ -613,6 +626,7 @@ let state = JSON.parse(localStorage.getItem('eat-v1')||'null') || {
   meetings:[], standaloneActions:[], daily:[], notes:[], compliance:[], misOps:[], sop:[], appointments:[],
   library:{ categories:['Legal Documents','Secretarial Documents','Bank Documents','Financials','MIS Data'], files:[] },
   chatSessions:[],
+  auditLog:[],
   nextPartId:2
 };
 if(!state.library) state.library={categories:['Legal Documents','Secretarial Documents','Bank Documents','Financials','MIS Data'],files:[]};
@@ -620,10 +634,12 @@ if(!state.chatSessions) state.chatSessions=[];
 if(!state.notes) state.notes=[];
 if(!state.sop) state.sop=[];
 if(!state.appointments) state.appointments=[];
+if(!state.auditLog) state.auditLog=[];
 let activeModule='meetings', currentFilter='all', editingId=null, selectedId=null, activeLibCategory='all', activeChatSessionId=null;
 
 function _saveLocal(){ localStorage.setItem('eat-v1', JSON.stringify(state)); }
 function save(){ _saveLocal(); if(syncEnabled && fbDb && fbSyncPath && !isSyncing){ clearTimeout(window._fbSaveTimer); window._fbSaveTimer=setTimeout(()=>pushToCloud(),1500); } }
+function logAudit(module,action,summary){ try{ if(!state.auditLog) state.auditLog=[]; state.auditLog.unshift({id:genId(), ts:new Date().toISOString(), user:(currentUser&&currentUser.email)||'local', module, action, summary:String(summary||'').slice(0,300)}); if(state.auditLog.length>1000) state.auditLog.length=1000; }catch(e){ console.warn('logAudit failed',e); } }
 function today(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function fmt(s){if(!s)return'—';const[y,m,d]=s.split('-');const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return `${d} ${mo[parseInt(m)-1]}`;}
 function esc(s){return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -693,6 +709,7 @@ function switchModule(mod){
   document.getElementById('sop-collapse-btn').style.display = mod==='sop' ? 'inline-block' : 'none';
   document.getElementById('view-pane').classList.add('hidden');
   renderSubFilters(); renderView();
+  const fab=document.getElementById('chat-fab'); if(fab) fab.style.display = (mod==='chat') ? 'none' : 'flex';
   if(window.innerWidth<=768) closeMobSidebar();
 }
 
@@ -850,14 +867,18 @@ function renderActionsView(area){
   html+='</tbody></table>'; area.innerHTML=html;
 }
 function toggleActionDone(id,source){
-  if(source==='meeting'){for(const m of state.meetings){const idx=(m.actions||[]).findIndex((a,i)=>(a.id||`${m.id}_${i}`)===id);if(idx>-1){m.actions[idx].done=!m.actions[idx].done;break;}}}
-  else{const a=state.standaloneActions.find(a=>a.id===id);if(a)a.done=!a.done;}
+  let txt='';
+  if(source==='meeting'){for(const m of state.meetings){const idx=(m.actions||[]).findIndex((a,i)=>(a.id||`${m.id}_${i}`)===id);if(idx>-1){m.actions[idx].done=!m.actions[idx].done;txt=m.actions[idx].text||'';break;}}}
+  else{const a=state.standaloneActions.find(a=>a.id===id);if(a){a.done=!a.done;txt=a.text||'';}}
+  logAudit('Action Items','edit','Toggled status: '+txt);
   save(); renderView();
 }
 function deleteActionItem(id,source){
   if(!confirm('Delete this action item?'))return;
-  if(source==='meeting'){for(const m of state.meetings){const idx=(m.actions||[]).findIndex((a,i)=>(a.id||`${m.id}_${i}`)===id);if(idx>-1){m.actions.splice(idx,1);break;}}}
-  else{state.standaloneActions=state.standaloneActions.filter(a=>a.id!==id);}
+  let txt='';
+  if(source==='meeting'){for(const m of state.meetings){const idx=(m.actions||[]).findIndex((a,i)=>(a.id||`${m.id}_${i}`)===id);if(idx>-1){txt=m.actions[idx].text||'';m.actions.splice(idx,1);break;}}}
+  else{const found=state.standaloneActions.find(a=>a.id===id);txt=found?found.text||'':'';state.standaloneActions=state.standaloneActions.filter(a=>a.id!==id);}
+  logAudit('Action Items','delete','Deleted action: '+txt);
   save(); renderView();
 }
 
@@ -872,8 +893,8 @@ function renderDailyView(area){
   dl.innerHTML = list.map(d=>`<div class="daily-item"><div class="daily-check ${d.done?'done':''}" onclick="toggleDailyDone('${d.id}')"></div><div class="daily-txt ${d.done?'done':''}">${esc(d.text)}</div><span class="row-btn rbdel" onclick="deleteDaily('${d.id}')">✕</span></div>`).join('');
 }
 function quickAddDaily(){const inp=document.getElementById('daily-quick-input');const val=inp.value.trim();if(!val)return;state.daily.push({id:genId(),text:val,done:false,addedAt:today()});inp.value='';save();renderView();}
-function toggleDailyDone(id){const d=state.daily.find(d=>d.id===id);if(d)d.done=!d.done;save();renderView();}
-function deleteDaily(id){state.daily=state.daily.filter(d=>d.id!==id);save();renderView();}
+function toggleDailyDone(id){const d=state.daily.find(d=>d.id===id);if(d){d.done=!d.done;logAudit('Daily Activities','edit','Toggled status: '+(d.text||''));}save();renderView();}
+function deleteDaily(id){const d=state.daily.find(d=>d.id===id);state.daily=state.daily.filter(d=>d.id!==id);logAudit('Daily Activities','delete','Deleted activity: '+(d?d.text||'':''));save();renderView();}
 
 // ---------- NOTES ----------
 function renderNotesView(area){
@@ -911,13 +932,15 @@ function saveNote(){
   if(editingId){
     const n=state.notes.find(n=>n.id===editingId);
     if(n){ n.title=title; n.content=content; n.updatedAt=new Date().toISOString(); }
+    logAudit('Notes','edit','Edited note: '+title);
     editingId=null;
   } else {
     state.notes.push({id:genId(),title,content,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+    logAudit('Notes','create','Created note: '+title);
   }
   save(); closeModal('note-modal'); renderView(); showToast('Note saved','success');
 }
-function deleteNote(id){ if(!confirm('Delete this note?'))return; state.notes=state.notes.filter(n=>n.id!==id); save(); renderView(); }
+function deleteNote(id){ if(!confirm('Delete this note?'))return; const n=state.notes.find(n=>n.id===id); state.notes=state.notes.filter(n=>n.id!==id); logAudit('Notes','delete','Deleted note: '+(n?n.title||'':'')); save(); renderView(); }
 
 // ---------- COMPLIANCE ----------
 function renderComplianceView(area){
@@ -935,8 +958,8 @@ function renderComplianceView(area){
   html+='</tbody></table>'; area.innerHTML=html;
 }
 function editCompliance(id){const c=state.compliance.find(c=>c.id===id);if(!c)return;editingId=id;document.getElementById('compliance-modal-title').textContent='Edit Compliance Item';document.getElementById('c-item').value=c.item;document.getElementById('c-freq').value=c.freq;document.getElementById('c-due').value=c.due||'';document.getElementById('c-notes').value=c.notes||'';openModal('compliance-modal');}
-function saveCompliance(){const item=document.getElementById('c-item').value.trim();if(!item){alert('Enter item name');return;}const freq=document.getElementById('c-freq').value,due=document.getElementById('c-due').value,notes=document.getElementById('c-notes').value.trim();if(editingId){const c=state.compliance.find(c=>c.id===editingId);if(c)Object.assign(c,{item,freq,due,notes});editingId=null;}else state.compliance.push({id:genId(),item,freq,due,notes});save();closeModal('compliance-modal');renderView();showToast('Compliance item saved','success');}
-function deleteCompliance(id){if(!confirm('Delete this compliance item?'))return;state.compliance=state.compliance.filter(c=>c.id!==id);save();renderView();}
+function saveCompliance(){const item=document.getElementById('c-item').value.trim();if(!item){alert('Enter item name');return;}const freq=document.getElementById('c-freq').value,due=document.getElementById('c-due').value,notes=document.getElementById('c-notes').value.trim();if(editingId){const c=state.compliance.find(c=>c.id===editingId);if(c)Object.assign(c,{item,freq,due,notes});logAudit('Compliance','edit','Edited compliance item: '+item);editingId=null;}else{state.compliance.push({id:genId(),item,freq,due,notes});logAudit('Compliance','create','Created compliance item: '+item);}save();closeModal('compliance-modal');renderView();showToast('Compliance item saved','success');}
+function deleteCompliance(id){if(!confirm('Delete this compliance item?'))return;const c=state.compliance.find(c=>c.id===id);state.compliance=state.compliance.filter(c=>c.id!==id);logAudit('Compliance','delete','Deleted compliance item: '+(c?c.item||'':''));save();renderView();}
 
 // ---------- MIS ----------
 function renderMisView(area){
@@ -977,13 +1000,15 @@ async function saveMisOp(){
   if(editingId){
     const o=state.misOps.find(o=>o.id===editingId);
     if(o){ Object.assign(o,{name,instructions}); if(exampleInput){ o.exampleInput=exampleInput; o.exampleOutput=exampleOutput; } }
+    logAudit('MIS Reports','edit','Edited MIS operation: '+name);
     editingId=null;
   } else {
     state.misOps.push({id:genId(),name,instructions,exampleInput,exampleOutput,createdAt:today()});
+    logAudit('MIS Reports','create','Created MIS operation: '+name);
   }
   save(); closeModal('mis-modal'); renderView(); showToast('Operation saved','success');
 }
-function deleteMisOp(id){if(!confirm('Delete this saved operation?'))return;state.misOps=state.misOps.filter(o=>o.id!==id);save();renderView();}
+function deleteMisOp(id){if(!confirm('Delete this saved operation?'))return;const o=state.misOps.find(o=>o.id===id);state.misOps=state.misOps.filter(o=>o.id!==id);logAudit('MIS Reports','delete','Deleted MIS operation: '+(o?o.name||'':''));save();renderView();}
 async function runMisOp(opId, event){
   const file=event.target.files[0]; if(!file)return; const op=state.misOps.find(o=>o.id===opId); if(!op)return;
   if(!currentUser){showToast('Sign in first','warn');return;}
@@ -1070,6 +1095,7 @@ function deleteLibFile(id){
   const f=state.library.files.find(f=>f.id===id);
   if(f && f.storagePath && fbStorage){ fbStorage.ref(f.storagePath).delete().catch(err=>console.warn('storage delete error',err)); }
   state.library.files=state.library.files.filter(f=>f.id!==id);
+  logAudit('Library','delete','Deleted file: '+(f?f.name||'':''));
   save();renderView();
 }
 
@@ -1206,13 +1232,16 @@ function openSopCategoryModal(catId){
 }
 function saveSopCategory(){
   const name = document.getElementById('sop-cat-name').value.trim(); if(!name){alert('Enter a category name');return;}
-  if(sopEditCtx.catId){ const c=findSopCat(sopEditCtx.catId); if(c) c.name=name; }
-  else { const id=genId(); state.sop.push({id,name,subcategories:[]}); sopExpanded.add(id); }
+  if(sopEditCtx.catId){ const c=findSopCat(sopEditCtx.catId); if(c) c.name=name; logAudit('Work SOP','edit','Edited category: '+name); }
+  else { const id=genId(); state.sop.push({id,name,subcategories:[]}); sopExpanded.add(id); logAudit('Work SOP','create','Created category: '+name); }
   save(); closeModal('sop-cat-modal'); renderView(); showToast('Category saved','success');
 }
 function deleteSopCategory(catId){
   if(!confirm('Delete this category and everything inside it?'))return;
-  state.sop = state.sop.filter(c=>c.id!==catId); save(); renderView();
+  const c=findSopCat(catId);
+  state.sop = state.sop.filter(c=>c.id!==catId);
+  logAudit('Work SOP','delete','Deleted category: '+(c?c.name||'':''));
+  save(); renderView();
 }
 
 // ---- CRUD: Subcategory ----
@@ -1225,14 +1254,17 @@ function openSopSubcategoryModal(catId, subId){
 function saveSopSubcategory(){
   const name = document.getElementById('sop-sub-name').value.trim(); if(!name){alert('Enter a subcategory name');return;}
   const cat = findSopCat(sopEditCtx.catId); if(!cat) return;
-  if(sopEditCtx.subId){ const s=findSopSub(sopEditCtx.catId, sopEditCtx.subId); if(s) s.name=name; }
-  else { const id=genId(); cat.subcategories.push({id,name,practices:[]}); sopExpanded.add(cat.id); sopExpanded.add(id); }
+  if(sopEditCtx.subId){ const s=findSopSub(sopEditCtx.catId, sopEditCtx.subId); if(s) s.name=name; logAudit('Work SOP','edit','Edited subcategory: '+name); }
+  else { const id=genId(); cat.subcategories.push({id,name,practices:[]}); sopExpanded.add(cat.id); sopExpanded.add(id); logAudit('Work SOP','create','Created subcategory: '+name); }
   save(); closeModal('sop-sub-modal'); renderView(); showToast('Subcategory saved','success');
 }
 function deleteSopSubcategory(catId, subId){
   if(!confirm('Delete this subcategory and everything inside it?'))return;
   const cat = findSopCat(catId); if(!cat) return;
-  cat.subcategories = cat.subcategories.filter(s=>s.id!==subId); save(); renderView();
+  const s=findSopSub(catId,subId);
+  cat.subcategories = cat.subcategories.filter(s=>s.id!==subId);
+  logAudit('Work SOP','delete','Deleted subcategory: '+(s?s.name||'':''));
+  save(); renderView();
 }
 
 // ---- CRUD: Practice ----
@@ -1256,14 +1288,17 @@ function saveSopPractice(){
   const personResponsible = document.getElementById('sop-prac-owner').value;
   const frequency = document.getElementById('sop-prac-freq').value;
   const sub = findSopSub(sopEditCtx.catId, sopEditCtx.subId); if(!sub) return;
-  if(sopEditCtx.pracId){ const p=findSopPrac(sopEditCtx.catId,sopEditCtx.subId,sopEditCtx.pracId); if(p){ p.text=text; p.personResponsible=personResponsible; p.frequency=frequency; } }
-  else { const id=genId(); sub.practices.push({id,text,personResponsible,frequency,issues:[]}); sopExpanded.add(sub.id); sopExpanded.add(sopEditCtx.catId); }
+  if(sopEditCtx.pracId){ const p=findSopPrac(sopEditCtx.catId,sopEditCtx.subId,sopEditCtx.pracId); if(p){ p.text=text; p.personResponsible=personResponsible; p.frequency=frequency; } logAudit('Work SOP','edit','Edited practice: '+text); }
+  else { const id=genId(); sub.practices.push({id,text,personResponsible,frequency,issues:[]}); sopExpanded.add(sub.id); sopExpanded.add(sopEditCtx.catId); logAudit('Work SOP','create','Created practice: '+text); }
   save(); closeModal('sop-prac-modal'); renderView(); showToast('Practice saved','success');
 }
 function deleteSopPractice(catId, subId, pracId){
   if(!confirm('Delete this practice and its issues?'))return;
   const sub = findSopSub(catId,subId); if(!sub) return;
-  sub.practices = sub.practices.filter(p=>p.id!==pracId); save(); renderView();
+  const p=findSopPrac(catId,subId,pracId);
+  sub.practices = sub.practices.filter(p=>p.id!==pracId);
+  logAudit('Work SOP','delete','Deleted practice: '+(p?p.text||'':''));
+  save(); renderView();
 }
 
 // ---- CRUD: Issue ----
@@ -1282,14 +1317,17 @@ function openSopIssueModal(catId, subId, pracId, issueId){
 function saveSopIssue(){
   const text = document.getElementById('sop-issue-text').value.trim(); if(!text){alert('Enter the issue');return;}
   const prac = findSopPrac(sopEditCtx.catId, sopEditCtx.subId, sopEditCtx.pracId); if(!prac) return;
-  if(sopEditCtx.issueId){ const i=prac.issues.find(i=>i.id===sopEditCtx.issueId); if(i) i.text=text; }
-  else { const id=genId(); prac.issues.push({id,text}); sopExpanded.add(prac.id); }
+  if(sopEditCtx.issueId){ const i=prac.issues.find(i=>i.id===sopEditCtx.issueId); if(i) i.text=text; logAudit('Work SOP','edit','Edited issue: '+text); }
+  else { const id=genId(); prac.issues.push({id,text}); sopExpanded.add(prac.id); logAudit('Work SOP','create','Created issue: '+text); }
   save(); closeModal('sop-issue-modal'); renderView(); showToast('Issue saved','success');
 }
 function deleteSopIssue(catId, subId, pracId, issueId){
   if(!confirm('Delete this issue?'))return;
   const prac = findSopPrac(catId,subId,pracId); if(!prac) return;
-  prac.issues = prac.issues.filter(i=>i.id!==issueId); save(); renderView();
+  const i=prac.issues.find(i=>i.id===issueId);
+  prac.issues = prac.issues.filter(i=>i.id!==issueId);
+  logAudit('Work SOP','delete','Deleted issue: '+(i?i.text||'':''));
+  save(); renderView();
 }
 
 // ---------- CALENDAR ----------
@@ -1411,16 +1449,19 @@ function saveAppointment(){
   const toTime=document.getElementById('appt-to').value;
   const location=document.getElementById('appt-location').value.trim();
   const notes=document.getElementById('appt-notes').value.trim();
-  if(sopEditCtx.apptId){ const a=state.appointments.find(a=>a.id===sopEditCtx.apptId); if(a) Object.assign(a,{title,date,fromTime,toTime,location,notes}); }
-  else state.appointments.push({id:genId(),title,date,fromTime,toTime,location,notes});
+  if(sopEditCtx.apptId){ const a=state.appointments.find(a=>a.id===sopEditCtx.apptId); if(a) Object.assign(a,{title,date,fromTime,toTime,location,notes}); logAudit('Calendar','edit','Edited appointment: '+title); }
+  else { state.appointments.push({id:genId(),title,date,fromTime,toTime,location,notes}); logAudit('Calendar','create','Created appointment: '+title); }
   calSelectedDate = date;
   save(); closeModal('appt-modal'); renderView(); showToast('Appointment saved','success');
   if(document.getElementById('day-popup-modal').classList.contains('show')) openDayPopup(date);
 }
 function deleteAppointment(id){
   if(!confirm('Delete this appointment?'))return;
-  const wasDate = state.appointments.find(a=>a.id===id)?.date;
-  state.appointments=state.appointments.filter(a=>a.id!==id); save(); renderView();
+  const found = state.appointments.find(a=>a.id===id);
+  const wasDate = found?.date;
+  state.appointments=state.appointments.filter(a=>a.id!==id);
+  logAudit('Calendar','delete','Deleted appointment: '+(found?found.title||'':''));
+  save(); renderView();
   if(wasDate && document.getElementById('day-popup-modal').classList.contains('show')) openDayPopup(wasDate);
 }
 
@@ -1539,10 +1580,24 @@ function renderChatSessionList(){
   [...state.chatSessions].sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||'')).forEach(s=>{
     const div = document.createElement('div');
     div.className = 'chat-session-item' + (s.id===activeChatSessionId?' active':'');
-    div.innerHTML = `${esc(s.title||'New chat')}<div class="chat-session-date">${fmt((s.updatedAt||'').slice(0,10))}</div>`;
-    div.onclick = ()=>{ activeChatSessionId = s.id; renderChatSessionList(); renderChatMessages(); };
+    div.innerHTML = `<div class="chat-session-item-main">${esc(s.title||'New chat')}<div class="chat-session-date">${fmt((s.updatedAt||'').slice(0,10))}</div></div><span class="row-btn rbdel" title="Delete chat" onclick="event.stopPropagation();deleteChatSession('${s.id}')">✕</span>`;
+    div.querySelector('.chat-session-item-main').onclick = ()=>{ activeChatSessionId = s.id; renderChatSessionList(); renderChatMessages(); };
     el.appendChild(div);
   });
+}
+function deleteChatSession(id){
+  if(!confirm('Delete this chat? This cannot be undone.'))return;
+  const s = state.chatSessions.find(s=>s.id===id);
+  state.chatSessions = state.chatSessions.filter(s=>s.id!==id);
+  delete chatApiHistory[id];
+  logAudit('Chat','delete','Deleted chat: '+(s?s.title||'New chat':''));
+  if(activeChatSessionId===id){
+    activeChatSessionId = state.chatSessions.length ? [...state.chatSessions].sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''))[0].id : null;
+  }
+  save();
+  renderChatSessionList();
+  if(activeChatSessionId) renderChatMessages(); else renderChatEmpty();
+  showToast('Chat deleted','success');
 }
 function newChatSession(){
   const s = { id:genId(), title:'New chat', messages:[], updatedAt:new Date().toISOString() };
@@ -1688,8 +1743,8 @@ function removePartChip(name){currentParticipants=currentParticipants.filter(n=>
 function onPartsKeydown(e){if(e.key==='Enter'){e.preventDefault();const val=e.target.value.trim();if(val&&!currentParticipants.includes(val)){currentParticipants.push(val);if(!state.participants.find(p=>p.name.toLowerCase()===val.toLowerCase()))state.participants.push({id:state.nextPartId++,name:val});}e.target.value='';renderPartsChips();}}
 function addActionRow(data){data=data||{};const editor=document.getElementById('actions-editor');const row=document.createElement('div');row.className='ae-row';const ownerOpts=state.participants.map(p=>`<option value="${esc(p.name)}" ${data.owner===p.name?'selected':''}>${esc(p.name)}</option>`).join('');row.innerHTML=`<input type="text" placeholder="Action item…" class="ae-text" value="${esc(data.text||'')}"/><select class="ae-owner"><option value="">Owner…</option>${ownerOpts}</select><input type="date" class="ae-due" value="${data.due||''}"/><div class="ae-del" onclick="this.parentElement.remove()">✕</div>`;editor.appendChild(row);}
 function readActionRows(){return [...document.querySelectorAll('#actions-editor .ae-row')].map(row=>({text:row.querySelector('.ae-text').value.trim(),owner:row.querySelector('.ae-owner').value,due:row.querySelector('.ae-due').value,done:false})).filter(a=>a.text);}
-function saveMeeting(){const title=document.getElementById('f-title').value.trim();if(!title){alert('Enter a meeting title.');return;}const date=document.getElementById('f-date').value,time=document.getElementById('f-time').value,cw=document.getElementById('f-cw').value.trim(),notes=document.getElementById('f-notes').value.trim();const actions=readActionRows();if(editingId){const m=state.meetings.find(m=>m.id===editingId);if(m){const prev=m.actions||[];actions.forEach(a=>{const p=prev.find(p=>p.text===a.text);if(p)a.done=p.done;});Object.assign(m,{title,date,time,cw,notes,participants:[...currentParticipants],actions});}}else state.meetings.push({id:genId(),title,date,time,cw,notes,participants:[...currentParticipants],actions,addedAt:today()});save();closeModal('meeting-modal');renderView();if(selectedId===editingId)renderMeetingViewPane();showToast('Meeting saved!','success');}
-function deleteMeeting(id){if(!confirm('Delete this meeting and its action items?'))return;state.meetings=state.meetings.filter(m=>m.id!==id);if(selectedId===id)closeViewPane();save();renderView();}
+function saveMeeting(){const title=document.getElementById('f-title').value.trim();if(!title){alert('Enter a meeting title.');return;}const date=document.getElementById('f-date').value,time=document.getElementById('f-time').value,cw=document.getElementById('f-cw').value.trim(),notes=document.getElementById('f-notes').value.trim();const actions=readActionRows();if(editingId){const m=state.meetings.find(m=>m.id===editingId);if(m){const prev=m.actions||[];actions.forEach(a=>{const p=prev.find(p=>p.text===a.text);if(p)a.done=p.done;});Object.assign(m,{title,date,time,cw,notes,participants:[...currentParticipants],actions});}logAudit('Meetings','edit','Edited meeting: '+title);}else{state.meetings.push({id:genId(),title,date,time,cw,notes,participants:[...currentParticipants],actions,addedAt:today()});logAudit('Meetings','create','Created meeting: '+title);}save();closeModal('meeting-modal');renderView();if(selectedId===editingId)renderMeetingViewPane();showToast('Meeting saved!','success');}
+function deleteMeeting(id){if(!confirm('Delete this meeting and its action items?'))return;const m=state.meetings.find(m=>m.id===id);state.meetings=state.meetings.filter(m=>m.id!==id);logAudit('Meetings','delete','Deleted meeting: '+(m?m.title||'':''));if(selectedId===id)closeViewPane();save();renderView();}
 async function extractActionsAI(){const notes=document.getElementById('f-notes').value.trim();if(!notes){showToast('Write meeting notes first.','warn');return;}if(!currentUser){showToast('Sign in first','warn');return;}const btn=document.getElementById('ai-extract-btn');btn.disabled=true;btn.textContent='✨ Extracting…';const names=currentParticipants.length?currentParticipants.join(', '):state.participants.map(p=>p.name).join(', ');try{const data=await callClaude({model:'claude-sonnet-4-6',max_tokens:1000,system:`Extract action items from meeting notes. Today: ${today()}. Participants: ${names||'none'}. Return ONLY a JSON array, no markdown. Each: {"text":"...","owner":"name or empty","due":"YYYY-MM-DD or empty"}.`,messages:[{role:'user',content:notes}]});if(data.error){showToast('API error: '+data.error.message,'warn');return;}const text=data.content?.[0]?.text||'[]';const parsed=JSON.parse(text.replace(/```json|```/g,'').trim());if(!Array.isArray(parsed)||parsed.length===0)showToast('No action items detected.','info');else{const existing=readActionRows().map(a=>a.text);parsed.forEach(a=>{if(!existing.includes(a.text))addActionRow(a);});showToast(`✅ Extracted ${parsed.length} item(s)`,'success');}}catch(err){showToast('AI extraction failed: '+err.message,'warn');}finally{btn.disabled=false;btn.textContent='✨ Extract Action Items with AI';}}
 
 // ═══════════════════════════════ VIEW PANE (Meetings) ═══════════════════════════════
@@ -1721,8 +1776,20 @@ function saveStandaloneAction(){const text=document.getElementById('a-text').val
 // ═══════════════════════════════ PARTICIPANTS ═══════════════════════════════
 function openManageParts(){renderManageParts();openModal('parts-modal');}
 function renderManageParts(){const el=document.getElementById('pl-list');el.innerHTML='';state.participants.forEach(p=>{const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;background:var(--surface2);padding:8px 10px;border-radius:7px;border:1.5px solid var(--border);';row.innerHTML=`<span style="flex:1;font-size:16.5px">${esc(p.name)}</span><div class="row-btn rbdel" onclick="removeParticipant(${p.id})">✕</div>`;el.appendChild(row);});}
-function addParticipant(){const inp=document.getElementById('new-part-input'),name=inp.value.trim();if(!name)return;state.participants.push({id:state.nextPartId++,name});inp.value='';save();renderManageParts();}
-function removeParticipant(id){state.participants=state.participants.filter(p=>p.id!==id);save();renderManageParts();}
+function addParticipant(){const inp=document.getElementById('new-part-input'),name=inp.value.trim();if(!name)return;state.participants.push({id:state.nextPartId++,name});inp.value='';logAudit('Participants','create','Added participant: '+name);save();renderManageParts();}
+function removeParticipant(id){const p=state.participants.find(p=>p.id===id);state.participants=state.participants.filter(p=>p.id!==id);logAudit('Participants','delete','Removed participant: '+(p?p.name||'':''));save();renderManageParts();}
+
+// ═══════════════════════════════ AUDIT LOG ═══════════════════════════════
+function openAuditLog(){renderAuditLog();openModal('audit-modal');}
+function renderAuditLog(){
+  const el=document.getElementById('audit-list'); if(!el) return;
+  if(!state.auditLog || !state.auditLog.length){ el.innerHTML='<div style="color:var(--muted);text-align:center;padding:20px">No edits or deletions recorded yet.</div>'; return; }
+  el.innerHTML = state.auditLog.map(a=>`<div style="background:var(--surface2);border:1.5px solid var(--border);border-radius:7px;padding:8px 10px;">
+    <div style="display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted)"><span>${esc(a.module)} · ${esc(a.action)}</span><span>${new Date(a.ts).toLocaleString()}</span></div>
+    <div style="font-size:15px;margin-top:2px">${esc(a.summary)}</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:2px">${esc(a.user||'')}</div>
+  </div>`).join('');
+}
 
 // ═══════════════════════════════ MODALS / MOBILE ═══════════════════════════════
 function openModal(id){document.getElementById(id).classList.add('show');}
@@ -1730,6 +1797,16 @@ function closeModal(id){document.getElementById(id).classList.remove('show');}
 document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');}));
 function toggleMobSidebar(){const sb=document.getElementById('sidebar'),ov=document.getElementById('mob-overlay');const open=sb.classList.toggle('mob-open');if(ov)ov.classList.toggle('show',open);}
 function closeMobSidebar(){document.getElementById('sidebar').classList.remove('mob-open');const ov=document.getElementById('mob-overlay');if(ov)ov.classList.remove('show');}
+function updateMobTopOffset(){
+  try{
+    const hdr=document.querySelector('header'), tick=document.querySelector('.ticker-bar');
+    const h=(hdr?hdr.getBoundingClientRect().height:0)+(tick?tick.getBoundingClientRect().height:0);
+    if(h>0) document.documentElement.style.setProperty('--mob-top', h+'px');
+  }catch(e){}
+}
+window.addEventListener('resize', updateMobTopOffset);
+window.addEventListener('orientationchange', updateMobTopOffset);
+document.addEventListener('DOMContentLoaded', updateMobTopOffset);
 
 // ═══════════════════════════════ EXPORT / IMPORT ═══════════════════════════════
 function exportData(){const obj={version:'eat-v1',exportedAt:new Date().toISOString(),state};const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`eat-backup-${today()}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);showToast('✅ Backup downloaded!','success');}
@@ -1973,6 +2050,7 @@ function toggleMic(){
 // ═══════════════════════════════ INIT ═══════════════════════════════
 window.addEventListener('resize',()=>renderView());
 switchModule('meetings');
+updateMobTopOffset();
 initFirebase();
 </script>
 </body>
