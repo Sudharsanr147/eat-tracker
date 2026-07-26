@@ -647,6 +647,9 @@ applyTheme();
   const m={name:'EAT — Executive Assistant Tracker',short_name:'EAT',start_url:window.location.href,scope:basePath,display:'standalone',background_color:'#0d0f18',theme_color:'#1a1f2e',icons:[{src:iconUrl,sizes:'192x192',type:'image/svg+xml',purpose:'any maskable'},{src:iconUrl,sizes:'512x512',type:'image/svg+xml',purpose:'any maskable'}]};
   const blob=new Blob([JSON.stringify(m)],{type:'application/manifest+json'});
   document.getElementById('pwa-manifest-link').href=URL.createObjectURL(blob);
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register(basePath+'sw.js', {scope: basePath}).catch(e=>console.warn('SW register failed',e));
+  }
 }catch(e){console.warn(e);}})();
 
 // ═══════════════════════════════ TICKER ═══════════════════════════════
