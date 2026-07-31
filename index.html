@@ -15,6 +15,8 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/mammoth.js/1.6.0/mammoth.browser.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js"></script>
+<script defer src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Poppins:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -675,8 +677,8 @@ table.reg-table{min-width:0;}
 // redeployed, so the version shown in the app (login screen + sidebar footer)
 // always reflects what's actually live. See CHANGELOG.md for the history
 // behind each version number.
-const APP_VERSION = '1.4.1';
-const APP_UPDATED = '2026-07-26';
+const APP_VERSION = '1.5.0';
+const APP_UPDATED = '2026-07-31';
 function renderAppVersion(){
   const [y,m,d] = APP_UPDATED.split('-');
   const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -1814,6 +1816,8 @@ Tool conventions: edit/delete tools find their target by a case-insensitive part
 
 Attachments: the user can attach spreadsheet or document files directly in this chat — their content appears inline under "[Attached files]". If asked to process/transform an attached spreadsheet, think step by step and use export_excel to deliver a downloadable result. If asked to run/apply a previously saved MIS operation (see misOps below, which includes instructions and, where available, sample input/output rows) on a newly attached file, reuse that operation's instructions and example pattern rather than asking the user to re-explain it. If asked to save a new reusable transformation, use add_mis_operation, including a small sample of input/output rows from the conversation when available. If asked to file away an attached document (not a spreadsheet transform), use add_library_document with the document's extracted text as the content — create a sensible category if none fits.
 
+Generating Office files: use create_word_document, create_excel_workbook, or create_powerpoint_presentation whenever Sudharsan asks for a document, report, memo, letter, data model, tracker, deck, or presentation as an actual file rather than as chat text. Feel free to draw on the state data below (meetings, actions, compliance, notes, SOP, etc.) or on this chat's conversation/attachments to fill in real content — don't just echo placeholders. Each of these saves the file to the Library and downloads it in one step, so don't also call add_library_document for the same file. Pick a sensible filename and Library category (a new one is fine); write full, well-organized content rather than a token gesture at the format.
+
 For questions, think carefully and answer directly and specifically from the state data below — meetings, actions, daily items, appointments, notes, Work SOP, compliance, MIS operations, participants, and Library document excerpts — cross-referencing across modules where relevant. If the question might relate to a fact, figure, or decision discussed in an earlier chat session (not visible below), use search_chat_history first before answering — don't guess or assume it wasn't discussed. Don't call a tool for pure questions. Be concise in your final answer even if your reasoning is thorough. Current state:\n${buildStateSummary()}`,
     tools: CHAT_TOOLS, messages: chatApiHistory[sessionId]
   });
@@ -1830,7 +1834,7 @@ For questions, think carefully and answer directly and specifically from the sta
   if(toolBlocks.length){
     const toolResults=[];
     for(const tb of toolBlocks){
-      const result=execTool(tb.name,tb.input);
+      const result=await execTool(tb.name,tb.input);
       addChatMsgToSession('tool','⚙ '+tb.name+' → '+result);
       toolResults.push({type:'tool_result',tool_use_id:tb.id,content:result});
     }
@@ -2067,6 +2071,33 @@ const CHAT_TOOLS=[
   {name:'edit_mis_operation',description:'Edit a saved MIS operation\'s name or instructions, by matching its current name',input_schema:{type:'object',properties:{match_text:{type:'string'},new_name:{type:'string'},new_instructions:{type:'string'}},required:['match_text']}},
   {name:'delete_mis_operation',description:'Delete a saved MIS operation by matching its name',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
   {name:'export_excel',description:'Generate and download an Excel file for the user from row data you have produced (e.g. after processing an attached file per their instructions in chat, including applying a saved MIS operation by name)',input_schema:{type:'object',properties:{filename:{type:'string',description:'File name without extension'},rows:{type:'array',description:'Array of row objects to write as the output spreadsheet',items:{type:'object'}}},required:['filename','rows']}},
+  {name:'create_word_document',description:'Generate a formatted Word (.docx) document — report, memo, letter, minutes, policy, summary, etc. — and save it to the Library (also downloads it to the device). You can draw on the app\'s current data shown in your context (meetings, actions, compliance, notes, etc.) as well as anything discussed in this chat.',input_schema:{type:'object',properties:{
+    filename:{type:'string',description:'File name without extension'},
+    category:{type:'string',description:'Library category to file it under (created if new); defaults to "Generated Documents"'},
+    title:{type:'string',description:'Document title / main heading'},
+    sections:{type:'array',description:'Ordered content blocks making up the document body',items:{type:'object',properties:{
+      heading:{type:'string',description:'Optional subheading for this section'},
+      paragraphs:{type:'array',items:{type:'string'},description:'Body paragraphs'},
+      bullets:{type:'array',items:{type:'string'},description:'Bullet list items'},
+      numbered:{type:'array',items:{type:'string'},description:'Numbered list items'},
+      table:{type:'object',description:'Optional table',properties:{headers:{type:'array',items:{type:'string'}},rows:{type:'array',items:{type:'array',items:{type:'string'}}}}}
+    }}}
+  },required:['filename','title','sections']}},
+  {name:'create_excel_workbook',description:'Generate an Excel (.xlsx) workbook with one or more named sheets — for data models, trackers, or structured multi-table output — and save it to the Library (also downloads it). For a single simple sheet from data you already produced in this chat, export_excel is simpler; use this when you need multiple named sheets.',input_schema:{type:'object',properties:{
+    filename:{type:'string',description:'File name without extension'},
+    category:{type:'string',description:'Library category to file it under (created if new); defaults to "Generated Documents"'},
+    sheets:{type:'array',description:'One or more sheets',items:{type:'object',properties:{name:{type:'string',description:'Sheet name, max 31 characters'},rows:{type:'array',description:'Row objects — object keys become column headers',items:{type:'object'}}},required:['name','rows']}}
+  },required:['filename','sheets']}},
+  {name:'create_powerpoint_presentation',description:'Generate a PowerPoint (.pptx) slide deck — pitch deck, review deck, summary, briefing — and save it to the Library (also downloads it). You can draw on the app\'s current data shown in your context as well as anything discussed in this chat.',input_schema:{type:'object',properties:{
+    filename:{type:'string',description:'File name without extension'},
+    category:{type:'string',description:'Library category to file it under (created if new); defaults to "Generated Documents"'},
+    slides:{type:'array',description:'Ordered slides',items:{type:'object',properties:{
+      title:{type:'string'},
+      bullets:{type:'array',items:{type:'string'}},
+      notes:{type:'string',description:'Optional speaker notes'},
+      table:{type:'object',description:'Optional table',properties:{headers:{type:'array',items:{type:'string'}},rows:{type:'array',items:{type:'array',items:{type:'string'}}}}}
+    },required:['title']}}
+  },required:['filename','slides']}},
   {name:'add_sop_category',description:'Add a new Work SOP category',input_schema:{type:'object',properties:{name:{type:'string'}},required:['name']}},
   {name:'edit_sop_category',description:'Rename a Work SOP category, by matching its current name',input_schema:{type:'object',properties:{match_text:{type:'string'},new_name:{type:'string'}},required:['match_text','new_name']}},
   {name:'delete_sop_category',description:'Delete a Work SOP category and everything inside it, by matching its name',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
@@ -2086,7 +2117,33 @@ const CHAT_TOOLS=[
   {name:'add_participant',description:'Add a new participant/person to the system — becomes available as a meeting participant, action owner, or SOP person responsible',input_schema:{type:'object',properties:{name:{type:'string'}},required:['name']}},
   {name:'delete_participant',description:'Remove a participant, by matching part of their name',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
 ];
-function execTool(name,input){
+// Shared delivery path for AI-generated files (Word/Excel/PowerPoint): triggers a
+// browser download and, when signed in, uploads the same blob to Firebase Storage
+// and files it in the Library — same storagePath/downloadURL shape as a manual
+// Library upload (see handleLibUpload) so it shows up identically with a working
+// download link.
+async function deliverGeneratedFile(blob, filename, mime, category){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  const cat = category || 'Generated Documents';
+  if(!state.library.categories.includes(cat)) state.library.categories.push(cat);
+  const entry = { id:genId(), name:filename, category:cat, type:mime, sizeKB:blob.size/1024, uploadedAt:today(), lastModifiedAt:today(), status:'ok', extractedText:'', storagePath:'', downloadURL:'' };
+  state.library.files.push(entry);
+  if(currentUser && fbStorage){
+    try{
+      const path = `users/${currentUser.uid}/library/${entry.id}/${filename}`;
+      const ref = fbStorage.ref(path);
+      await ref.put(blob, {contentType:mime});
+      entry.storagePath = path;
+      entry.downloadURL = await ref.getDownloadURL();
+    }catch(err){ console.warn('storage upload error',err); }
+  }
+  save(); renderView();
+  return entry;
+}
+async function execTool(name,input){
   try{
     if(name==='add_meeting'){const parts=input.participants||[];parts.forEach(nm=>{if(!state.participants.find(p=>p.name.toLowerCase()===nm.toLowerCase()))state.participants.push({id:state.nextPartId++,name:nm});});state.meetings.push({id:genId(),title:input.title,date:input.date||today(),time:input.time||'',cw:input.cw||'',notes:input.notes||'',participants:parts,actions:(input.actions||[]).map(a=>({...a,done:false})),addedAt:today()});save();return 'Meeting added: '+input.title;}
     if(name==='edit_meeting'){const m=state.meetings.find(m=>(m.title||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!m)return 'No matching meeting found for: '+input.match_text;if(input.new_title)m.title=input.new_title;if(input.date)m.date=input.date;if(input.time!==undefined)m.time=input.time;if(input.cw!==undefined)m.cw=input.cw;if(input.notes!==undefined)m.notes=input.notes;if(input.participants){m.participants=input.participants;input.participants.forEach(nm=>{if(!state.participants.find(p=>p.name.toLowerCase()===nm.toLowerCase()))state.participants.push({id:state.nextPartId++,name:nm});});}save();return 'Meeting updated: '+m.title;}
@@ -2139,6 +2196,65 @@ function execTool(name,input){
         XLSX.writeFile(outWb,`${(input.filename||'output').replace(/[^a-z0-9]/gi,'_')}.xlsx`);
         return `Downloaded ${(input.rows||[]).length} rows as ${input.filename}.xlsx`;
       }catch(err){ return 'Failed to generate file: '+err.message; }
+    }
+    if(name==='create_word_document'){
+      try{
+        if(typeof docx==='undefined') return 'Word generation library is still loading — please try again in a moment.';
+        const { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType } = docx;
+        const children=[ new Paragraph({ text: input.title||'Untitled', heading: HeadingLevel.HEADING_1 }) ];
+        (input.sections||[]).forEach(sec=>{
+          if(sec.heading) children.push(new Paragraph({ text: sec.heading, heading: HeadingLevel.HEADING_2 }));
+          (sec.paragraphs||[]).forEach(p=> children.push(new Paragraph({ children:[new TextRun(String(p))] })));
+          (sec.bullets||[]).forEach(b=> children.push(new Paragraph({ text: '•  '+String(b) })));
+          (sec.numbered||[]).forEach((n,i)=> children.push(new Paragraph({ text: (i+1)+'.  '+String(n) })));
+          if(sec.table && sec.table.headers && sec.table.headers.length){
+            const headerRow=new TableRow({ children: sec.table.headers.map(h=> new TableCell({ children:[new Paragraph({ children:[new TextRun({text:String(h), bold:true})] })] })) });
+            const dataRows=(sec.table.rows||[]).map(r=> new TableRow({ children: r.map(c=> new TableCell({ children:[new Paragraph(String(c))] })) }));
+            children.push(new Table({ rows:[headerRow,...dataRows], width:{size:100, type:WidthType.PERCENTAGE} }));
+          }
+        });
+        const doc=new Document({ sections:[{ properties:{}, children }] });
+        const blob=await Packer.toBlob(doc);
+        const filename=`${(input.filename||'document').replace(/[^a-z0-9]/gi,'_')}.docx`;
+        await deliverGeneratedFile(blob, filename, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', input.category);
+        return `Created Word document "${filename}" — downloaded and saved to Library${input.category?' under '+input.category:''}.`;
+      }catch(err){ return 'Failed to generate Word document: '+err.message; }
+    }
+    if(name==='create_excel_workbook'){
+      try{
+        const wb=XLSX.utils.book_new();
+        (input.sheets||[]).forEach(sh=>{
+          const ws=XLSX.utils.json_to_sheet(sh.rows||[]);
+          XLSX.utils.book_append_sheet(wb, ws, (sh.name||'Sheet').slice(0,31));
+        });
+        const wbout=XLSX.write(wb, {bookType:'xlsx', type:'array'});
+        const blob=new Blob([wbout], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+        const filename=`${(input.filename||'workbook').replace(/[^a-z0-9]/gi,'_')}.xlsx`;
+        await deliverGeneratedFile(blob, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', input.category);
+        return `Created Excel workbook "${filename}" with ${(input.sheets||[]).length} sheet(s) — downloaded and saved to Library${input.category?' under '+input.category:''}.`;
+      }catch(err){ return 'Failed to generate Excel workbook: '+err.message; }
+    }
+    if(name==='create_powerpoint_presentation'){
+      try{
+        if(typeof PptxGenJS==='undefined') return 'PowerPoint generation library is still loading — please try again in a moment.';
+        const pptx=new PptxGenJS();
+        (input.slides||[]).forEach(sl=>{
+          const slide=pptx.addSlide();
+          slide.addText(sl.title||'', { x:0.4, y:0.25, w:9.2, h:0.8, fontSize:24, bold:true, color:'1A1A2E' });
+          if(sl.bullets && sl.bullets.length){
+            slide.addText(sl.bullets.map(b=>({ text:String(b), options:{bullet:true, breakLine:true} })), { x:0.5, y:1.2, w:9, h:sl.table?3:4.5, fontSize:16, color:'333333' });
+          }
+          if(sl.table && sl.table.headers && sl.table.headers.length){
+            const rows=[ sl.table.headers.map(h=>({ text:String(h), options:{bold:true, fill:{color:'EEEEEE'}} })), ...(sl.table.rows||[]).map(r=> r.map(c=>({ text:String(c) }))) ];
+            slide.addTable(rows, { x:0.5, y: sl.bullets&&sl.bullets.length?4.4:1.2, w:9 });
+          }
+          if(sl.notes) slide.addNotes(sl.notes);
+        });
+        const blob=await pptx.write({outputType:'blob'});
+        const filename=`${(input.filename||'presentation').replace(/[^a-z0-9]/gi,'_')}.pptx`;
+        await deliverGeneratedFile(blob, filename, 'application/vnd.openxmlformats-officedocument.presentationml.presentation', input.category);
+        return `Created PowerPoint presentation "${filename}" with ${(input.slides||[]).length} slide(s) — downloaded and saved to Library${input.category?' under '+input.category:''}.`;
+      }catch(err){ return 'Failed to generate PowerPoint presentation: '+err.message; }
     }
     return 'Unknown tool: '+name;
   }catch(err){return 'Error executing '+name+': '+err.message;}

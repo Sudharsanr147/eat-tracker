@@ -7,6 +7,24 @@ the app itself (login screen and sidebar footer) — see `APP_VERSION` near the
 top of the `<script>` block in `index.html`. If the number you see in the app
 matches the latest entry below, you're on the current version.
 
+## v1.5.0 — 2026-07-31
+
+- The AI chat assistant can now generate real Microsoft Office files on
+  request — Word documents (create_word_document), Excel workbooks with one
+  or more sheets (create_excel_workbook), and PowerPoint decks
+  (create_powerpoint_presentation). Ask for a report, memo, letter, data
+  model, tracker, or slide deck and it produces an actual .docx/.xlsx/.pptx
+  file, using the app's own data (meetings, actions, compliance, notes,
+  etc.) or the chat conversation as source content.
+- Every generated file is both downloaded immediately to your device and
+  filed into the Library (in a category you choose, or a new "Generated
+  Documents" category by default), so it's available later from any device
+  you're signed into — same as a file you upload manually.
+- Added two new client-side libraries, loaded on demand (deferred, so they
+  don't slow down initial page load): `docx` for Word generation and
+  `pptxgenjs` for PowerPoint generation. Excel generation reuses the
+  existing SheetJS library already used for reading spreadsheets.
+
 ## v1.4.1 — 2026-07-26
 
 - Fixed the real cause of the mobile "cut off" text on Action Items and
