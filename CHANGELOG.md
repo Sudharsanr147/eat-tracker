@@ -7,6 +7,30 @@ the app itself (login screen and sidebar footer) — see `APP_VERSION` near the
 top of the `<script>` block in `index.html`. If the number you see in the app
 matches the latest entry below, you're on the current version.
 
+## v1.6.0 — 2026-08-01
+
+- The AI chat assistant can now search the public internet (Anthropic's
+  native web search tool), but only reaches for it when the answer genuinely
+  isn't in your portal data, this chat, or the Library — it won't use it for
+  anything your own data can already answer. Any time it does use the web,
+  the app automatically appends a clearly labeled "🌐 FROM THE INTERNET"
+  source list under that reply, so internet-sourced facts are never
+  mistaken for portal data.
+- create_powerpoint_presentation now builds real, designed decks instead of
+  plain title+bullets slides: 6 slide layouts (title, bullets, two-column,
+  section divider, quote, table), 5 color themes (default, corporate-blue,
+  dark, warm, minimal-mono), and per-line bold/italic/color formatting on
+  bullets. (No image support — decks are text/table/chart-style only.)
+- The chat window now shows a live "Thinking… /  Running <tool>… Ns" status
+  indicator with an elapsed-seconds counter while waiting on a reply, so
+  longer requests (multi-step tool use, document generation) no longer look
+  stalled — mirrors the status indicator shown in Claude Cowork.
+- create_powerpoint_presentation gained two more slide layouts: chart (real
+  native PowerPoint charts — bar, line, pie, doughnut, area, scatter, radar)
+  and diagram (process flows, cycles, pyramids, and simple hierarchies built
+  from shapes — a SmartArt-style emulation, since true Office SmartArt is a
+  proprietary format no library can generate).
+
 ## v1.5.0 — 2026-07-31
 
 - The AI chat assistant can now generate real Microsoft Office files on

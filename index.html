@@ -208,6 +208,12 @@ table.reg-table{width:100%;border-collapse:collapse;min-width:640px;}
 .chat-msg.user{align-self:flex-end;background:var(--accent);color:var(--on-accent);border-bottom-right-radius:3px;}
 .chat-msg.bot{align-self:flex-start;background:var(--surface2);border:1.5px solid var(--border);border-bottom-left-radius:3px;white-space:pre-wrap;}
 .chat-msg.tool{align-self:flex-start;background:rgba(39,201,126,.1);border:1.5px solid var(--green);color:var(--green);font-family:var(--mono);font-size:14.5px;max-width:95%;}
+.chat-msg.thinking{align-self:flex-start;background:var(--surface2);border:1.5px solid var(--border);border-bottom-left-radius:3px;color:var(--muted);font-style:italic;display:flex;align-items:center;gap:8px;}
+.chat-msg.thinking .think-dots{display:inline-flex;gap:3px;}
+.chat-msg.thinking .think-dots span{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.3;animation:think-pulse 1.2s infinite ease-in-out;}
+.chat-msg.thinking .think-dots span:nth-child(2){animation-delay:.2s;}
+.chat-msg.thinking .think-dots span:nth-child(3){animation-delay:.4s;}
+@keyframes think-pulse{0%,80%,100%{opacity:.3;}40%{opacity:1;}}
 .chat-input-row{display:flex;gap:8px;padding:14px 20px;border-top:2px solid var(--border);background:var(--surface);max-width:760px;margin:0 auto;width:100%;}
 .chat-input-row textarea{flex:1;resize:none;background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);font-size:17px;outline:none;max-height:100px;}
 .chat-mic{background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;width:40px;flex-shrink:0;cursor:pointer;font-size:20px;}
@@ -677,8 +683,8 @@ table.reg-table{min-width:0;}
 // redeployed, so the version shown in the app (login screen + sidebar footer)
 // always reflects what's actually live. See CHANGELOG.md for the history
 // behind each version number.
-const APP_VERSION = '1.5.0';
-const APP_UPDATED = '2026-07-31';
+const APP_VERSION = '1.6.0';
+const APP_UPDATED = '2026-08-01';
 function renderAppVersion(){
   const [y,m,d] = APP_UPDATED.split('-');
   const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -1745,8 +1751,47 @@ function addChatMsgToSession(role,text){
   save();
   const msgsEl=document.getElementById('chat-msgs');
   const el=document.createElement('div'); el.className='chat-msg '+role; el.textContent=text;
-  msgsEl.appendChild(el); msgsEl.scrollTop = msgsEl.scrollHeight;
+  msgsEl.appendChild(el);
+  pinThinkingToBottom();
+  msgsEl.scrollTop = msgsEl.scrollHeight;
   renderChatSessionList();
+}
+
+// Live "Thinking…/Running…" status indicator shown at the bottom of the
+// chat while waiting on the AI service, with elapsed seconds counted from
+// the user's last message — mirrors the status shown in Claude Cowork.
+let chatThinking = null; // {startTime, label, intervalId, el}
+function startThinkingIndicator(label){
+  stopThinkingIndicator();
+  const msgsEl=document.getElementById('chat-msgs'); if(!msgsEl) return;
+  const el=document.createElement('div');
+  el.className='chat-msg thinking';
+  msgsEl.appendChild(el);
+  chatThinking = { startTime:Date.now(), label:label||'Thinking', el };
+  updateThinkingIndicatorText();
+  chatThinking.intervalId = setInterval(updateThinkingIndicatorText, 1000);
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+}
+function updateThinkingLabel(label){
+  if(!chatThinking) return;
+  chatThinking.label = label;
+  updateThinkingIndicatorText();
+}
+function updateThinkingIndicatorText(){
+  if(!chatThinking) return;
+  const secs = Math.floor((Date.now()-chatThinking.startTime)/1000);
+  chatThinking.el.innerHTML = `${esc(chatThinking.label)}… ${secs}s <span class="think-dots"><span></span><span></span><span></span></span>`;
+}
+function stopThinkingIndicator(){
+  if(!chatThinking) return;
+  clearInterval(chatThinking.intervalId);
+  chatThinking.el.remove();
+  chatThinking = null;
+}
+function pinThinkingToBottom(){
+  if(!chatThinking) return;
+  const msgsEl=document.getElementById('chat-msgs'); if(!msgsEl) return;
+  msgsEl.appendChild(chatThinking.el);
 }
 function onChatKeydown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
 
@@ -1801,9 +1846,10 @@ async function sendChat(){
   if(!chatApiHistory[activeChatSessionId]) chatApiHistory[activeChatSessionId]=[];
   chatApiHistory[activeChatSessionId].push({role:'user',content:apiText});
   pendingAttachments = []; renderAttachChips();
+  startThinkingIndicator('Thinking');
   try{ await runChatTurn(activeChatSessionId); }
   catch(err){ addChatMsgToSession('bot','Something went wrong: '+err.message); }
-  finally{ sendBtn.disabled=false; renderView(); }
+  finally{ stopThinkingIndicator(); sendBtn.disabled=false; renderView(); }
 }
 async function runChatTurn(sessionId, depth=0){
   if(depth>4){ addChatMsgToSession('bot','(stopped after several steps — try rephrasing)'); return; }
@@ -1818,8 +1864,13 @@ Attachments: the user can attach spreadsheet or document files directly in this 
 
 Generating Office files: use create_word_document, create_excel_workbook, or create_powerpoint_presentation whenever Sudharsan asks for a document, report, memo, letter, data model, tracker, deck, or presentation as an actual file rather than as chat text. Feel free to draw on the state data below (meetings, actions, compliance, notes, SOP, etc.) or on this chat's conversation/attachments to fill in real content — don't just echo placeholders. Each of these saves the file to the Library and downloads it in one step, so don't also call add_library_document for the same file. Pick a sensible filename and Library category (a new one is fine); write full, well-organized content rather than a token gesture at the format.
 
+PowerPoint design: create_powerpoint_presentation supports real slide design, not just a title and a bullet list — choose a layout per slide (title, bullets, two_column, section_header, quote, table, chart, diagram) to fit the content, and a theme (default, corporate-blue, dark, warm, minimal-mono) for the whole deck. Use bold/italic/color on individual bullet lines (pass them as objects, not plain strings) to emphasize key points sparingly — don't over-format. Use the chart layout for real numeric data (bar/line/pie/doughnut/area/scatter/radar via "chart") and the diagram layout for process flows, cycles, pyramids, or simple hierarchies (via "diagram") — this is a shape-based emulation of PowerPoint SmartArt, since true SmartArt is a proprietary format no library can generate; keep diagram items short (a few words) and to about 6 nodes or fewer so they stay readable. This tool does not support images — do not offer or imply that a deck will include pictures.
+
+Internet search: you also have a web_search tool for the public internet — real-time news, rates, regulations, external company or market facts, or anything else outside this portal and this chat. Use it only when the answer genuinely isn't in the state data below, this conversation, or the Library — never for something Sudharsan's own portal data can already answer. Whenever you do use it, say so plainly in your answer (e.g. "From a quick web search:") so portal-derived and internet-derived facts are never confused; the app will also automatically append a labeled, clickable source list beneath your reply whenever you cite a page, so cite your sources normally and don't fabricate a source list yourself.
+
 For questions, think carefully and answer directly and specifically from the state data below — meetings, actions, daily items, appointments, notes, Work SOP, compliance, MIS operations, participants, and Library document excerpts — cross-referencing across modules where relevant. If the question might relate to a fact, figure, or decision discussed in an earlier chat session (not visible below), use search_chat_history first before answering — don't guess or assume it wasn't discussed. Don't call a tool for pure questions. Be concise in your final answer even if your reasoning is thorough. Current state:\n${buildStateSummary()}`,
-    tools: CHAT_TOOLS, messages: chatApiHistory[sessionId]
+    tools: [...CHAT_TOOLS, {type:'web_search_20250305', name:'web_search', max_uses:5}],
+    messages: chatApiHistory[sessionId]
   });
   if(data.error){ addChatMsgToSession('bot','API error: '+(data.error.message||JSON.stringify(data.error))); return; }
   if(!data || !Array.isArray(data.content)){
@@ -1828,17 +1879,33 @@ For questions, think carefully and answer directly and specifically from the sta
     return;
   }
   chatApiHistory[sessionId].push({role:'assistant',content:data.content});
-  const textBlocks=data.content.filter(c=>c.type==='text').map(c=>c.text).join('\n');
+  const textParts=data.content.filter(c=>c.type==='text');
+  let textBlocks=textParts.map(c=>c.text).join('\n');
+  // Programmatically (not just via prompt instruction) surface any web_search
+  // citations attached to this turn's text, so internet-sourced facts are
+  // always visibly and reliably distinguished from portal data — regardless
+  // of whether the model itself remembered to call it out in prose.
+  const webSources=[];
+  textParts.forEach(c=>{ (c.citations||[]).forEach(ci=>{
+    if(ci && ci.type==='web_search_result_location' && ci.url && !webSources.find(s=>s.url===ci.url)){
+      webSources.push({title:ci.title||ci.url, url:ci.url});
+    }
+  });});
+  if(webSources.length){
+    textBlocks += '\n\n🌐 FROM THE INTERNET (not portal data):\n' + webSources.map(s=>`• ${s.title} — ${s.url}`).join('\n');
+  }
   if(textBlocks) addChatMsgToSession('bot',textBlocks);
   const toolBlocks=data.content.filter(c=>c.type==='tool_use');
   if(toolBlocks.length){
     const toolResults=[];
     for(const tb of toolBlocks){
+      updateThinkingLabel('Running '+tb.name);
       const result=await execTool(tb.name,tb.input);
       addChatMsgToSession('tool','⚙ '+tb.name+' → '+result);
       toolResults.push({type:'tool_result',tool_use_id:tb.id,content:result});
     }
     chatApiHistory[sessionId].push({role:'user',content:toolResults});
+    updateThinkingLabel('Thinking');
     await runChatTurn(sessionId, depth+1);
   }
 }
@@ -2088,14 +2155,30 @@ const CHAT_TOOLS=[
     category:{type:'string',description:'Library category to file it under (created if new); defaults to "Generated Documents"'},
     sheets:{type:'array',description:'One or more sheets',items:{type:'object',properties:{name:{type:'string',description:'Sheet name, max 31 characters'},rows:{type:'array',description:'Row objects — object keys become column headers',items:{type:'object'}}},required:['name','rows']}}
   },required:['filename','sheets']}},
-  {name:'create_powerpoint_presentation',description:'Generate a PowerPoint (.pptx) slide deck — pitch deck, review deck, summary, briefing — and save it to the Library (also downloads it). You can draw on the app\'s current data shown in your context as well as anything discussed in this chat.',input_schema:{type:'object',properties:{
+  {name:'create_powerpoint_presentation',description:'Generate a fully designed PowerPoint (.pptx) slide deck — pitch deck, review deck, summary, briefing — with real formatting (bold/italic/color), slide layouts (title, bullets, two-column, section dividers, quotes, tables, native data charts, and shape-based SmartArt-style diagrams), and a color theme. Saves it to the Library (also downloads it). You can draw on the app\'s current data shown in your context as well as anything discussed in this chat.',input_schema:{type:'object',properties:{
     filename:{type:'string',description:'File name without extension'},
     category:{type:'string',description:'Library category to file it under (created if new); defaults to "Generated Documents"'},
+    theme:{type:'string',enum:['default','corporate-blue','dark','warm','minimal-mono'],description:'Color theme for the whole deck. default=navy on white, corporate-blue=blue accents on white, dark=dark background with light text, warm=cream background with amber accents, minimal-mono=black & white'},
     slides:{type:'array',description:'Ordered slides',items:{type:'object',properties:{
+      layout:{type:'string',enum:['title','bullets','two_column','section_header','quote','table','chart','diagram'],description:'Slide layout. title=big centered title+subtitle (use for slide 1). bullets=heading + bullet list (default if omitted). two_column=heading + two side-by-side bullet columns (use "columns"). section_header=big centered divider text, no bullets. quote=large centered quotation (use "quote"/"attribution"). table=heading + data table (use "table"). chart=heading + a real native data chart (use "chart"). diagram=heading + a shape-based process/cycle/pyramid/hierarchy diagram (use "diagram") — a SmartArt-style emulation, since true PowerPoint SmartArt cannot be generated programmatically.'},
       title:{type:'string'},
-      bullets:{type:'array',items:{type:'string'}},
+      subtitle:{type:'string',description:'Used by the title and section_header layouts'},
+      bullets:{type:'array',description:'Bullet lines — plain strings for default formatting, or objects for bold/italic/color on individual lines',items:{anyOf:[{type:'string'},{type:'object',properties:{text:{type:'string'},bold:{type:'boolean'},italic:{type:'boolean'},color:{type:'string',description:'Hex color like "CC0000", overrides the theme text color for just this line'}},required:['text']}]}},
+      columns:{type:'array',description:'For the two_column layout: up to 2 objects, each with its own heading and bullets',items:{type:'object',properties:{heading:{type:'string'},bullets:{type:'array',items:{type:'string'}}}}},
+      quote:{type:'string',description:'The quotation text, for the quote layout'},
+      attribution:{type:'string',description:'Who said the quote, for the quote layout'},
+      accentColor:{type:'string',description:'Hex color like "1A5FB4" overriding the theme accent color for just this slide\'s heading/title'},
       notes:{type:'string',description:'Optional speaker notes'},
-      table:{type:'object',description:'Optional table',properties:{headers:{type:'array',items:{type:'string'}},rows:{type:'array',items:{type:'array',items:{type:'string'}}}}}
+      table:{type:'object',description:'Optional table',properties:{headers:{type:'array',items:{type:'string'}},rows:{type:'array',items:{type:'array',items:{type:'string'}}}}},
+      chart:{type:'object',description:'Data chart, for the chart layout',properties:{
+        type:{type:'string',enum:['bar','line','pie','doughnut','area','scatter','radar'],description:'Chart type'},
+        categories:{type:'array',items:{type:'string'},description:'X-axis labels (bar/line/area) or slice labels (pie/doughnut)'},
+        series:{type:'array',description:'One or more data series plotted against categories',items:{type:'object',properties:{name:{type:'string'},values:{type:'array',items:{type:'number'}}},required:['values']}}
+      },required:['type','categories','series']},
+      diagram:{type:'object',description:'Shape-based diagram, for the diagram layout — an emulation of PowerPoint SmartArt built from positioned shapes/text, since true SmartArt is a proprietary format no library can generate',properties:{
+        type:{type:'string',enum:['process','cycle','pyramid','hierarchy'],description:'process=left-to-right flow of connected steps. cycle=circular ring of repeating steps. pyramid=stacked tiers, item[0]=top/smallest tier. hierarchy=one root (item[0]) with child items[1:] branching below it, like a simple org chart.'},
+        items:{type:'array',items:{type:'string'},description:'Short labels for each node, in order (max ~6 for readability)'}
+      },required:['type','items']}
     },required:['title']}}
   },required:['filename','slides']}},
   {name:'add_sop_category',description:'Add a new Work SOP category',input_schema:{type:'object',properties:{name:{type:'string'}},required:['name']}},
@@ -2237,23 +2320,134 @@ async function execTool(name,input){
     if(name==='create_powerpoint_presentation'){
       try{
         if(typeof PptxGenJS==='undefined') return 'PowerPoint generation library is still loading — please try again in a moment.';
+        const THEMES = {
+          'default':       { bg:'FFFFFF', text:'333333', accent:'1A1A2E', accent2:'6C63FF' },
+          'corporate-blue':{ bg:'FFFFFF', text:'2B2B2B', accent:'0B3D91', accent2:'1E88E5' },
+          'dark':          { bg:'1A1A2E', text:'E8E8E8', accent:'FFFFFF', accent2:'8E86FF' },
+          'warm':          { bg:'FFF8EF', text:'3A2E20', accent:'B5651D', accent2:'E08E45' },
+          'minimal-mono':  { bg:'FFFFFF', text:'1A1A1A', accent:'000000', accent2:'666666' },
+        };
+        const th = THEMES[input.theme] || THEMES['default'];
         const pptx=new PptxGenJS();
-        (input.slides||[]).forEach(sl=>{
-          const slide=pptx.addSlide();
-          slide.addText(sl.title||'', { x:0.4, y:0.25, w:9.2, h:0.8, fontSize:24, bold:true, color:'1A1A2E' });
-          if(sl.bullets && sl.bullets.length){
-            slide.addText(sl.bullets.map(b=>({ text:String(b), options:{bullet:true, breakLine:true} })), { x:0.5, y:1.2, w:9, h:sl.table?3:4.5, fontSize:16, color:'333333' });
+        pptx.layout='LAYOUT_16x9';
+        const richBullets = (arr)=> (arr||[]).map(b=>{
+          if(typeof b==='string' || typeof b==='number') return { text:String(b), options:{bullet:true, breakLine:true, color:th.text} };
+          return { text:String((b&&b.text)||''), options:{bullet:true, breakLine:true, bold:!!(b&&b.bold), italic:!!(b&&b.italic), color:(b&&b.color)||th.text} };
+        });
+        const tableRows = (tbl)=> [
+          tbl.headers.map(h=>({ text:String(h), options:{bold:true, color:'FFFFFF', fill:{color:th.accent2}} })),
+          ...(tbl.rows||[]).map(r=> r.map(c=>({ text:String(c), options:{color:th.text} })))
+        ];
+        // Shape-based "SmartArt" emulation — true Office SmartArt is a
+        // proprietary format no library can generate, so these diagrams are
+        // built from plain positioned shapes/text instead. Every shape draw
+        // is individually try/caught so one unsupported shape name never
+        // takes down the rest of the deck.
+        const drawBox = (slide, label, x, y, w, h, fill, shapeName) => {
+          try{
+            slide.addText(label||'', { shape:(pptx.ShapeType && pptx.ShapeType[shapeName]) || shapeName || 'roundRect',
+              x, y, w, h, fill:{color:fill}, line:{color:fill, width:0.75},
+              color:'FFFFFF', align:'center', valign:'middle', fontSize:13, bold:true, shrinkText:true });
+          }catch(err){ console.warn('diagram shape failed ('+shapeName+'):', err); }
+        };
+        const drawDiagram = (slide, type, rawItems, th) => {
+          const items=(rawItems||[]).filter(Boolean).slice(0,6);
+          if(!items.length) return;
+          if(type==='process'){
+            const n=items.length, gap=0.35, bw=(9-gap*(n-1))/n, y=2.3, h=1.3;
+            items.forEach((label,i)=>{
+              const x=0.5+i*(bw+gap);
+              drawBox(slide, label, x, y, bw, h, i%2===0?th.accent2:th.accent, 'roundRect');
+              if(i<n-1) slide.addText('→', { x:x+bw, y:y+h/2-0.3, w:gap, h:0.6, fontSize:22, bold:true, align:'center', valign:'middle', color:th.text });
+            });
+          } else if(type==='cycle'){
+            const n=items.length, cx=5, cy=3.1, r=1.9, bw=2.2, bh=0.95;
+            items.forEach((label,i)=>{
+              const angle=(-90 + i*(360/n)) * Math.PI/180;
+              const x=cx + r*Math.cos(angle) - bw/2, y=cy + r*Math.sin(angle) - bh/2;
+              drawBox(slide, label, x, y, bw, bh, i%2===0?th.accent2:th.accent, 'ellipse');
+            });
+          } else if(type==='pyramid'){
+            const n=items.length, top=1.05, totalH=3.9, lh=totalH/n, minW=2.6, maxW=8.6;
+            items.forEach((label,i)=>{
+              const w = minW + (n>1 ? i*(maxW-minW)/(n-1) : 0);
+              const x=(10-w)/2, y=top+i*lh;
+              drawBox(slide, label, x, y, w, lh-0.12, i%2===0?th.accent2:th.accent, 'trapezoid');
+            });
+          } else { // hierarchy
+            const root=items[0], children=items.slice(1);
+            const rootW=2.8, rootH=0.8, rootX=(10-rootW)/2, rootY=0.9;
+            drawBox(slide, root, rootX, rootY, rootW, rootH, th.accent, 'roundRect');
+            if(children.length){
+              const m=children.length, gap=0.3, cw=(9-gap*(m-1))/m, cy=2.7, ch=0.8;
+              const rootCx=rootX+rootW/2, rootBottomY=rootY+rootH;
+              children.forEach((label,i)=>{
+                const x=0.5+i*(cw+gap);
+                drawBox(slide, label, x, cy, cw, ch, th.accent2, 'roundRect');
+                const childCx=x+cw/2;
+                try{
+                  slide.addShape((pptx.ShapeType && pptx.ShapeType.line) || 'line', {
+                    x:Math.min(rootCx,childCx), y:rootBottomY, w:Math.max(Math.abs(childCx-rootCx),0.01), h:(cy-rootBottomY),
+                    line:{color:th.text, width:1.25}, flipH: childCx<rootCx
+                  });
+                }catch(err){ console.warn('diagram connector failed:', err); }
+              });
+            }
           }
-          if(sl.table && sl.table.headers && sl.table.headers.length){
-            const rows=[ sl.table.headers.map(h=>({ text:String(h), options:{bold:true, fill:{color:'EEEEEE'}} })), ...(sl.table.rows||[]).map(r=> r.map(c=>({ text:String(c) }))) ];
-            slide.addTable(rows, { x:0.5, y: sl.bullets&&sl.bullets.length?4.4:1.2, w:9 });
+        };
+        for(const sl of (input.slides||[])){
+          const slide=pptx.addSlide();
+          slide.background = { color: th.bg };
+          const accent = sl.accentColor || th.accent;
+          const layout = sl.layout || (sl.table && sl.table.headers ? 'table' : 'bullets');
+          if(layout==='title'){
+            slide.addText(sl.title||'', { x:0.5, y:1.9, w:9, h:1.2, fontSize:40, bold:true, color:accent, align:'center' });
+            if(sl.subtitle) slide.addText(sl.subtitle, { x:0.5, y:3.1, w:9, h:0.8, fontSize:20, color:th.text, align:'center' });
+          } else if(layout==='section_header'){
+            slide.addText(sl.title||'', { x:0.5, y:2.1, w:9, h:1, fontSize:32, bold:true, color:accent, align:'center' });
+            if(sl.subtitle) slide.addText(sl.subtitle, { x:0.5, y:3.1, w:9, h:0.6, fontSize:16, color:th.text, align:'center' });
+          } else if(layout==='quote'){
+            slide.addText('“'+(sl.quote||sl.title||'')+'”', { x:0.8, y:1.6, w:8.4, h:1.8, fontSize:26, italic:true, color:accent, align:'center' });
+            if(sl.attribution) slide.addText('— '+sl.attribution, { x:0.8, y:3.5, w:8.4, h:0.5, fontSize:16, color:th.text, align:'center' });
+          } else if(layout==='two_column'){
+            slide.addText(sl.title||'', { x:0.4, y:0.25, w:9.2, h:0.7, fontSize:24, bold:true, color:accent });
+            const cols = (sl.columns && sl.columns.length ? sl.columns : [{heading:'', bullets:sl.bullets||[]}]).slice(0,2);
+            const colW=4.3;
+            cols.forEach((col,i)=>{
+              const x=0.5+i*(colW+0.4);
+              if(col.heading) slide.addText(col.heading, { x, y:1.05, w:colW, h:0.5, fontSize:18, bold:true, color:th.text });
+              slide.addText(richBullets(col.bullets), { x, y: col.heading?1.6:1.05, w:colW, h:3.6, fontSize:14, color:th.text });
+            });
+          } else if(layout==='chart'){
+            slide.addText(sl.title||'', { x:0.4, y:0.25, w:9.2, h:0.7, fontSize:24, bold:true, color:accent });
+            if(sl.chart && sl.chart.type && sl.chart.series && sl.chart.series.length){
+              try{
+                const chartType = (pptx.ChartType && pptx.ChartType[sl.chart.type]) || sl.chart.type;
+                const chartData = sl.chart.series.map(s=>({ name:s.name||'Series', labels:sl.chart.categories||[], values:(s.values||[]).map(Number) }));
+                slide.addChart(chartType, chartData, {
+                  x:0.5, y:1.15, w:9, h:4.2, showLegend: sl.chart.series.length>1, showTitle:false,
+                  chartColors:[th.accent2, th.accent, '999999', 'CCCCCC', th.text],
+                  catAxisLabelColor:th.text, valAxisLabelColor:th.text, dataLabelColor:th.text, legendColor:th.text
+                });
+              }catch(err){ slide.addText('(chart could not be rendered: '+err.message+')', { x:0.5, y:1.5, w:9, h:1, fontSize:14, color:th.text }); }
+            }
+          } else if(layout==='diagram'){
+            slide.addText(sl.title||'', { x:0.4, y:0.25, w:9.2, h:0.7, fontSize:22, bold:true, color:accent });
+            if(sl.diagram && sl.diagram.type) drawDiagram(slide, sl.diagram.type, sl.diagram.items, th);
+          } else if(layout==='table'){
+            slide.addText(sl.title||'', { x:0.4, y:0.25, w:9.2, h:0.7, fontSize:24, bold:true, color:accent });
+            if(sl.table && sl.table.headers && sl.table.headers.length) slide.addTable(tableRows(sl.table), { x:0.4, y:1.15, w:9.2 });
+          } else { // 'bullets' default
+            slide.addText(sl.title||'', { x:0.4, y:0.25, w:9.2, h:0.7, fontSize:24, bold:true, color:accent });
+            if(sl.bullets && sl.bullets.length) slide.addText(richBullets(sl.bullets), { x:0.5, y:1.05, w:9, h: sl.table?2.7:4, fontSize:16, color:th.text });
+            if(sl.table && sl.table.headers && sl.table.headers.length) slide.addTable(tableRows(sl.table), { x:0.5, y: sl.bullets&&sl.bullets.length?3.9:1.05, w:9 });
           }
           if(sl.notes) slide.addNotes(sl.notes);
-        });
+        }
         const blob=await pptx.write({outputType:'blob'});
         const filename=`${(input.filename||'presentation').replace(/[^a-z0-9]/gi,'_')}.pptx`;
         await deliverGeneratedFile(blob, filename, 'application/vnd.openxmlformats-officedocument.presentationml.presentation', input.category);
-        return `Created PowerPoint presentation "${filename}" with ${(input.slides||[]).length} slide(s) — downloaded and saved to Library${input.category?' under '+input.category:''}.`;
+        return `Created PowerPoint presentation "${filename}" with ${(input.slides||[]).length} slide(s)${input.theme?' using the '+input.theme+' theme':''} — downloaded and saved to Library${input.category?' under '+input.category:''}.`;
       }catch(err){ return 'Failed to generate PowerPoint presentation: '+err.message; }
     }
     return 'Unknown tool: '+name;
