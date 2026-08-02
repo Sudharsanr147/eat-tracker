@@ -7,6 +7,53 @@ the app itself (login screen and sidebar footer) — see `APP_VERSION` near the
 top of the `<script>` block in `index.html`. If the number you see in the app
 matches the latest entry below, you're on the current version.
 
+## v1.8.0 — 2026-08-02
+
+- Sidebar reorganized: module buttons now have proper button styling
+  (border, hover/active highlight) with emoji icons removed; the version
+  indicator moved up into the header next to the EAT logo, shown in
+  brackets. "Views" (the old sub-filter list) is now a collapsible section,
+  collapsed by default, and its old "By Owner"/"By Counterparty" sub-groupings
+  were removed as no longer needed.
+- Added a "Masters" collapsible section (collapsed by default) holding
+  Companies and a brand-new Team Members module — Team Members is a full
+  add/edit/delete master list (same pattern as Companies) backed by the
+  existing participant data, replacing the old "Manage Participants" button.
+  It does not change the meeting attendee "Participants" field, which still
+  works exactly as before.
+- Added a "Settings" collapsible section (collapsed by default, pinned to
+  the bottom of the sidebar) holding Audit Log, Cloud Sync, Export/Import,
+  and Account.
+- Removed the Counterparty field from Meetings entirely — modal, table,
+  detail pane, sidebar filters, and the AI chat tools no longer reference it.
+- Renamed the Meetings module to "Meeting Minutes" throughout the sidebar
+  and toolbar, added a Notes preview column to the Meetings table, and made
+  the detail side-panel scroll independently of its header so long meeting
+  notes/action lists no longer get cut off.
+- Action Items gained a High/Medium/Low priority field, shown as
+  color-coded text (red/gold/green in dark mode, red/amber/green in light
+  mode) and settable from both the UI and the AI chat assistant.
+- Daily Activities gained the same priority field (with sorting: not-done
+  items first, then High → Medium → Low → no priority), plus a new
+  "Today Due & Overdue Action Items" table beneath the list so overdue or
+  due-today action items are visible without leaving the Daily Activities
+  screen. Existing/legacy daily items can have a priority added via the
+  edit UI. Chat tools (add_daily/edit_daily) support priority too.
+- Rewrote EATER's system prompt to clearly explain what each module is for
+  (Meeting Minutes, Action Items, Daily Activities, Notes, Calendar, Work
+  SOP, Company Master/Team Members, Compliance Manager, MIS Reports,
+  Library), and added cross-posting guidance: when a meeting note, general
+  note, or Work SOP entry describes something actionable, EATER now asks
+  whether it should also be logged as an Action Item or Daily Activity
+  instead of silently filing it in one place only.
+- Fixed a mobile Safari bug (most visible on iPad) where the chat text
+  input bar could render off-screen and unreachable when entering the Chat
+  module or tapping the floating message button from another tab — caused
+  by the page using `100vh` for its overall height, which on Safari can be
+  taller than the actually-visible viewport. The page height now falls back
+  to `100dvh` (dynamic viewport height), matching the pattern already used
+  for the mobile sidebar and other full-screen drawers.
+
 ## v1.7.1 — 2026-08-02
 
 - Fixed the Library category "folders" at the top of the Library view —

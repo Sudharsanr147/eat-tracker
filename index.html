@@ -25,15 +25,17 @@
   --accent:#f5c518;--green:#e8e8e8;--red:#ff4444;--yellow:#f5c518;--orange:#ff4444;
   --purple:#f5c518;--teal:#f5c518;--on-accent:#000000;
   --shadow:0 8px 32px rgba(0,0,0,.7);--card-hover:#141414;--mono:'IBM Plex Mono',monospace;
+  --pri-high:#ff5c5c;--pri-medium:#f5c518;--pri-low:#4ade80;
 }
 body.light{
   --bg:#ffffff;--surface:#ffffff;--surface2:#f7f8fa;--surface3:#eef0f3;
   --border:#e3e6eb;--text:#1a1d29;--muted:#6b7280;
   --accent:#2563eb;--green:#16a34a;--red:#dc2626;--yellow:#b45309;--orange:#c2410c;
   --purple:#7c3aed;--teal:#0d9488;--on-accent:#ffffff;--shadow:0 4px 20px rgba(0,0,0,.08);--card-hover:#f5f6f9;
+  --pri-high:#dc2626;--pri-medium:#a16207;--pri-low:#15803d;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;font-size:18px;height:100vh;overflow:hidden;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;}
+body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;font-size:18px;height:100vh;height:100dvh;overflow:hidden;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;}
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
@@ -76,9 +78,9 @@ header h1 span{color:var(--accent);}
 .app{display:flex;flex:1;overflow:hidden;min-height:0;}
 .sidebar{width:195px;min-width:195px;background:var(--surface);border-right:2px solid var(--border);padding:12px 0;overflow-y:auto;display:flex;flex-direction:column;position:sticky;top:0;}
 .sb-label{font-size:13px;text-transform:uppercase;letter-spacing:1px;padding:0 14px 4px;margin-top:10px;font-weight:700;opacity:.7;}
-.mod-item{display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;border-left:3px solid transparent;font-weight:600;font-size:16.5px;}
-.mod-item:hover,.mod-item.active{background:var(--surface2);}
-.mod-item.active{border-left-color:var(--accent);color:var(--accent);}
+.mod-item{display:flex;align-items:center;gap:8px;padding:9px 14px;margin:3px 10px;cursor:pointer;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);font-weight:600;font-size:16px;transition:background .15s,border-color .15s,color .15s;}
+.mod-item:hover{background:var(--surface2);border-color:var(--accent);}
+.mod-item.active{background:var(--surface2);border-color:var(--accent);color:var(--accent);}
 .sb-item{display:flex;align-items:center;gap:7px;padding:6px 14px;cursor:pointer;border-left:3px solid transparent;font-size:15.5px;}
 .sb-item:hover,.sb-item.active{background:var(--surface2);}
 .sb-item.active{border-left-color:var(--accent);}
@@ -87,6 +89,9 @@ header h1 span{color:var(--accent);}
 .sb-badge.danger{background:rgba(232,67,67,.15);border-color:var(--red);color:var(--red);}
 .sb-bottom{padding:10px 14px;margin-top:auto;display:flex;flex-direction:column;gap:5px;}
 .sb-btn{display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:8px;background:var(--surface2);border:1.5px solid var(--border);cursor:pointer;font-size:15px;font-weight:500;}
+.sb-label.sb-collapsible{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+.sb-chevron{font-size:11px;opacity:.7;}
+.sb-collapse-body.collapsed{display:none;}
 .mob-drawer-head{display:none;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:2px solid var(--border);background:var(--surface2);font-family:'Libre Baskerville',serif;font-size:17px;flex-shrink:0;color:var(--text);}
 .mob-drawer-head .vp-close{color:var(--text);}
 .chat-mob-topbar{display:none;align-items:center;gap:8px;padding:10px 14px;border-bottom:2px solid var(--border);background:var(--surface2);cursor:pointer;font-weight:600;font-size:15.5px;flex-shrink:0;color:var(--text);}
@@ -112,6 +117,11 @@ table.reg-table{width:100%;border-collapse:collapse;min-width:640px;}
 .reg-table td{padding:10px 12px;border-right:1.5px solid var(--border);vertical-align:middle;font-size:16.5px;}
 .reg-table td:last-child{border-right:none;}
 .cw-tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:14.5px;font-weight:600;border:1px solid;background:rgba(91,141,238,.12);border-color:rgba(91,141,238,.3);color:var(--accent);}
+.notes-clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;line-height:1.35;}
+.pri-tag{font-weight:700;font-size:14.5px;letter-spacing:.2px;}
+.pri-tag.pri-high{color:var(--pri-high);}
+.pri-tag.pri-medium{color:var(--pri-medium);}
+.pri-tag.pri-low{color:var(--pri-low);}
 .pill{display:inline-block;font-family:var(--mono);font-size:14px;padding:2px 8px;border-radius:10px;font-weight:600;border:1px solid;}
 .pill-open{background:rgba(240,190,48,.12);color:var(--yellow);border-color:rgba(240,190,48,.3);}
 .pill-done{background:rgba(39,201,126,.12);color:var(--green);border-color:rgba(39,201,126,.3);}
@@ -127,6 +137,7 @@ table.reg-table{width:100%;border-collapse:collapse;min-width:640px;}
 
 .daily-quickadd{display:flex;gap:8px;padding:14px 16px;border-bottom:2px solid var(--border);background:var(--surface2);}
 .daily-quickadd input{flex:1;background:var(--surface);border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;color:var(--text);font-size:17px;outline:none;}
+.pri-select{background:var(--surface);border:1.5px solid var(--border);border-radius:7px;padding:9px 10px;color:var(--text);font-size:15.5px;outline:none;flex-shrink:0;}
 .daily-list{padding:12px 16px;display:flex;flex-direction:column;gap:8px;}
 .daily-item{display:flex;align-items:center;gap:10px;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;}
 .daily-check{width:18px;height:18px;border-radius:5px;border:2px solid var(--border);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
@@ -176,7 +187,8 @@ table.reg-table{width:100%;border-collapse:collapse;min-width:640px;}
 
 .view-pane{width:340px;min-width:340px;background:var(--surface);border-left:2px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .25s;}
 .view-pane.hidden{width:0;min-width:0;border:none;}
-.vp-header{padding:12px 14px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:7px;background:var(--surface2);}
+.vp-header{padding:12px 14px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:7px;background:var(--surface2);flex-shrink:0;}
+#vp-content{flex:1;overflow-y:auto;min-height:0;}
 .vp-title{font-family:'Libre Baskerville',serif;font-size:17px;flex:1;}
 .vp-close{cursor:pointer;font-size:22px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:5px;}
 .vp-close:hover{background:var(--surface3);}
@@ -385,6 +397,7 @@ table.reg-table{min-width:0;}
 .login-card button:disabled{opacity:.5;}
 .login-error{color:var(--red);font-size:14.5px;margin-top:8px;text-align:center;min-height:18px;}
 .app-version{font-size:12px;color:var(--muted);text-align:center;letter-spacing:.3px;}
+.app-version-header{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.2px;vertical-align:middle;}
 .app-version.sb-version{padding:8px 14px 4px;margin-top:2px;border-top:1px dashed var(--border);}
 .login-card .app-version{margin-top:14px;}
 </style>
@@ -407,7 +420,7 @@ table.reg-table{min-width:0;}
   <button class="mob-menu-btn" onclick="toggleMobSidebar()">☰</button>
   <div class="logo-badge">EK</div>
   <div class="brand-block">
-    <h1>EAT</h1>
+    <h1>EAT <span class="app-version-header" id="app-version-header"></span></h1>
     <div class="brand-sub">Executive Assistant Tracker</div>
   </div>
   <div class="header-stats">
@@ -427,27 +440,31 @@ table.reg-table{min-width:0;}
   <div class="sidebar" id="sidebar">
     <div class="mob-drawer-head">Menu <span class="vp-close" onclick="closeAllMobDrawers()">✕</span></div>
     <div class="sb-label">Modules</div>
-    <div class="mod-item" data-mod="chat" onclick="switchModule('chat')">💬 Chat</div>
-    <div class="mod-item" data-mod="daily" onclick="switchModule('daily')">✅ Daily Activities</div>
-    <div class="mod-item" data-mod="actions" onclick="switchModule('actions')">☑️ Action Items</div>
-    <div class="mod-item" data-mod="notes" onclick="switchModule('notes')">🗒️ Notes</div>
-    <div class="mod-item" data-mod="calendar" onclick="switchModule('calendar')">📅 Calendar</div>
-    <div class="mod-item active" data-mod="meetings" onclick="switchModule('meetings')">📖 Meetings</div>
-    <div class="mod-item" data-mod="sop" onclick="switchModule('sop')">🌳 Work SOP</div>
-    <div class="mod-item" data-mod="companies" onclick="switchModule('companies')">🏢 Companies</div>
-    <div class="mod-item" data-mod="compliance" onclick="switchModule('compliance')">📋 Compliance Manager</div>
-    <div class="mod-item" data-mod="mis" onclick="switchModule('mis')">📊 MIS Reports</div>
-    <div class="mod-item" data-mod="library" onclick="switchModule('library')">🗄️ Library</div>
-    <div class="sb-label" id="sub-filter-label">Views</div>
-    <div id="sub-filters"></div>
-    <div class="sb-bottom">
-      <div class="sb-btn" onclick="openManageParts()">⚙️ Manage Participants</div>
-      <div class="sb-btn" onclick="openAuditLog()">🕵️ Audit Log</div>
-      <div class="sb-btn" onclick="openModal('sync-modal')" style="color:var(--accent);border-color:var(--accent)">☁️ Cloud Sync</div>
-      <div class="sb-btn" onclick="openModal('export-modal')" style="color:var(--green);border-color:var(--green)">📦 Export / Import</div>
-      <div class="sb-btn" onclick="openAccountModal()" style="color:var(--purple);border-color:var(--purple)">👤 Account</div>
-      <div class="app-version sb-version" id="app-version-sidebar"></div>
+    <div class="mod-item" data-mod="chat" onclick="switchModule('chat')">Chat</div>
+    <div class="mod-item" data-mod="daily" onclick="switchModule('daily')">Daily Activities</div>
+    <div class="mod-item" data-mod="actions" onclick="switchModule('actions')">Action Items</div>
+    <div class="mod-item" data-mod="notes" onclick="switchModule('notes')">Notes</div>
+    <div class="mod-item" data-mod="calendar" onclick="switchModule('calendar')">Calendar</div>
+    <div class="mod-item active" data-mod="meetings" onclick="switchModule('meetings')">Meeting Minutes</div>
+    <div class="mod-item" data-mod="sop" onclick="switchModule('sop')">Work SOP</div>
+    <div class="mod-item" data-mod="compliance" onclick="switchModule('compliance')">Compliance Manager</div>
+    <div class="mod-item" data-mod="mis" onclick="switchModule('mis')">MIS Reports</div>
+    <div class="mod-item" data-mod="library" onclick="switchModule('library')">Library</div>
+    <div class="sb-label sb-collapsible" id="views-hdr" onclick="toggleSbSection('views')"><span id="sub-filter-label">Views</span><span class="sb-chevron" id="views-chevron">▸</span></div>
+    <div id="sub-filters" class="sb-collapse-body collapsed"></div>
+    <div class="sb-label sb-collapsible" id="masters-hdr" onclick="toggleSbSection('masters')"><span>Masters</span><span class="sb-chevron" id="masters-chevron">▸</span></div>
+    <div id="masters-body" class="sb-collapse-body collapsed">
+      <div class="mod-item" data-mod="companies" onclick="switchModule('companies')">Companies</div>
+      <div class="mod-item" data-mod="team" onclick="switchModule('team')">Team Members</div>
     </div>
+    <div class="sb-label sb-collapsible" id="settings-hdr" onclick="toggleSbSection('settings')" style="margin-top:auto"><span>Settings</span><span class="sb-chevron" id="settings-chevron">▸</span></div>
+    <div id="settings-body" class="sb-collapse-body collapsed">
+      <div class="sb-btn" onclick="openAuditLog()" style="margin:3px 10px">🕵️ Audit Log</div>
+      <div class="sb-btn" onclick="openModal('sync-modal')" style="margin:3px 10px;color:var(--accent);border-color:var(--accent)">☁️ Cloud Sync</div>
+      <div class="sb-btn" onclick="openModal('export-modal')" style="margin:3px 10px;color:var(--green);border-color:var(--green)">📦 Export / Import</div>
+      <div class="sb-btn" onclick="openAccountModal()" style="margin:3px 10px;color:var(--purple);border-color:var(--purple)">👤 Account</div>
+    </div>
+    <div class="app-version sb-version" id="app-version-sidebar"></div>
   </div>
 
   <div class="centre">
@@ -473,10 +490,9 @@ table.reg-table{min-width:0;}
 <div class="overlay" id="meeting-modal">
   <div class="modal">
     <h2 id="meeting-modal-title">Add Meeting</h2>
-    <div class="m-grid tri" style="margin-bottom:10px">
+    <div class="m-grid" style="margin-bottom:10px">
       <div class="field"><label>📅 Date</label><input type="date" id="f-date"/></div>
       <div class="field"><label>🕐 Time</label><input type="time" id="f-time"/></div>
-      <div class="field"><label>🏷 Counterparty</label><input type="text" id="f-cw" placeholder="e.g. SBI, Internal"/></div>
     </div>
     <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Meeting Title</label><input type="text" id="f-title"/></div></div>
     <div class="m-grid full" style="margin-bottom:10px">
@@ -501,6 +517,7 @@ table.reg-table{min-width:0;}
       <div class="field"><label>Owner</label><select id="a-owner"></select></div>
       <div class="field"><label>Due Date</label><input type="date" id="a-due"/></div>
     </div>
+    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Priority</label><select id="a-priority"><option value="">None</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
     <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('action-modal')">Cancel</button><button class="btn-primary" onclick="saveStandaloneAction()">💾 Save</button></div>
   </div>
 </div>
@@ -627,16 +644,12 @@ table.reg-table{min-width:0;}
   </div>
 </div>
 
-<!-- MANAGE PARTICIPANTS -->
-<div class="overlay" id="parts-modal">
+<!-- TEAM MEMBER MODAL -->
+<div class="overlay" id="team-modal">
   <div class="modal">
-    <h2>Manage Participants</h2>
-    <div id="pl-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;max-height:280px;overflow-y:auto;"></div>
-    <div style="display:flex;gap:7px;">
-      <input type="text" id="new-part-input" placeholder="New participant name…" style="flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:16.5px;outline:none" onkeydown="if(event.key==='Enter')addParticipant()"/>
-      <button class="btn-primary" onclick="addParticipant()">Add</button>
-    </div>
-    <div class="modal-actions"><button class="btn-primary" onclick="closeModal('parts-modal')">Done</button></div>
+    <h2 id="team-modal-title">Add Team Member</h2>
+    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Name</label><input type="text" id="team-name" placeholder="e.g. Priya Sharma"/></div></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('team-modal')">Cancel</button><button class="btn-primary" onclick="saveTeamMember()">💾 Save</button></div>
   </div>
 </div>
 
@@ -698,14 +711,16 @@ table.reg-table{min-width:0;}
 // redeployed, so the version shown in the app (login screen + sidebar footer)
 // always reflects what's actually live. See CHANGELOG.md for the history
 // behind each version number.
-const APP_VERSION = '1.7.1';
+const APP_VERSION = '1.8.0';
 const APP_UPDATED = '2026-08-02';
 function renderAppVersion(){
   const [y,m,d] = APP_UPDATED.split('-');
   const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const label = 'v'+APP_VERSION+' · Updated '+parseInt(d)+' '+mo[parseInt(m)-1]+' '+y;
-  const a = document.getElementById('app-version-login'); if(a) a.textContent = label;
-  const b = document.getElementById('app-version-sidebar'); if(b) b.textContent = label;
+  const updatedLabel = 'Updated '+parseInt(d)+' '+mo[parseInt(m)-1]+' '+y;
+  const fullLabel = 'v'+APP_VERSION+' · '+updatedLabel;
+  const a = document.getElementById('app-version-login'); if(a) a.textContent = fullLabel;
+  const b = document.getElementById('app-version-sidebar'); if(b) b.textContent = updatedLabel;
+  const h = document.getElementById('app-version-header'); if(h) h.textContent = '('+APP_VERSION+')';
 }
 
 // ═══════════════════════════════ STATE ═══════════════════════════════
@@ -808,7 +823,7 @@ function renderTicker(){
 
 // ═══════════════════════════════ MODULE SWITCHING ═══════════════════════════════
 const moduleConfig = {
-  meetings:{title:'Meetings', addLabel:'＋ Add Meeting', filters:[{k:'all',l:'All Meetings',i:'📋'},{k:'week',l:'This Week',i:'📅'},{k:'month',l:'This Month',i:'🗓️'},{k:'overdue-actions',l:'Overdue Actions',i:'🔴'},{k:'open-actions',l:'Open Actions',i:'⚠️'}]},
+  meetings:{title:'Meeting Minutes', addLabel:'＋ Add Meeting', filters:[{k:'all',l:'All Meetings',i:'📋'},{k:'week',l:'This Week',i:'📅'},{k:'month',l:'This Month',i:'🗓️'},{k:'overdue-actions',l:'Overdue Actions',i:'🔴'},{k:'open-actions',l:'Open Actions',i:'⚠️'}]},
   calendar:{title:'Calendar', addLabel:'＋ Add Appointment', filters:[]},
   actions:{title:'Action Items', addLabel:'＋ Add Action', filters:[{k:'all',l:'All Actions',i:'☑️'},{k:'overdue',l:'Overdue',i:'🔴'},{k:'open',l:'Open',i:'⚠️'},{k:'done',l:'Done',i:'✅'}]},
   daily:{title:'Daily Activities', addLabel:null, filters:[]},
@@ -818,6 +833,7 @@ const moduleConfig = {
   library:{title:'Library', addLabel:null, filters:[]},
   sop:{title:'Work SOP', addLabel:'＋ Add Category', filters:[]},
   companies:{title:'Companies', addLabel:'＋ Add Company', filters:[]},
+  team:{title:'Team Members', addLabel:'＋ Add Team Member', filters:[]},
   chat:{title:'Chat', addLabel:null, filters:[]}
 };
 
@@ -839,11 +855,28 @@ function switchModule(mod){
   if(isCompactView()) closeAllMobDrawers();
 }
 
+let sbOpen = {views:false, masters:false, settings:false};
+function toggleSbSection(key){
+  sbOpen[key] = !sbOpen[key];
+  const bodyId = key==='views' ? 'sub-filters' : key+'-body';
+  const body = document.getElementById(bodyId);
+  const chev = document.getElementById(key+'-chevron');
+  if(body) body.classList.toggle('collapsed', !sbOpen[key]);
+  if(chev) chev.textContent = sbOpen[key] ? '▾' : '▸';
+}
+
 function renderSubFilters(){
   const cfg = moduleConfig[activeModule];
   const wrap = document.getElementById('sub-filters');
   const label = document.getElementById('sub-filter-label');
-  wrap.innerHTML=''; label.style.display = cfg.filters.length ? 'block' : 'none';
+  const hdr = document.getElementById('views-hdr');
+  const chev = document.getElementById('views-chevron');
+  wrap.innerHTML='';
+  label.textContent = (activeModule==='library') ? 'Categories' : 'Views';
+  const hasContent = cfg.filters.length>0 || activeModule==='library';
+  hdr.style.display = (activeModule==='chat' || !hasContent) ? 'none' : 'flex';
+  wrap.classList.toggle('collapsed', !sbOpen.views);
+  chev.textContent = sbOpen.views ? '▾' : '▸';
   cfg.filters.forEach(f=>{
     const div=document.createElement('div');
     div.className='sb-item'+(currentFilter===f.k?' active':'');
@@ -851,31 +884,7 @@ function renderSubFilters(){
     div.onclick=()=>{currentFilter=f.k; renderSubFilters(); document.getElementById('view-pane').classList.add('hidden'); renderView();};
     wrap.appendChild(div);
   });
-  if(activeModule==='actions'){
-    label.textContent='Views'; label.style.display='block';
-    const owners = new Set(getAllActions().map(a=>a.owner).filter(Boolean));
-    if(owners.size){ const hdr=document.createElement('div'); hdr.className='sb-label'; hdr.textContent='By Owner'; wrap.appendChild(hdr); }
-    [...owners].sort().forEach(owner=>{
-      const count = getAllActions().filter(a=>a.owner===owner).length;
-      const div=document.createElement('div'); div.className='sb-item'+(currentFilter===`owner-${owner}`?' active':'');
-      div.innerHTML=`<span>👤</span><span class="sb-name">${esc(owner)}</span><span class="sb-badge">${count}</span>`;
-      div.onclick=()=>{currentFilter=`owner-${owner}`; renderSubFilters(); renderView();};
-      wrap.appendChild(div);
-    });
-  }
-  if(activeModule==='meetings'){
-    const cwSet = new Set(state.meetings.map(m=>m.cw).filter(Boolean));
-    if(cwSet.size){ const hdr=document.createElement('div'); hdr.className='sb-label'; hdr.textContent='By Counterparty'; wrap.appendChild(hdr); }
-    [...cwSet].sort().forEach(cw=>{
-      const count = state.meetings.filter(m=>m.cw===cw).length;
-      const div=document.createElement('div'); div.className='sb-item'+(currentFilter===`cw-${cw}`?' active':'');
-      div.innerHTML=`<span>🏢</span><span class="sb-name">${esc(cw)}</span><span class="sb-badge">${count}</span>`;
-      div.onclick=()=>{currentFilter=`cw-${cw}`; renderSubFilters(); renderView();};
-      wrap.appendChild(div);
-    });
-  }
   if(activeModule==='library'){
-    label.textContent='Categories'; label.style.display='block';
     const allDiv=document.createElement('div'); allDiv.className='sb-item'+(activeLibCategory==='all'?' active':'');
     allDiv.innerHTML=`<span>🗄️</span><span class="sb-name">All Files</span><span class="sb-badge">${state.library.files.length}</span>`;
     allDiv.onclick=()=>{activeLibCategory='all'; renderSubFilters(); renderView();};
@@ -889,9 +898,6 @@ function renderSubFilters(){
     });
     const addCat=document.createElement('div'); addCat.className='sb-btn'; addCat.style.margin='8px 14px'; addCat.innerHTML='＋ New Category';
     addCat.onclick=()=>openModal('lib-cat-modal'); wrap.appendChild(addCat);
-  }
-  if(activeModule==='chat'){
-    label.style.display='none';
   }
 }
 
@@ -944,6 +950,7 @@ function renderView(){
   else if(activeModule==='library') renderLibraryView(area);
   else if(activeModule==='sop') renderSopView(area);
   else if(activeModule==='companies') renderCompaniesView(area);
+  else if(activeModule==='team') renderTeamView(area);
   else if(activeModule==='chat') renderChatView(area);
   applyMobileTableLabels(area);
 }
@@ -956,17 +963,16 @@ function renderMeetingsView(area){
   else if(currentFilter==='month')list=list.filter(m=>isThisMonth(m.date));
   else if(currentFilter==='overdue-actions')list=list.filter(m=>meetingActionStats(m).overdue>0);
   else if(currentFilter==='open-actions')list=list.filter(m=>meetingActionStats(m).open>0);
-  else if(currentFilter.startsWith('cw-')){const cw=currentFilter.slice(3);list=list.filter(m=>m.cw===cw);}
-  if(search)list=list.filter(m=>(m.title||'').toLowerCase().includes(search)||(m.cw||'').toLowerCase().includes(search)||(m.notes||'').toLowerCase().includes(search)||(m.participants||[]).join(' ').toLowerCase().includes(search));
+  if(search)list=list.filter(m=>(m.title||'').toLowerCase().includes(search)||(m.notes||'').toLowerCase().includes(search)||(m.participants||[]).join(' ').toLowerCase().includes(search));
   list.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   if(list.length===0){area.innerHTML='<div class="empty-state">📖<br>No meetings yet.</div>';return;}
   function actBadge(m){const s=meetingActionStats(m);if(s.total===0)return'<span class="pill pill-none">No actions</span>';if(s.overdue>0)return`<span class="pill pill-overdue">${s.overdue} overdue</span>`;if(s.open>0)return`<span class="pill pill-open">${s.open} open</span>`;return'<span class="pill pill-done">All done</span>';}
-  let html=`<table class="reg-table"><thead><tr><th>📅 Date</th><th>📝 Meeting</th><th>🏷 Counterparty</th><th>👥 Participants</th><th>☑️ Actions</th></tr></thead><tbody>`;
+  let html=`<table class="reg-table"><thead><tr><th>📅 Date</th><th>📝 Meeting</th><th>👥 Participants</th><th>🗒️ Notes</th><th>☑️ Actions</th></tr></thead><tbody>`;
   list.forEach(m=>{html+=`<tr onclick="openMeetingView('${m.id}')" style="cursor:pointer">
     <td style="color:var(--muted);font-size:15.5px;white-space:nowrap">${fmt(m.date)}${m.time?' · '+m.time:''}</td>
     <td style="font-weight:600">${esc(m.title||'(untitled)')}</td>
-    <td>${m.cw?`<span class="cw-tag">${esc(m.cw)}</span>`:'—'}</td>
     <td style="color:var(--muted);font-size:15.5px">${esc((m.participants||[]).join(', ')||'—')}</td>
+    <td style="color:var(--muted);font-size:14.5px;max-width:240px">${m.notes?`<div class="notes-clamp">${esc(m.notes)}</div>`:'—'}</td>
     <td>${actBadge(m)}</td></tr>`;});
   html+='</tbody></table>'; area.innerHTML=html;
 }
@@ -986,11 +992,12 @@ function renderActionsView(area){
   const toggleBar = `<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14.5px;color:var(--muted)"><input type="checkbox" id="actions-show-done-toggle" ${actionsShowDone?'checked':''} onchange="toggleShowDoneActions(this.checked)"/> Show Done items</label></div>`;
   if(list.length===0){area.innerHTML=toggleBar+'<div class="empty-state">☑️<br>No action items.</div>';return;}
   function pill(a){if(a.done)return'<span class="pill pill-done">Done</span>';if(a.due&&a.due<today())return'<span class="pill pill-overdue">Overdue</span>';return'<span class="pill pill-open">Open</span>';}
-  let html=toggleBar+`<table class="reg-table"><thead><tr><th>Action</th><th>Owner</th><th>Linked To</th><th>Due</th><th>Status</th><th></th></tr></thead><tbody>`;
+  function priTag(a){if(!a.priority)return'—';return `<span class="pri-tag pri-${a.priority}">${a.priority.charAt(0).toUpperCase()+a.priority.slice(1)}</span>`;}
+  let html=toggleBar+`<table class="reg-table"><thead><tr><th>Action</th><th>Owner</th><th>Linked To</th><th>Due</th><th>Priority</th><th>Status</th><th></th></tr></thead><tbody>`;
   list.forEach(a=>{html+=`<tr>
     <td>${esc(a.text)}</td><td>${esc(a.owner||'Unassigned')}</td>
     <td style="color:var(--muted);font-size:15.5px">${a.source==='meeting'?esc(a.meetingTitle):'Standalone'}</td>
-    <td>${fmt(a.due)}</td><td>${pill(a)}</td>
+    <td>${fmt(a.due)}</td><td>${priTag(a)}</td><td>${pill(a)}</td>
     <td style="white-space:nowrap">
       <span class="row-btn" onclick='editActionItem(${JSON.stringify(a.id)},"${a.source}")'>✎</span>
       <span class="row-btn" onclick='toggleActionDone(${JSON.stringify(a.id)},"${a.source}")'>${a.done?'↺':'✓'}</span>
@@ -1009,6 +1016,7 @@ function editActionItem(id,source){
   populateOwnerSelect();
   document.getElementById('a-owner').value=a.owner||'';
   document.getElementById('a-due').value=a.due||'';
+  document.getElementById('a-priority').value=a.priority||'';
   openModal('action-modal');
 }
 function toggleActionDone(id,source){
@@ -1029,23 +1037,43 @@ function deleteActionItem(id,source){
 
 // ---------- DAILY ----------
 function renderDailyView(area){
-  area.innerHTML = `<div class="daily-quickadd"><input type="text" id="daily-quick-input" placeholder="What do you need to do today? Press Enter to add…" onkeydown="if(event.key==='Enter')quickAddDaily()"/><button class="btn-primary" onclick="quickAddDaily()">＋ Add</button></div><div class="daily-list" id="daily-list"></div>`;
+  area.innerHTML = `<div class="daily-quickadd"><input type="text" id="daily-quick-input" placeholder="What do you need to do today? Press Enter to add…" onkeydown="if(event.key==='Enter')quickAddDaily()"/><select class="pri-select" id="daily-quick-priority" title="Priority"><option value="">Priority…</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select><button class="btn-primary" onclick="quickAddDaily()">＋ Add</button></div><div class="daily-list" id="daily-list"></div><div class="sb-label" style="margin-top:22px">🔴 Today Due &amp; Overdue Action Items</div><div id="daily-actions-due"></div>`;
   const search=document.getElementById('search-input').value.toLowerCase();
   let list=[...state.daily]; if(search)list=list.filter(d=>d.text.toLowerCase().includes(search));
-  list.sort((a,b)=>(a.done===b.done)?0:(a.done?1:-1));
+  const priRank={high:0,medium:1,low:2};
+  list.sort((a,b)=>{
+    if(a.done!==b.done) return a.done?1:-1;
+    const ra=(a.priority in priRank)?priRank[a.priority]:3, rb=(b.priority in priRank)?priRank[b.priority]:3;
+    return ra-rb;
+  });
   const dl=document.getElementById('daily-list');
-  if(list.length===0){dl.innerHTML='<div class="empty-state">✅<br>No daily activities yet.</div>';return;}
-  dl.innerHTML = list.map(d=>{
-    if(d.id===editingDailyId){
-      return `<div class="daily-item"><input type="text" id="daily-edit-input-${d.id}" value="${esc(d.text)}" style="flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;color:var(--text);font-size:17px;outline:none;" onkeydown="if(event.key==='Enter')saveDailyEdit('${d.id}');if(event.key==='Escape')cancelDailyEdit();"/><span class="row-btn" onclick="saveDailyEdit('${d.id}')">💾</span><span class="row-btn rbdel" onclick="cancelDailyEdit()">✕</span></div>`;
-    }
-    return `<div class="daily-item"><div class="daily-check ${d.done?'done':''}" onclick="toggleDailyDone('${d.id}')"></div><div class="daily-txt ${d.done?'done':''}">${esc(d.text)}</div><span class="row-btn" onclick="editDaily('${d.id}')">✎</span><span class="row-btn rbdel" onclick="deleteDaily('${d.id}')">✕</span></div>`;
-  }).join('');
+  if(list.length===0){dl.innerHTML='<div class="empty-state">✅<br>No daily activities yet.</div>';}
+  else{
+    dl.innerHTML = list.map(d=>{
+      if(d.id===editingDailyId){
+        return `<div class="daily-item"><input type="text" id="daily-edit-input-${d.id}" value="${esc(d.text)}" style="flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;color:var(--text);font-size:17px;outline:none;" onkeydown="if(event.key==='Enter')saveDailyEdit('${d.id}');if(event.key==='Escape')cancelDailyEdit();"/><select class="pri-select" id="daily-edit-priority-${d.id}" title="Priority"><option value="" ${!d.priority?'selected':''}>None</option><option value="high" ${d.priority==='high'?'selected':''}>High</option><option value="medium" ${d.priority==='medium'?'selected':''}>Medium</option><option value="low" ${d.priority==='low'?'selected':''}>Low</option></select><span class="row-btn" onclick="saveDailyEdit('${d.id}')">💾</span><span class="row-btn rbdel" onclick="cancelDailyEdit()">✕</span></div>`;
+      }
+      const priHtml = d.priority ? `<span class="pri-tag pri-${d.priority}">${d.priority.charAt(0).toUpperCase()+d.priority.slice(1)}</span>` : '';
+      return `<div class="daily-item"><div class="daily-check ${d.done?'done':''}" onclick="toggleDailyDone('${d.id}')"></div>${priHtml}<div class="daily-txt ${d.done?'done':''}">${esc(d.text)}</div><span class="row-btn" onclick="editDaily('${d.id}')">✎</span><span class="row-btn rbdel" onclick="deleteDaily('${d.id}')">✕</span></div>`;
+    }).join('');
+  }
+  const dueList = getAllActions().filter(a=>!a.done && a.due && a.due<=today()).sort((a,b)=>(a.due||'').localeCompare(b.due||''));
+  const dueWrap = document.getElementById('daily-actions-due');
+  if(dueList.length===0){ dueWrap.innerHTML = '<div class="empty-state" style="padding:20px 0">🎉<br>Nothing due or overdue.</div>'; }
+  else{
+    let h = `<table class="reg-table"><thead><tr><th>Action</th><th>Owner</th><th>Linked To</th><th>Due</th><th></th></tr></thead><tbody>`;
+    dueList.forEach(a=>{
+      const overdue = a.due < today();
+      h += `<tr><td>${esc(a.text)}</td><td>${esc(a.owner||'Unassigned')}</td><td style="color:var(--muted);font-size:15.5px">${a.source==='meeting'?esc(a.meetingTitle):'Standalone'}</td><td>${overdue?`<span class="pill pill-overdue">${fmt(a.due)}</span>`:`<span class="pill pill-open">${fmt(a.due)} · Today</span>`}</td><td><span class="row-btn" onclick='toggleActionDone(${JSON.stringify(a.id)},"${a.source}")'>✓</span></td></tr>`;
+    });
+    h += '</tbody></table>';
+    dueWrap.innerHTML = h;
+  }
 }
-function quickAddDaily(){const inp=document.getElementById('daily-quick-input');const val=inp.value.trim();if(!val)return;state.daily.push({id:genId(),text:val,done:false,addedAt:today()});inp.value='';save();renderView();}
+function quickAddDaily(){const inp=document.getElementById('daily-quick-input');const val=inp.value.trim();if(!val)return;const priSel=document.getElementById('daily-quick-priority');const priority=priSel?priSel.value:'';state.daily.push({id:genId(),text:val,priority,done:false,addedAt:today()});inp.value='';save();renderView();}
 function toggleDailyDone(id){const d=state.daily.find(d=>d.id===id);if(d){d.done=!d.done;logAudit('Daily Activities','edit','Toggled status: '+(d.text||''));}save();renderView();}
 function editDaily(id){editingDailyId=id;renderView();setTimeout(()=>{const el=document.getElementById('daily-edit-input-'+id);if(el){el.focus();el.select();}},0);}
-function saveDailyEdit(id){const inp=document.getElementById('daily-edit-input-'+id);const val=inp?inp.value.trim():'';if(!val){alert('Enter activity text');return;}const d=state.daily.find(d=>d.id===id);if(d){d.text=val;logAudit('Daily Activities','edit','Edited activity: '+val);}editingDailyId=null;save();renderView();}
+function saveDailyEdit(id){const inp=document.getElementById('daily-edit-input-'+id);const val=inp?inp.value.trim():'';if(!val){alert('Enter activity text');return;}const priSel=document.getElementById('daily-edit-priority-'+id);const priority=priSel?priSel.value:'';const d=state.daily.find(d=>d.id===id);if(d){d.text=val;d.priority=priority;logAudit('Daily Activities','edit','Edited activity: '+val);}editingDailyId=null;save();renderView();}
 function cancelDailyEdit(){editingDailyId=null;renderView();}
 function deleteDaily(id){const d=state.daily.find(d=>d.id===id);state.daily=state.daily.filter(d=>d.id!==id);logAudit('Daily Activities','delete','Deleted activity: '+(d?d.text||'':''));save();renderView();}
 
@@ -1940,7 +1968,21 @@ async function runChatTurn(sessionId, depth=0){
   const data=await callClaude({
     model:'claude-sonnet-4-6',max_tokens:8000,
     thinking:{type:'enabled', budget_tokens:3000},
-    system:`You are EATER, Sudharsan's Executive Assistant and the AI intelligence embedded as the chat inside his EAT (Executive Assistant Tracker) portal. You are not just a Q&A layer — you have full read and write control over every module: Meetings, Calendar/Appointments, Action Items, Daily Activities, Notes, Work SOP (categories, optionally grouped under an Area → subcategories → details), Company Master, Compliance Manager, MIS Reports, the Library (uploaded company documents), and Participants. Sudharsan will mostly work through you rather than clicking into modules directly — when he asks you to add, change, remove, reschedule, reassign, or look something up anywhere in the portal, use the tools provided to actually do it rather than telling him to do it himself in the UI. Today's date is ${today()}.
+    system:`You are EATER, Sudharsan's Executive Assistant and the AI intelligence embedded as the chat inside his EAT (Executive Assistant Tracker) portal. You are not just a Q&A layer — you have full read and write control over every module: Meeting Minutes, Calendar/Appointments, Action Items, Daily Activities, Notes, Work SOP (categories, optionally grouped under an Area → subcategories → details), Company Master, Team Members, Compliance Manager, MIS Reports, and the Library (uploaded/generated documents). Sudharsan will mostly work through you rather than clicking into modules directly — when he asks you to add, change, remove, reschedule, reassign, or look something up anywhere in the portal, use the tools provided to actually do it rather than telling him to do it himself in the UI. Today's date is ${today()}.
+
+What each module is actually for, so you file things in the right place:
+- Meeting Minutes: a record of what happened in a specific meeting — date, participants, freeform notes, and any action items that came out of it. Use this when Sudharsan describes something that happened in or was decided during a named/dated meeting.
+- Action Items: discrete, trackable tasks with an owner, due date, priority (high/medium/low), and done/not-done state. Can stand alone or be linked to the meeting that spawned them. This is the "who owes what, by when" list.
+- Daily Activities: Sudharsan's own lightweight personal to-do list for the day — no owner or due date, just text, an optional priority, and done/not-done. Use this for his own quick personal tasks, not for tasks assigned to someone else or tied to a deadline (that's Action Items).
+- Notes: freeform notes not tied to a meeting, a task, or a procedure — general information worth keeping that doesn't fit anywhere more specific.
+- Calendar/Appointments: scheduled events with a date, time, and location — things going on his calendar, not tasks.
+- Work SOP: the standing knowledge base of how things are done — Areas group Categories, which contain Subcategories, which contain Details (each tagged info or issue, optionally scoped to specific companies). This is reference/procedural knowledge, not a task list.
+- Company Master / Team Members: reference lists of companies and people used elsewhere in the portal (e.g. tagging a Work SOP detail to a company).
+- Compliance Manager: recurring regulatory/compliance obligations with a frequency and due date.
+- MIS Reports: saved spreadsheet transformation recipes (instructions plus example input/output) that can be reapplied to new files.
+- Library: uploaded or AI-generated documents, filed by category.
+
+Cross-posting: when Sudharsan gives you a meeting note, a general note, or a Work SOP info/issue entry that actually describes something someone needs to do by a certain time (an assigned task, a deadline, a follow-up), don't just file it in its primary module and stop — briefly ask whether he also wants it logged as an Action Item (if it has or implies an owner/due date) or a Daily Activity (if it's just his own quick to-do). Only ask when the content plausibly reads as actionable; don't ask about entries that are clearly just informational (e.g. a procedure note, a status update, a reference fact).
 
 Work SOP structure: each category optionally belongs to an Area (a broad grouping shown as a header above its categories, e.g. "Finance" or "Operations"), contains subcategories, and each subcategory contains details — a detail is a single line of guidance tagged as either "info" (a normal note or procedure, shown in green) or "issue" (a logged problem, shown in red). Each detail can optionally be scoped to one or more companies from the Company Master; if no company is specified it applies to All Companies. When Sudharsan says something like Add info "XXX" or Add issue "XXX" (with or without naming a category/subcategory/company), use add_sop_detail: infer type from the word "info" vs "issue" in his phrasing (default info if neither is said), pick the best-matching existing category/subcategory from the Work SOP structure in the state data below (only create a new category/subcategory via add_sop_category/add_sop_subcategory if nothing reasonably matches), and only pass companies if he actually named one or more — if he doesn't mention a company, omit it entirely so the detail applies to All Companies. You can also add new companies to the Company Master yourself via add_company when Sudharsan mentions one that doesn't exist yet.
 
@@ -2001,21 +2043,22 @@ let currentParticipants=[];
 function openAddModal(){
   if(activeModule==='meetings')openAddMeetingModal();
   else if(activeModule==='calendar'){openAppointmentModal(calSelectedDate);}
-  else if(activeModule==='actions'){editingId=null;editingActionSource=null;document.getElementById('action-modal-title').textContent='Add Action Item';document.getElementById('a-text').value='';populateOwnerSelect();document.getElementById('a-due').value='';openModal('action-modal');}
+  else if(activeModule==='actions'){editingId=null;editingActionSource=null;document.getElementById('action-modal-title').textContent='Add Action Item';document.getElementById('a-text').value='';populateOwnerSelect();document.getElementById('a-due').value='';document.getElementById('a-priority').value='';openModal('action-modal');}
   else if(activeModule==='compliance'){editingId=null;document.getElementById('compliance-modal-title').textContent='Add Compliance Item';document.getElementById('c-item').value='';document.getElementById('c-freq').value='Monthly';document.getElementById('c-due').value='';document.getElementById('c-notes').value='';openModal('compliance-modal');}
   else if(activeModule==='mis'){editingId=null;document.getElementById('mis-modal-title').textContent='New MIS Operation';document.getElementById('mis-name').value='';document.getElementById('mis-instructions').value='';openModal('mis-modal');}
   else if(activeModule==='notes'){openAddNoteModal();}
   else if(activeModule==='sop'){openSopCategoryModal();}
   else if(activeModule==='companies'){openCompanyModal();}
+  else if(activeModule==='team'){openTeamModal();}
 }
-function openAddMeetingModal(){editingId=null;document.getElementById('meeting-modal-title').textContent='Add Meeting';document.getElementById('f-date').value=today();document.getElementById('f-time').value='';document.getElementById('f-cw').value='';document.getElementById('f-title').value='';document.getElementById('f-notes').value='';currentParticipants=[];renderPartsChips();document.getElementById('actions-editor').innerHTML='';addActionRow();openModal('meeting-modal');}
-function openEditMeetingModal(id){const m=state.meetings.find(m=>m.id===id);if(!m)return;editingId=id;document.getElementById('meeting-modal-title').textContent='Edit Meeting';document.getElementById('f-date').value=m.date||today();document.getElementById('f-time').value=m.time||'';document.getElementById('f-cw').value=m.cw||'';document.getElementById('f-title').value=m.title||'';document.getElementById('f-notes').value=m.notes||'';currentParticipants=[...(m.participants||[])];renderPartsChips();document.getElementById('actions-editor').innerHTML='';(m.actions&&m.actions.length?m.actions:[{}]).forEach(a=>addActionRow(a));openModal('meeting-modal');}
+function openAddMeetingModal(){editingId=null;document.getElementById('meeting-modal-title').textContent='Add Meeting';document.getElementById('f-date').value=today();document.getElementById('f-time').value='';document.getElementById('f-title').value='';document.getElementById('f-notes').value='';currentParticipants=[];renderPartsChips();document.getElementById('actions-editor').innerHTML='';addActionRow();openModal('meeting-modal');}
+function openEditMeetingModal(id){const m=state.meetings.find(m=>m.id===id);if(!m)return;editingId=id;document.getElementById('meeting-modal-title').textContent='Edit Meeting';document.getElementById('f-date').value=m.date||today();document.getElementById('f-time').value=m.time||'';document.getElementById('f-title').value=m.title||'';document.getElementById('f-notes').value=m.notes||'';currentParticipants=[...(m.participants||[])];renderPartsChips();document.getElementById('actions-editor').innerHTML='';(m.actions&&m.actions.length?m.actions:[{}]).forEach(a=>addActionRow(a));openModal('meeting-modal');}
 function renderPartsChips(){const wrap=document.getElementById('parts-wrap');wrap.querySelectorAll('.part-chip').forEach(c=>c.remove());const input=document.getElementById('parts-input');currentParticipants.forEach(name=>{const chip=document.createElement('div');chip.className='part-chip';chip.innerHTML=`<span>${esc(name)}</span><span class="x" onclick="removePartChip('${name.replace(/'/g,"\\'")}')">✕</span>`;wrap.insertBefore(chip,input);});}
 function removePartChip(name){currentParticipants=currentParticipants.filter(n=>n!==name);renderPartsChips();}
 function onPartsKeydown(e){if(e.key==='Enter'){e.preventDefault();const val=e.target.value.trim();if(val&&!currentParticipants.includes(val)){currentParticipants.push(val);if(!state.participants.find(p=>p.name.toLowerCase()===val.toLowerCase()))state.participants.push({id:state.nextPartId++,name:val});}e.target.value='';renderPartsChips();}}
 function addActionRow(data){data=data||{};const editor=document.getElementById('actions-editor');const row=document.createElement('div');row.className='ae-row';const ownerOpts=state.participants.map(p=>`<option value="${esc(p.name)}" ${data.owner===p.name?'selected':''}>${esc(p.name)}</option>`).join('');row.innerHTML=`<input type="text" placeholder="Action item…" class="ae-text" value="${esc(data.text||'')}"/><select class="ae-owner"><option value="">Owner…</option>${ownerOpts}</select><input type="date" class="ae-due" value="${data.due||''}"/><div class="ae-del" onclick="this.parentElement.remove()">✕</div>`;editor.appendChild(row);}
 function readActionRows(){return [...document.querySelectorAll('#actions-editor .ae-row')].map(row=>({text:row.querySelector('.ae-text').value.trim(),owner:row.querySelector('.ae-owner').value,due:row.querySelector('.ae-due').value,done:false})).filter(a=>a.text);}
-function saveMeeting(){const title=document.getElementById('f-title').value.trim();if(!title){alert('Enter a meeting title.');return;}const date=document.getElementById('f-date').value,time=document.getElementById('f-time').value,cw=document.getElementById('f-cw').value.trim(),notes=document.getElementById('f-notes').value.trim();const actions=readActionRows();if(editingId){const m=state.meetings.find(m=>m.id===editingId);if(m){const prev=m.actions||[];actions.forEach(a=>{const p=prev.find(p=>p.text===a.text);if(p)a.done=p.done;});Object.assign(m,{title,date,time,cw,notes,participants:[...currentParticipants],actions});}logAudit('Meetings','edit','Edited meeting: '+title);}else{state.meetings.push({id:genId(),title,date,time,cw,notes,participants:[...currentParticipants],actions,addedAt:today()});logAudit('Meetings','create','Created meeting: '+title);}save();closeModal('meeting-modal');renderView();if(selectedId===editingId)renderMeetingViewPane();showToast('Meeting saved!','success');}
+function saveMeeting(){const title=document.getElementById('f-title').value.trim();if(!title){alert('Enter a meeting title.');return;}const date=document.getElementById('f-date').value,time=document.getElementById('f-time').value,notes=document.getElementById('f-notes').value.trim();const actions=readActionRows();if(editingId){const m=state.meetings.find(m=>m.id===editingId);if(m){const prev=m.actions||[];actions.forEach(a=>{const p=prev.find(p=>p.text===a.text);if(p)a.done=p.done;});Object.assign(m,{title,date,time,notes,participants:[...currentParticipants],actions});}logAudit('Meetings','edit','Edited meeting: '+title);}else{state.meetings.push({id:genId(),title,date,time,notes,participants:[...currentParticipants],actions,addedAt:today()});logAudit('Meetings','create','Created meeting: '+title);}save();closeModal('meeting-modal');renderView();if(selectedId===editingId)renderMeetingViewPane();showToast('Meeting saved!','success');}
 function deleteMeeting(id){if(!confirm('Delete this meeting and its action items?'))return;const m=state.meetings.find(m=>m.id===id);state.meetings=state.meetings.filter(m=>m.id!==id);logAudit('Meetings','delete','Deleted meeting: '+(m?m.title||'':''));if(selectedId===id)closeViewPane();save();renderView();}
 async function extractActionsAI(){const notes=document.getElementById('f-notes').value.trim();if(!notes){showToast('Write meeting notes first.','warn');return;}if(!currentUser){showToast('Sign in first','warn');return;}const btn=document.getElementById('ai-extract-btn');btn.disabled=true;btn.textContent='✨ Extracting…';const names=currentParticipants.length?currentParticipants.join(', '):state.participants.map(p=>p.name).join(', ');try{const data=await callClaude({model:'claude-sonnet-4-6',max_tokens:1000,system:`Extract action items from meeting notes. Today: ${today()}. Participants: ${names||'none'}. Return ONLY a JSON array, no markdown. Each: {"text":"...","owner":"name or empty","due":"YYYY-MM-DD or empty"}.`,messages:[{role:'user',content:notes}]});if(data.error){showToast('API error: '+data.error.message,'warn');return;}const text=data.content?.[0]?.text||'[]';const parsed=JSON.parse(text.replace(/```json|```/g,'').trim());if(!Array.isArray(parsed)||parsed.length===0)showToast('No action items detected.','info');else{const existing=readActionRows().map(a=>a.text);parsed.forEach(a=>{if(!existing.includes(a.text))addActionRow(a);});showToast(`✅ Extracted ${parsed.length} item(s)`,'success');}}catch(err){showToast('AI extraction failed: '+err.message,'warn');}finally{btn.disabled=false;btn.textContent='✨ Extract Action Items with AI';}}
 
@@ -2030,7 +2073,6 @@ function renderMeetingViewPane(){
   const body=document.createElement('div'); body.className='vp-body';
   let html=`<div class="vp-subject">${esc(m.title||'(untitled)')}</div>`;
   html+=`<div class="vp-field"><div class="vp-field-label">When</div><div class="vp-field-val">${fmt(m.date)}${m.time?' · '+m.time:''}</div></div>`;
-  if(m.cw)html+=`<div class="vp-field"><div class="vp-field-label">Counterparty</div><div class="vp-field-val">${esc(m.cw)}</div></div>`;
   html+=`<div class="vp-field"><div class="vp-field-label">Participants</div><div class="vp-field-val">${esc((m.participants||[]).join(', ')||'—')}</div></div>`;
   if(m.notes)html+=`<div class="vp-field"><div class="vp-field-label">Notes</div><div class="vp-field-val">${esc(m.notes)}</div></div>`;
   const acts=m.actions||[];
@@ -2046,27 +2088,57 @@ function populateOwnerSelect(){document.getElementById('a-owner').innerHTML='<op
 function saveStandaloneAction(){
   const text=document.getElementById('a-text').value.trim();
   if(!text){alert('Enter action text');return;}
-  const owner=document.getElementById('a-owner').value,due=document.getElementById('a-due').value;
+  const owner=document.getElementById('a-owner').value,due=document.getElementById('a-due').value,priority=document.getElementById('a-priority').value;
   if(editingId){
     let a=null;
     if(editingActionSource==='meeting'){for(const m of state.meetings){const idx=(m.actions||[]).findIndex((x,i)=>(x.id||`${m.id}_${i}`)===editingId);if(idx>-1){a=m.actions[idx];break;}}}
     else{a=state.standaloneActions.find(a=>a.id===editingId);}
-    if(a)Object.assign(a,{text,owner,due});
+    if(a)Object.assign(a,{text,owner,due,priority});
     logAudit('Action Items','edit','Edited action: '+text);
     editingId=null; editingActionSource=null;
     save();closeModal('action-modal');renderView();showToast('Action updated','success');
   }else{
-    state.standaloneActions.push({id:genId(),text,owner,due,done:false});
+    state.standaloneActions.push({id:genId(),text,owner,due,priority,done:false});
     logAudit('Action Items','create','Created action: '+text);
     save();closeModal('action-modal');renderView();showToast('Action added','success');
   }
 }
 
 // ═══════════════════════════════ PARTICIPANTS ═══════════════════════════════
-function openManageParts(){renderManageParts();openModal('parts-modal');}
-function renderManageParts(){const el=document.getElementById('pl-list');el.innerHTML='';state.participants.forEach(p=>{const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;background:var(--surface2);padding:8px 10px;border-radius:7px;border:1.5px solid var(--border);';row.innerHTML=`<span style="flex:1;font-size:16.5px">${esc(p.name)}</span><div class="row-btn rbdel" onclick="removeParticipant(${p.id})">✕</div>`;el.appendChild(row);});}
-function addParticipant(){const inp=document.getElementById('new-part-input'),name=inp.value.trim();if(!name)return;state.participants.push({id:state.nextPartId++,name});inp.value='';logAudit('Participants','create','Added participant: '+name);save();renderManageParts();}
-function removeParticipant(id){const p=state.participants.find(p=>p.id===id);state.participants=state.participants.filter(p=>p.id!==id);logAudit('Participants','delete','Removed participant: '+(p?p.name||'':''));save();renderManageParts();}
+// ---------- TEAM MEMBERS ----------
+function renderTeamView(area){
+  const search=document.getElementById('search-input').value.toLowerCase();
+  let list=[...state.participants];
+  if(search) list=list.filter(p=>(p.name||'').toLowerCase().includes(search));
+  list.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  if(list.length===0){area.innerHTML='<div class="empty-state">👤<br>No team members yet.</div>';return;}
+  let html=`<table class="reg-table"><thead><tr><th>Name</th><th></th></tr></thead><tbody>`;
+  list.forEach(p=>{html+=`<tr>
+    <td style="font-weight:600">${esc(p.name)}</td>
+    <td style="white-space:nowrap;text-align:right">
+      <span class="row-btn" onclick="openTeamModal(${p.id})">✎</span><span class="row-btn rbdel" onclick="deleteTeamMember(${p.id})">✕</span>
+    </td></tr>`;});
+  html+='</tbody></table>'; area.innerHTML=html;
+}
+function openTeamModal(id){
+  document.getElementById('team-modal-title').textContent = id ? 'Edit Team Member' : 'Add Team Member';
+  document.getElementById('team-name').value = id ? (state.participants.find(p=>p.id===id)?.name||'') : '';
+  editingId = id||null;
+  openModal('team-modal');
+}
+function saveTeamMember(){
+  const name = document.getElementById('team-name').value.trim(); if(!name){alert('Enter a name');return;}
+  if(editingId){ const p=state.participants.find(p=>p.id===editingId); if(p){ p.name=name; logAudit('Team Members','edit','Edited team member: '+name); } }
+  else { state.participants.push({id:state.nextPartId++,name}); logAudit('Team Members','create','Added team member: '+name); }
+  editingId=null; save(); closeModal('team-modal'); renderView(); showToast('Team member saved','success');
+}
+function deleteTeamMember(id){
+  if(!confirm('Delete this team member?'))return;
+  const p=state.participants.find(p=>p.id===id);
+  state.participants=state.participants.filter(p=>p.id!==id);
+  logAudit('Team Members','delete','Removed team member: '+(p?p.name||'':''));
+  save(); renderView(); showToast('Team member removed','success');
+}
 
 // ═══════════════════════════════ AUDIT LOG ═══════════════════════════════
 function openAuditLog(){renderAuditLog();openModal('audit-modal');}
@@ -2200,15 +2272,15 @@ async function callClaude(body){
 
 // ═══════════════════════════════ SONNET TOOLS ═══════════════════════════════
 const CHAT_TOOLS=[
-  {name:'add_meeting',description:'Add a new meeting with optional notes, participants, and action items',input_schema:{type:'object',properties:{title:{type:'string'},date:{type:'string',description:'YYYY-MM-DD, default today'},time:{type:'string'},cw:{type:'string',description:'counterparty or meeting type'},participants:{type:'array',items:{type:'string'}},notes:{type:'string'},actions:{type:'array',items:{type:'object',properties:{text:{type:'string'},owner:{type:'string'},due:{type:'string'}}}}},required:['title']}},
-  {name:'edit_meeting',description:'Edit an existing meeting\'s title, date, time, counterparty, notes, or participant list, by matching part of its current title',input_schema:{type:'object',properties:{match_text:{type:'string'},new_title:{type:'string'},date:{type:'string',description:'YYYY-MM-DD'},time:{type:'string'},cw:{type:'string'},notes:{type:'string'},participants:{type:'array',items:{type:'string'},description:'If provided, replaces the full participant list'}},required:['match_text']}},
+  {name:'add_meeting',description:'Add a new meeting with optional notes, participants, and action items',input_schema:{type:'object',properties:{title:{type:'string'},date:{type:'string',description:'YYYY-MM-DD, default today'},time:{type:'string'},participants:{type:'array',items:{type:'string'}},notes:{type:'string'},actions:{type:'array',items:{type:'object',properties:{text:{type:'string'},owner:{type:'string'},due:{type:'string'}}}}},required:['title']}},
+  {name:'edit_meeting',description:'Edit an existing meeting\'s title, date, time, notes, or participant list, by matching part of its current title',input_schema:{type:'object',properties:{match_text:{type:'string'},new_title:{type:'string'},date:{type:'string',description:'YYYY-MM-DD'},time:{type:'string'},notes:{type:'string'},participants:{type:'array',items:{type:'string'},description:'If provided, replaces the full participant list'}},required:['match_text']}},
   {name:'delete_meeting',description:'Delete a meeting and all of its action items, by matching part of its title',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
   {name:'add_meeting_action',description:'Add a new action item to an existing meeting (found by matching part of its title) — use this instead of add_action when the action belongs to a specific meeting rather than being standalone',input_schema:{type:'object',properties:{meeting_match:{type:'string'},text:{type:'string'},owner:{type:'string'},due:{type:'string',description:'YYYY-MM-DD'}},required:['meeting_match','text']}},
-  {name:'add_action',description:'Add a standalone action item (not linked to a specific meeting)',input_schema:{type:'object',properties:{text:{type:'string'},owner:{type:'string'},due:{type:'string',description:'YYYY-MM-DD'}},required:['text']}},
-  {name:'edit_action',description:'Edit an existing action item by matching part of its text',input_schema:{type:'object',properties:{match_text:{type:'string'},new_text:{type:'string'},owner:{type:'string'},due:{type:'string'},done:{type:'boolean'}},required:['match_text']}},
+  {name:'add_action',description:'Add a standalone action item (not linked to a specific meeting)',input_schema:{type:'object',properties:{text:{type:'string'},owner:{type:'string'},due:{type:'string',description:'YYYY-MM-DD'},priority:{type:'string',enum:['high','medium','low'],description:'Optional priority level'}},required:['text']}},
+  {name:'edit_action',description:'Edit an existing action item by matching part of its text',input_schema:{type:'object',properties:{match_text:{type:'string'},new_text:{type:'string'},owner:{type:'string'},due:{type:'string'},done:{type:'boolean'},priority:{type:'string',enum:['high','medium','low'],description:'Optional priority level'}},required:['match_text']}},
   {name:'delete_action',description:'Delete an action item by matching part of its text',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
-  {name:'add_daily',description:'Add a daily activity/todo item',input_schema:{type:'object',properties:{text:{type:'string'}},required:['text']}},
-  {name:'edit_daily',description:'Edit an existing daily activity/todo item by matching part of its text',input_schema:{type:'object',properties:{match_text:{type:'string'},new_text:{type:'string'},done:{type:'boolean'}},required:['match_text']}},
+  {name:'add_daily',description:'Add a daily activity/todo item',input_schema:{type:'object',properties:{text:{type:'string'},priority:{type:'string',enum:['high','medium','low'],description:'Optional priority level'}},required:['text']}},
+  {name:'edit_daily',description:'Edit an existing daily activity/todo item by matching part of its text',input_schema:{type:'object',properties:{match_text:{type:'string'},new_text:{type:'string'},done:{type:'boolean'},priority:{type:'string',enum:['high','medium','low'],description:'Optional priority level'}},required:['match_text']}},
   {name:'toggle_daily',description:'Mark a daily activity done/undone by matching its text',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
   {name:'delete_daily',description:'Delete a daily activity by matching its text',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
   {name:'add_compliance',description:'Add a compliance/statutory deadline item',input_schema:{type:'object',properties:{item:{type:'string'},freq:{type:'string'},due:{type:'string'},notes:{type:'string'}},required:['item']}},
@@ -2316,18 +2388,18 @@ async function deliverGeneratedFile(blob, filename, mime, category){
 }
 async function execTool(name,input){
   try{
-    if(name==='add_meeting'){const parts=input.participants||[];parts.forEach(nm=>{if(!state.participants.find(p=>p.name.toLowerCase()===nm.toLowerCase()))state.participants.push({id:state.nextPartId++,name:nm});});state.meetings.push({id:genId(),title:input.title,date:input.date||today(),time:input.time||'',cw:input.cw||'',notes:input.notes||'',participants:parts,actions:(input.actions||[]).map(a=>({...a,done:false})),addedAt:today()});save();return 'Meeting added: '+input.title;}
-    if(name==='edit_meeting'){const m=state.meetings.find(m=>(m.title||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!m)return 'No matching meeting found for: '+input.match_text;if(input.new_title)m.title=input.new_title;if(input.date)m.date=input.date;if(input.time!==undefined)m.time=input.time;if(input.cw!==undefined)m.cw=input.cw;if(input.notes!==undefined)m.notes=input.notes;if(input.participants){m.participants=input.participants;input.participants.forEach(nm=>{if(!state.participants.find(p=>p.name.toLowerCase()===nm.toLowerCase()))state.participants.push({id:state.nextPartId++,name:nm});});}save();return 'Meeting updated: '+m.title;}
+    if(name==='add_meeting'){const parts=input.participants||[];parts.forEach(nm=>{if(!state.participants.find(p=>p.name.toLowerCase()===nm.toLowerCase()))state.participants.push({id:state.nextPartId++,name:nm});});state.meetings.push({id:genId(),title:input.title,date:input.date||today(),time:input.time||'',notes:input.notes||'',participants:parts,actions:(input.actions||[]).map(a=>({...a,done:false})),addedAt:today()});save();return 'Meeting added: '+input.title;}
+    if(name==='edit_meeting'){const m=state.meetings.find(m=>(m.title||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!m)return 'No matching meeting found for: '+input.match_text;if(input.new_title)m.title=input.new_title;if(input.date)m.date=input.date;if(input.time!==undefined)m.time=input.time;if(input.notes!==undefined)m.notes=input.notes;if(input.participants){m.participants=input.participants;input.participants.forEach(nm=>{if(!state.participants.find(p=>p.name.toLowerCase()===nm.toLowerCase()))state.participants.push({id:state.nextPartId++,name:nm});});}save();return 'Meeting updated: '+m.title;}
     if(name==='delete_meeting'){const m=state.meetings.find(m=>(m.title||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!m)return 'No matching meeting found for: '+input.match_text;state.meetings=state.meetings.filter(x=>x.id!==m.id);save();return 'Deleted meeting: '+m.title;}
     if(name==='add_meeting_action'){const m=state.meetings.find(m=>(m.title||'').toLowerCase().includes(input.meeting_match.toLowerCase()));if(!m)return 'No matching meeting found for: '+input.meeting_match;if(!m.actions)m.actions=[];m.actions.push({text:input.text,owner:input.owner||'',due:input.due||'',done:false});save();return 'Action added to meeting "'+m.title+'": '+input.text;}
-    if(name==='add_action'){state.standaloneActions.push({id:genId(),text:input.text,owner:input.owner||'',due:input.due||'',done:false});save();return 'Action added: '+input.text;}
+    if(name==='add_action'){state.standaloneActions.push({id:genId(),text:input.text,owner:input.owner||'',due:input.due||'',priority:input.priority||'',done:false});save();return 'Action added: '+input.text;}
     if(name==='edit_action'){const a=findActionByMatch(input.match_text);if(!a)return 'No matching action found for: '+input.match_text;
-      if(a.source==='standalone'){const s=state.standaloneActions.find(s=>s.id===a.id);if(input.new_text)s.text=input.new_text;if(input.owner!==undefined)s.owner=input.owner;if(input.due!==undefined)s.due=input.due;if(input.done!==undefined)s.done=input.done;}
-      else{const m=state.meetings.find(m=>m.id===a.meetingId);const act=m.actions[a.idx];if(input.new_text)act.text=input.new_text;if(input.owner!==undefined)act.owner=input.owner;if(input.due!==undefined)act.due=input.due;if(input.done!==undefined)act.done=input.done;}
+      if(a.source==='standalone'){const s=state.standaloneActions.find(s=>s.id===a.id);if(input.new_text)s.text=input.new_text;if(input.owner!==undefined)s.owner=input.owner;if(input.due!==undefined)s.due=input.due;if(input.done!==undefined)s.done=input.done;if(input.priority!==undefined)s.priority=input.priority;}
+      else{const m=state.meetings.find(m=>m.id===a.meetingId);const act=m.actions[a.idx];if(input.new_text)act.text=input.new_text;if(input.owner!==undefined)act.owner=input.owner;if(input.due!==undefined)act.due=input.due;if(input.done!==undefined)act.done=input.done;if(input.priority!==undefined)act.priority=input.priority;}
       save();return 'Action updated: '+(input.new_text||a.text);}
     if(name==='delete_action'){const a=findActionByMatch(input.match_text);if(!a)return 'No matching action found';if(a.source==='standalone')state.standaloneActions=state.standaloneActions.filter(s=>s.id!==a.id);else{const m=state.meetings.find(m=>m.id===a.meetingId);m.actions.splice(a.idx,1);}save();return 'Action deleted: '+a.text;}
-    if(name==='add_daily'){state.daily.push({id:genId(),text:input.text,done:false,addedAt:today()});save();return 'Daily activity added: '+input.text;}
-    if(name==='edit_daily'){const d=state.daily.find(d=>d.text.toLowerCase().includes(input.match_text.toLowerCase()));if(!d)return 'No matching daily item found for: '+input.match_text;if(input.new_text)d.text=input.new_text;if(input.done!==undefined)d.done=input.done;save();return 'Daily activity updated: '+(input.new_text||d.text);}
+    if(name==='add_daily'){state.daily.push({id:genId(),text:input.text,priority:input.priority||'',done:false,addedAt:today()});save();return 'Daily activity added: '+input.text;}
+    if(name==='edit_daily'){const d=state.daily.find(d=>d.text.toLowerCase().includes(input.match_text.toLowerCase()));if(!d)return 'No matching daily item found for: '+input.match_text;if(input.new_text)d.text=input.new_text;if(input.done!==undefined)d.done=input.done;if(input.priority!==undefined)d.priority=input.priority;save();return 'Daily activity updated: '+(input.new_text||d.text);}
     if(name==='toggle_daily'){const d=state.daily.find(d=>d.text.toLowerCase().includes(input.match_text.toLowerCase()));if(!d)return 'No matching daily item found';d.done=!d.done;save();return 'Toggled: '+d.text;}
     if(name==='delete_daily'){const d=state.daily.find(d=>d.text.toLowerCase().includes(input.match_text.toLowerCase()));if(!d)return 'No matching daily item found';state.daily=state.daily.filter(x=>x.id!==d.id);save();return 'Deleted: '+d.text;}
     if(name==='add_compliance'){state.compliance.push({id:genId(),item:input.item,freq:input.freq||'Monthly',due:input.due||'',notes:input.notes||''});save();return 'Compliance item added: '+input.item;}
@@ -2568,7 +2640,7 @@ function buildStateSummary(){
   return JSON.stringify({
     today: today(),
     participants: state.participants.map(p=>p.name),
-    meetings: state.meetings.map(m=>({id:m.id,title:m.title,date:m.date,cw:m.cw,participants:m.participants,notes:m.notes,actions:m.actions})),
+    meetings: state.meetings.map(m=>({id:m.id,title:m.title,date:m.date,participants:m.participants,notes:m.notes,actions:m.actions})),
     standaloneActions: state.standaloneActions,
     daily: state.daily,
     appointments: state.appointments,
