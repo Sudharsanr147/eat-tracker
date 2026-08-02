@@ -7,6 +7,14 @@ the app itself (login screen and sidebar footer) — see `APP_VERSION` near the
 top of the `<script>` block in `index.html`. If the number you see in the app
 matches the latest entry below, you're on the current version.
 
+## v1.9.5 — 2026-08-02
+
+- Action Items table: removed the Company column and the always-visible
+  edit/complete/delete icon column. The action text now clamps to 1-2
+  lines instead of wrapping freely. Click a row once to reveal that row's
+  edit/complete/delete icons (click again to hide them); double-click a
+  row to jump straight to the edit popup.
+
 ## v1.9.4 — 2026-08-02
 
 - Daily Activities "Due & Overdue Action Items" table: removed the Linked
