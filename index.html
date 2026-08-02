@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-title" content="EAT"/>
 <link rel="manifest" id="pwa-manifest-link"/>
@@ -229,7 +229,7 @@ table.reg-table{width:100%;border-collapse:collapse;min-width:640px;}
 .chat-msg.thinking .think-dots span:nth-child(2){animation-delay:.2s;}
 .chat-msg.thinking .think-dots span:nth-child(3){animation-delay:.4s;}
 @keyframes think-pulse{0%,80%,100%{opacity:.3;}40%{opacity:1;}}
-.chat-input-row{display:flex;gap:8px;padding:14px 20px;border-top:2px solid var(--border);background:var(--surface);max-width:760px;margin:0 auto;width:100%;}
+.chat-input-row{display:flex;gap:8px;padding:14px 20px calc(14px + env(safe-area-inset-bottom));border-top:2px solid var(--border);background:var(--surface);max-width:760px;margin:0 auto;width:100%;flex-shrink:0;}
 .chat-input-row textarea{flex:1;resize:none;background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);font-size:17px;outline:none;max-height:100px;}
 .chat-mic{background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;width:40px;flex-shrink:0;cursor:pointer;font-size:20px;}
 .chat-mic.listening{background:var(--red);border-color:var(--red);color:#fff;animation:pulse 1s infinite;}
@@ -514,10 +514,14 @@ table.reg-table{min-width:0;}
     <h2 id="action-modal-title">Add Action Item</h2>
     <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Action</label><input type="text" id="a-text"/></div></div>
     <div class="m-grid" style="margin-bottom:10px">
-      <div class="field"><label>Owner</label><select id="a-owner"></select></div>
+      <div class="field"><label>Team Member</label><select id="a-owner"></select></div>
       <div class="field"><label>Due Date</label><input type="date" id="a-due"/></div>
     </div>
-    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Priority</label><select id="a-priority"><option value="">None</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+    <div class="m-grid" style="margin-bottom:10px">
+      <div class="field"><label>Priority</label><select id="a-priority"><option value="">None</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+      <div class="field"><label>Company <span style="color:var(--muted);font-weight:400">(optional)</span></label><select id="a-company"></select></div>
+    </div>
+    <div class="m-grid full" style="margin-bottom:10px"><div class="field"><label>Description <span style="color:var(--muted);font-weight:400">(optional)</span></label><textarea id="a-desc" rows="4" style="width:100%;resize:vertical"></textarea></div></div>
     <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('action-modal')">Cancel</button><button class="btn-primary" onclick="saveStandaloneAction()">💾 Save</button></div>
   </div>
 </div>
@@ -711,7 +715,7 @@ table.reg-table{min-width:0;}
 // redeployed, so the version shown in the app (login screen + sidebar footer)
 // always reflects what's actually live. See CHANGELOG.md for the history
 // behind each version number.
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.9.0';
 const APP_UPDATED = '2026-08-02';
 function renderAppVersion(){
   const [y,m,d] = APP_UPDATED.split('-');
@@ -979,25 +983,35 @@ function renderMeetingsView(area){
 
 // ---------- ACTIONS ----------
 function toggleShowDoneActions(val){ actionsShowDone=val; renderView(); }
+function setActionMemberFilter(name){ currentFilter = name==='all' ? 'all' : 'owner-'+name; renderView(); }
 function renderActionsView(area){
   const search=document.getElementById('search-input').value.toLowerCase();
   let list=getAllActions();
+  const activeMember = currentFilter.startsWith('owner-') ? currentFilter.slice(6) : 'all';
   if(currentFilter==='overdue')list=list.filter(a=>!a.done&&a.due&&a.due<today());
   else if(currentFilter==='open')list=list.filter(a=>!a.done);
   else if(currentFilter==='done')list=list.filter(a=>a.done);
   else if(currentFilter.startsWith('owner-')){const o=currentFilter.slice(6);list=list.filter(a=>a.owner===o);}
   if(currentFilter!=='done' && !actionsShowDone) list=list.filter(a=>!a.done);
-  if(search)list=list.filter(a=>a.text.toLowerCase().includes(search)||(a.owner||'').toLowerCase().includes(search));
+  if(search)list=list.filter(a=>a.text.toLowerCase().includes(search)||(a.owner||'').toLowerCase().includes(search)||(a.description||'').toLowerCase().includes(search));
   list.sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999'));
+  const memberChips = `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">`
+    + `<div class="chip ${activeMember==='all'?'active':''}" onclick="setActionMemberFilter('all')">👥 All Team Members</div>`
+    + state.participants.map(p=>`<div class="chip ${activeMember===p.name?'active':''}" onclick="setActionMemberFilter('${p.name.replace(/'/g,"\\'")}')">${esc(p.name)}</div>`).join('')
+    + (activeMember!=='all'?`<div class="chip" onclick="setActionMemberFilter('all')" style="border-style:dashed">✕ Clear</div>`:'')
+    + `</div>`;
   const toggleBar = `<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14.5px;color:var(--muted)"><input type="checkbox" id="actions-show-done-toggle" ${actionsShowDone?'checked':''} onchange="toggleShowDoneActions(this.checked)"/> Show Done items</label></div>`;
-  if(list.length===0){area.innerHTML=toggleBar+'<div class="empty-state">☑️<br>No action items.</div>';return;}
+  const header = memberChips + toggleBar;
+  if(list.length===0){area.innerHTML=header+'<div class="empty-state">☑️<br>No action items.</div>';return;}
   function pill(a){if(a.done)return'<span class="pill pill-done">Done</span>';if(a.due&&a.due<today())return'<span class="pill pill-overdue">Overdue</span>';return'<span class="pill pill-open">Open</span>';}
   function priTag(a){if(!a.priority)return'—';return `<span class="pri-tag pri-${a.priority}">${a.priority.charAt(0).toUpperCase()+a.priority.slice(1)}</span>`;}
-  let html=toggleBar+`<table class="reg-table"><thead><tr><th>Action</th><th>Owner</th><th>Linked To</th><th>Due</th><th>Priority</th><th>Status</th><th></th></tr></thead><tbody>`;
+  let html=header+`<table class="reg-table"><thead><tr><th>Action</th><th>Description</th><th>Team Member</th><th>Company</th><th>Due</th><th>Date Added</th><th>Priority</th><th>Status</th><th></th></tr></thead><tbody>`;
   list.forEach(a=>{html+=`<tr>
-    <td>${esc(a.text)}</td><td>${esc(a.owner||'Unassigned')}</td>
-    <td style="color:var(--muted);font-size:15.5px">${a.source==='meeting'?esc(a.meetingTitle):'Standalone'}</td>
-    <td>${fmt(a.due)}</td><td>${priTag(a)}</td><td>${pill(a)}</td>
+    <td>${esc(a.text)}</td>
+    <td style="color:var(--muted);font-size:14.5px;max-width:220px">${a.description?`<div class="notes-clamp">${esc(a.description)}</div>`:'—'}</td>
+    <td>${esc(a.owner||'Unassigned')}</td>
+    <td style="color:var(--muted);font-size:15.5px">${a.company?esc(companyName(a.company)):'—'}</td>
+    <td>${fmt(a.due)}</td><td>${a.addedAt?fmt(a.addedAt):'—'}</td><td>${priTag(a)}</td><td>${pill(a)}</td>
     <td style="white-space:nowrap">
       <span class="row-btn" onclick='editActionItem(${JSON.stringify(a.id)},"${a.source}")'>✎</span>
       <span class="row-btn" onclick='toggleActionDone(${JSON.stringify(a.id)},"${a.source}")'>${a.done?'↺':'✓'}</span>
@@ -1014,9 +1028,12 @@ function editActionItem(id,source){
   document.getElementById('action-modal-title').textContent='Edit Action Item';
   document.getElementById('a-text').value=a.text||'';
   populateOwnerSelect();
+  populateCompanySelect();
   document.getElementById('a-owner').value=a.owner||'';
   document.getElementById('a-due').value=a.due||'';
   document.getElementById('a-priority').value=a.priority||'';
+  document.getElementById('a-company').value=a.company||'';
+  document.getElementById('a-desc').value=a.description||'';
   openModal('action-modal');
 }
 function toggleActionDone(id,source){
@@ -1061,10 +1078,11 @@ function renderDailyView(area){
   const dueWrap = document.getElementById('daily-actions-due');
   if(dueList.length===0){ dueWrap.innerHTML = '<div class="empty-state" style="padding:20px 0">🎉<br>Nothing due or overdue.</div>'; }
   else{
-    let h = `<table class="reg-table"><thead><tr><th>Action</th><th>Owner</th><th>Linked To</th><th>Due</th><th></th></tr></thead><tbody>`;
+    function priTagDaily(a){if(!a.priority)return'—';return `<span class="pri-tag pri-${a.priority}">${a.priority.charAt(0).toUpperCase()+a.priority.slice(1)}</span>`;}
+    let h = `<table class="reg-table"><thead><tr><th>Action</th><th>Owner</th><th>Linked To</th><th>Due</th><th>Priority</th><th></th></tr></thead><tbody>`;
     dueList.forEach(a=>{
       const overdue = a.due < today();
-      h += `<tr><td>${esc(a.text)}</td><td>${esc(a.owner||'Unassigned')}</td><td style="color:var(--muted);font-size:15.5px">${a.source==='meeting'?esc(a.meetingTitle):'Standalone'}</td><td>${overdue?`<span class="pill pill-overdue">${fmt(a.due)}</span>`:`<span class="pill pill-open">${fmt(a.due)} · Today</span>`}</td><td><span class="row-btn" onclick='toggleActionDone(${JSON.stringify(a.id)},"${a.source}")'>✓</span></td></tr>`;
+      h += `<tr><td>${esc(a.text)}</td><td>${esc(a.owner||'Unassigned')}</td><td style="color:var(--muted);font-size:15.5px">${a.source==='meeting'?esc(a.meetingTitle):'Standalone'}</td><td>${overdue?`<span class="pill pill-overdue">${fmt(a.due)}</span>`:`<span class="pill pill-open">${fmt(a.due)} · Today</span>`}</td><td>${priTagDaily(a)}</td><td style="white-space:nowrap"><span class="row-btn" onclick='editActionItem(${JSON.stringify(a.id)},"${a.source}")'>✎</span> <span class="row-btn" onclick='toggleActionDone(${JSON.stringify(a.id)},"${a.source}")'>✓</span></td></tr>`;
     });
     h += '</tbody></table>';
     dueWrap.innerHTML = h;
@@ -1307,6 +1325,7 @@ function sopFindPracQ(sub,q){ return sub ? sub.practices.find(p=>(p.text||'').to
 function sopFindCompanyQ(q){ return state.companies.find(c=>(c.name||'').toLowerCase().includes((q||'').toLowerCase())); }
 function resolveCompanyIds(names){ if(!names || !names.length) return []; const ids=[]; names.forEach(n=>{ const c=sopFindCompanyQ(n); if(c && c.id!=='all' && !ids.includes(c.id)) ids.push(c.id); }); return ids; }
 function companyName(id){ const c=state.companies.find(c=>c.id===id); return c?c.name:id; }
+function resolveCompanyIdByName(name){ if(!name)return ''; const existing=state.companies.find(c=>c.id!=='all'&&c.name.toLowerCase()===name.toLowerCase()); if(existing)return existing.id; const id=genId(); state.companies.push({id,name}); return id; }
 function practiceAppliesTo(prac, companyId){
   if(!companyId || companyId==='all') return true;
   if(!prac.companies || !prac.companies.length) return true; // empty = All Companies
@@ -1972,7 +1991,7 @@ async function runChatTurn(sessionId, depth=0){
 
 What each module is actually for, so you file things in the right place:
 - Meeting Minutes: a record of what happened in a specific meeting — date, participants, freeform notes, and any action items that came out of it. Use this when Sudharsan describes something that happened in or was decided during a named/dated meeting.
-- Action Items: discrete, trackable tasks with an owner, due date, priority (high/medium/low), and done/not-done state. Can stand alone or be linked to the meeting that spawned them. This is the "who owes what, by when" list.
+- Action Items: discrete, trackable tasks with an assigned Team Member, due date, priority (high/medium/low), an optional Company, an optional longer Description, and done/not-done state. Can stand alone or be linked to the meeting that spawned them. This is the "who owes what, by when" list. When Sudharsan pastes or forwards an email and asks you to log it as an action item, put the full email content (as given) into the description field, and write a short, clear heading summarizing the ask as the action text — don't just repeat the email subject line verbatim unless it's already a good heading. Infer a due date, team member, or company from the email content only if they're clearly stated; otherwise leave them blank rather than guessing.
 - Daily Activities: Sudharsan's own lightweight personal to-do list for the day — no owner or due date, just text, an optional priority, and done/not-done. Use this for his own quick personal tasks, not for tasks assigned to someone else or tied to a deadline (that's Action Items).
 - Notes: freeform notes not tied to a meeting, a task, or a procedure — general information worth keeping that doesn't fit anywhere more specific.
 - Calendar/Appointments: scheduled events with a date, time, and location — things going on his calendar, not tasks.
@@ -2043,7 +2062,7 @@ let currentParticipants=[];
 function openAddModal(){
   if(activeModule==='meetings')openAddMeetingModal();
   else if(activeModule==='calendar'){openAppointmentModal(calSelectedDate);}
-  else if(activeModule==='actions'){editingId=null;editingActionSource=null;document.getElementById('action-modal-title').textContent='Add Action Item';document.getElementById('a-text').value='';populateOwnerSelect();document.getElementById('a-due').value='';document.getElementById('a-priority').value='';openModal('action-modal');}
+  else if(activeModule==='actions'){editingId=null;editingActionSource=null;document.getElementById('action-modal-title').textContent='Add Action Item';document.getElementById('a-text').value='';populateOwnerSelect();populateCompanySelect();document.getElementById('a-due').value='';document.getElementById('a-priority').value='';document.getElementById('a-company').value='';document.getElementById('a-desc').value='';openModal('action-modal');}
   else if(activeModule==='compliance'){editingId=null;document.getElementById('compliance-modal-title').textContent='Add Compliance Item';document.getElementById('c-item').value='';document.getElementById('c-freq').value='Monthly';document.getElementById('c-due').value='';document.getElementById('c-notes').value='';openModal('compliance-modal');}
   else if(activeModule==='mis'){editingId=null;document.getElementById('mis-modal-title').textContent='New MIS Operation';document.getElementById('mis-name').value='';document.getElementById('mis-instructions').value='';openModal('mis-modal');}
   else if(activeModule==='notes'){openAddNoteModal();}
@@ -2057,8 +2076,8 @@ function renderPartsChips(){const wrap=document.getElementById('parts-wrap');wra
 function removePartChip(name){currentParticipants=currentParticipants.filter(n=>n!==name);renderPartsChips();}
 function onPartsKeydown(e){if(e.key==='Enter'){e.preventDefault();const val=e.target.value.trim();if(val&&!currentParticipants.includes(val)){currentParticipants.push(val);if(!state.participants.find(p=>p.name.toLowerCase()===val.toLowerCase()))state.participants.push({id:state.nextPartId++,name:val});}e.target.value='';renderPartsChips();}}
 function addActionRow(data){data=data||{};const editor=document.getElementById('actions-editor');const row=document.createElement('div');row.className='ae-row';const ownerOpts=state.participants.map(p=>`<option value="${esc(p.name)}" ${data.owner===p.name?'selected':''}>${esc(p.name)}</option>`).join('');row.innerHTML=`<input type="text" placeholder="Action item…" class="ae-text" value="${esc(data.text||'')}"/><select class="ae-owner"><option value="">Owner…</option>${ownerOpts}</select><input type="date" class="ae-due" value="${data.due||''}"/><div class="ae-del" onclick="this.parentElement.remove()">✕</div>`;editor.appendChild(row);}
-function readActionRows(){return [...document.querySelectorAll('#actions-editor .ae-row')].map(row=>({text:row.querySelector('.ae-text').value.trim(),owner:row.querySelector('.ae-owner').value,due:row.querySelector('.ae-due').value,done:false})).filter(a=>a.text);}
-function saveMeeting(){const title=document.getElementById('f-title').value.trim();if(!title){alert('Enter a meeting title.');return;}const date=document.getElementById('f-date').value,time=document.getElementById('f-time').value,notes=document.getElementById('f-notes').value.trim();const actions=readActionRows();if(editingId){const m=state.meetings.find(m=>m.id===editingId);if(m){const prev=m.actions||[];actions.forEach(a=>{const p=prev.find(p=>p.text===a.text);if(p)a.done=p.done;});Object.assign(m,{title,date,time,notes,participants:[...currentParticipants],actions});}logAudit('Meetings','edit','Edited meeting: '+title);}else{state.meetings.push({id:genId(),title,date,time,notes,participants:[...currentParticipants],actions,addedAt:today()});logAudit('Meetings','create','Created meeting: '+title);}save();closeModal('meeting-modal');renderView();if(selectedId===editingId)renderMeetingViewPane();showToast('Meeting saved!','success');}
+function readActionRows(){return [...document.querySelectorAll('#actions-editor .ae-row')].map(row=>({text:row.querySelector('.ae-text').value.trim(),owner:row.querySelector('.ae-owner').value,due:row.querySelector('.ae-due').value,company:'',description:'',addedAt:today(),done:false})).filter(a=>a.text);}
+function saveMeeting(){const title=document.getElementById('f-title').value.trim();if(!title){alert('Enter a meeting title.');return;}const date=document.getElementById('f-date').value,time=document.getElementById('f-time').value,notes=document.getElementById('f-notes').value.trim();const actions=readActionRows();if(editingId){const m=state.meetings.find(m=>m.id===editingId);if(m){const prev=m.actions||[];actions.forEach(a=>{const p=prev.find(p=>p.text===a.text);if(p){a.done=p.done;a.company=p.company||'';a.description=p.description||'';a.addedAt=p.addedAt||a.addedAt;}});Object.assign(m,{title,date,time,notes,participants:[...currentParticipants],actions});}logAudit('Meetings','edit','Edited meeting: '+title);}else{state.meetings.push({id:genId(),title,date,time,notes,participants:[...currentParticipants],actions,addedAt:today()});logAudit('Meetings','create','Created meeting: '+title);}save();closeModal('meeting-modal');renderView();if(selectedId===editingId)renderMeetingViewPane();showToast('Meeting saved!','success');}
 function deleteMeeting(id){if(!confirm('Delete this meeting and its action items?'))return;const m=state.meetings.find(m=>m.id===id);state.meetings=state.meetings.filter(m=>m.id!==id);logAudit('Meetings','delete','Deleted meeting: '+(m?m.title||'':''));if(selectedId===id)closeViewPane();save();renderView();}
 async function extractActionsAI(){const notes=document.getElementById('f-notes').value.trim();if(!notes){showToast('Write meeting notes first.','warn');return;}if(!currentUser){showToast('Sign in first','warn');return;}const btn=document.getElementById('ai-extract-btn');btn.disabled=true;btn.textContent='✨ Extracting…';const names=currentParticipants.length?currentParticipants.join(', '):state.participants.map(p=>p.name).join(', ');try{const data=await callClaude({model:'claude-sonnet-4-6',max_tokens:1000,system:`Extract action items from meeting notes. Today: ${today()}. Participants: ${names||'none'}. Return ONLY a JSON array, no markdown. Each: {"text":"...","owner":"name or empty","due":"YYYY-MM-DD or empty"}.`,messages:[{role:'user',content:notes}]});if(data.error){showToast('API error: '+data.error.message,'warn');return;}const text=data.content?.[0]?.text||'[]';const parsed=JSON.parse(text.replace(/```json|```/g,'').trim());if(!Array.isArray(parsed)||parsed.length===0)showToast('No action items detected.','info');else{const existing=readActionRows().map(a=>a.text);parsed.forEach(a=>{if(!existing.includes(a.text))addActionRow(a);});showToast(`✅ Extracted ${parsed.length} item(s)`,'success');}}catch(err){showToast('AI extraction failed: '+err.message,'warn');}finally{btn.disabled=false;btn.textContent='✨ Extract Action Items with AI';}}
 
@@ -2084,21 +2103,22 @@ function renderMeetingViewPane(){
 function toggleMeetingAction(mid,idx){const m=state.meetings.find(m=>m.id===mid);if(m&&m.actions&&m.actions[idx]){m.actions[idx].done=!m.actions[idx].done;save();renderMeetingViewPane();renderView();}}
 
 // ═══════════════════════════════ STANDALONE ACTIONS ═══════════════════════════════
-function populateOwnerSelect(){document.getElementById('a-owner').innerHTML='<option value="">Owner…</option>'+state.participants.map(p=>`<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('');}
+function populateOwnerSelect(){document.getElementById('a-owner').innerHTML='<option value="">Team Member…</option>'+state.participants.map(p=>`<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('');}
+function populateCompanySelect(){document.getElementById('a-company').innerHTML='<option value="">— None —</option>'+state.companies.filter(c=>c.id!=='all').map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');}
 function saveStandaloneAction(){
   const text=document.getElementById('a-text').value.trim();
   if(!text){alert('Enter action text');return;}
-  const owner=document.getElementById('a-owner').value,due=document.getElementById('a-due').value,priority=document.getElementById('a-priority').value;
+  const owner=document.getElementById('a-owner').value,due=document.getElementById('a-due').value,priority=document.getElementById('a-priority').value,company=document.getElementById('a-company').value,description=document.getElementById('a-desc').value.trim();
   if(editingId){
     let a=null;
     if(editingActionSource==='meeting'){for(const m of state.meetings){const idx=(m.actions||[]).findIndex((x,i)=>(x.id||`${m.id}_${i}`)===editingId);if(idx>-1){a=m.actions[idx];break;}}}
     else{a=state.standaloneActions.find(a=>a.id===editingId);}
-    if(a)Object.assign(a,{text,owner,due,priority});
+    if(a)Object.assign(a,{text,owner,due,priority,company,description});
     logAudit('Action Items','edit','Edited action: '+text);
     editingId=null; editingActionSource=null;
     save();closeModal('action-modal');renderView();showToast('Action updated','success');
   }else{
-    state.standaloneActions.push({id:genId(),text,owner,due,priority,done:false});
+    state.standaloneActions.push({id:genId(),text,owner,due,priority,company,description,done:false,addedAt:today()});
     logAudit('Action Items','create','Created action: '+text);
     save();closeModal('action-modal');renderView();showToast('Action added','success');
   }
@@ -2275,9 +2295,9 @@ const CHAT_TOOLS=[
   {name:'add_meeting',description:'Add a new meeting with optional notes, participants, and action items',input_schema:{type:'object',properties:{title:{type:'string'},date:{type:'string',description:'YYYY-MM-DD, default today'},time:{type:'string'},participants:{type:'array',items:{type:'string'}},notes:{type:'string'},actions:{type:'array',items:{type:'object',properties:{text:{type:'string'},owner:{type:'string'},due:{type:'string'}}}}},required:['title']}},
   {name:'edit_meeting',description:'Edit an existing meeting\'s title, date, time, notes, or participant list, by matching part of its current title',input_schema:{type:'object',properties:{match_text:{type:'string'},new_title:{type:'string'},date:{type:'string',description:'YYYY-MM-DD'},time:{type:'string'},notes:{type:'string'},participants:{type:'array',items:{type:'string'},description:'If provided, replaces the full participant list'}},required:['match_text']}},
   {name:'delete_meeting',description:'Delete a meeting and all of its action items, by matching part of its title',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
-  {name:'add_meeting_action',description:'Add a new action item to an existing meeting (found by matching part of its title) — use this instead of add_action when the action belongs to a specific meeting rather than being standalone',input_schema:{type:'object',properties:{meeting_match:{type:'string'},text:{type:'string'},owner:{type:'string'},due:{type:'string',description:'YYYY-MM-DD'}},required:['meeting_match','text']}},
-  {name:'add_action',description:'Add a standalone action item (not linked to a specific meeting)',input_schema:{type:'object',properties:{text:{type:'string'},owner:{type:'string'},due:{type:'string',description:'YYYY-MM-DD'},priority:{type:'string',enum:['high','medium','low'],description:'Optional priority level'}},required:['text']}},
-  {name:'edit_action',description:'Edit an existing action item by matching part of its text',input_schema:{type:'object',properties:{match_text:{type:'string'},new_text:{type:'string'},owner:{type:'string'},due:{type:'string'},done:{type:'boolean'},priority:{type:'string',enum:['high','medium','low'],description:'Optional priority level'}},required:['match_text']}},
+  {name:'add_meeting_action',description:'Add a new action item to an existing meeting (found by matching part of its title) — use this instead of add_action when the action belongs to a specific meeting rather than being standalone',input_schema:{type:'object',properties:{meeting_match:{type:'string'},text:{type:'string'},owner:{type:'string'},due:{type:'string',description:'YYYY-MM-DD'},description:{type:'string',description:'Optional longer description/body text for the action, e.g. full email content'},company:{type:'string',description:'Optional company name this action relates to; matched case-insensitively against the Company Master, auto-created if not found'}},required:['meeting_match','text']}},
+  {name:'add_action',description:'Add a standalone action item (not linked to a specific meeting)',input_schema:{type:'object',properties:{text:{type:'string'},owner:{type:'string'},due:{type:'string',description:'YYYY-MM-DD'},priority:{type:'string',enum:['high','medium','low'],description:'Optional priority level'},description:{type:'string',description:'Optional longer description/body text for the action, e.g. full email content'},company:{type:'string',description:'Optional company name this action relates to; matched case-insensitively against the Company Master, auto-created if not found'}},required:['text']}},
+  {name:'edit_action',description:'Edit an existing action item by matching part of its text',input_schema:{type:'object',properties:{match_text:{type:'string'},new_text:{type:'string'},owner:{type:'string'},due:{type:'string'},done:{type:'boolean'},priority:{type:'string',enum:['high','medium','low'],description:'Optional priority level'},description:{type:'string',description:'Optional longer description/body text for the action, e.g. full email content'},company:{type:'string',description:'Optional company name this action relates to; matched case-insensitively against the Company Master, auto-created if not found'}},required:['match_text']}},
   {name:'delete_action',description:'Delete an action item by matching part of its text',input_schema:{type:'object',properties:{match_text:{type:'string'}},required:['match_text']}},
   {name:'add_daily',description:'Add a daily activity/todo item',input_schema:{type:'object',properties:{text:{type:'string'},priority:{type:'string',enum:['high','medium','low'],description:'Optional priority level'}},required:['text']}},
   {name:'edit_daily',description:'Edit an existing daily activity/todo item by matching part of its text',input_schema:{type:'object',properties:{match_text:{type:'string'},new_text:{type:'string'},done:{type:'boolean'},priority:{type:'string',enum:['high','medium','low'],description:'Optional priority level'}},required:['match_text']}},
@@ -2391,11 +2411,11 @@ async function execTool(name,input){
     if(name==='add_meeting'){const parts=input.participants||[];parts.forEach(nm=>{if(!state.participants.find(p=>p.name.toLowerCase()===nm.toLowerCase()))state.participants.push({id:state.nextPartId++,name:nm});});state.meetings.push({id:genId(),title:input.title,date:input.date||today(),time:input.time||'',notes:input.notes||'',participants:parts,actions:(input.actions||[]).map(a=>({...a,done:false})),addedAt:today()});save();return 'Meeting added: '+input.title;}
     if(name==='edit_meeting'){const m=state.meetings.find(m=>(m.title||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!m)return 'No matching meeting found for: '+input.match_text;if(input.new_title)m.title=input.new_title;if(input.date)m.date=input.date;if(input.time!==undefined)m.time=input.time;if(input.notes!==undefined)m.notes=input.notes;if(input.participants){m.participants=input.participants;input.participants.forEach(nm=>{if(!state.participants.find(p=>p.name.toLowerCase()===nm.toLowerCase()))state.participants.push({id:state.nextPartId++,name:nm});});}save();return 'Meeting updated: '+m.title;}
     if(name==='delete_meeting'){const m=state.meetings.find(m=>(m.title||'').toLowerCase().includes(input.match_text.toLowerCase()));if(!m)return 'No matching meeting found for: '+input.match_text;state.meetings=state.meetings.filter(x=>x.id!==m.id);save();return 'Deleted meeting: '+m.title;}
-    if(name==='add_meeting_action'){const m=state.meetings.find(m=>(m.title||'').toLowerCase().includes(input.meeting_match.toLowerCase()));if(!m)return 'No matching meeting found for: '+input.meeting_match;if(!m.actions)m.actions=[];m.actions.push({text:input.text,owner:input.owner||'',due:input.due||'',done:false});save();return 'Action added to meeting "'+m.title+'": '+input.text;}
-    if(name==='add_action'){state.standaloneActions.push({id:genId(),text:input.text,owner:input.owner||'',due:input.due||'',priority:input.priority||'',done:false});save();return 'Action added: '+input.text;}
+    if(name==='add_meeting_action'){const m=state.meetings.find(m=>(m.title||'').toLowerCase().includes(input.meeting_match.toLowerCase()));if(!m)return 'No matching meeting found for: '+input.meeting_match;if(!m.actions)m.actions=[];m.actions.push({text:input.text,owner:input.owner||'',due:input.due||'',description:input.description||'',company:resolveCompanyIdByName(input.company),addedAt:today(),done:false});save();return 'Action added to meeting "'+m.title+'": '+input.text;}
+    if(name==='add_action'){state.standaloneActions.push({id:genId(),text:input.text,owner:input.owner||'',due:input.due||'',priority:input.priority||'',description:input.description||'',company:resolveCompanyIdByName(input.company),addedAt:today(),done:false});save();return 'Action added: '+input.text;}
     if(name==='edit_action'){const a=findActionByMatch(input.match_text);if(!a)return 'No matching action found for: '+input.match_text;
-      if(a.source==='standalone'){const s=state.standaloneActions.find(s=>s.id===a.id);if(input.new_text)s.text=input.new_text;if(input.owner!==undefined)s.owner=input.owner;if(input.due!==undefined)s.due=input.due;if(input.done!==undefined)s.done=input.done;if(input.priority!==undefined)s.priority=input.priority;}
-      else{const m=state.meetings.find(m=>m.id===a.meetingId);const act=m.actions[a.idx];if(input.new_text)act.text=input.new_text;if(input.owner!==undefined)act.owner=input.owner;if(input.due!==undefined)act.due=input.due;if(input.done!==undefined)act.done=input.done;if(input.priority!==undefined)act.priority=input.priority;}
+      if(a.source==='standalone'){const s=state.standaloneActions.find(s=>s.id===a.id);if(input.new_text)s.text=input.new_text;if(input.owner!==undefined)s.owner=input.owner;if(input.due!==undefined)s.due=input.due;if(input.done!==undefined)s.done=input.done;if(input.priority!==undefined)s.priority=input.priority;if(input.description!==undefined)s.description=input.description;if(input.company!==undefined)s.company=resolveCompanyIdByName(input.company);}
+      else{const m=state.meetings.find(m=>m.id===a.meetingId);const act=m.actions[a.idx];if(input.new_text)act.text=input.new_text;if(input.owner!==undefined)act.owner=input.owner;if(input.due!==undefined)act.due=input.due;if(input.done!==undefined)act.done=input.done;if(input.priority!==undefined)act.priority=input.priority;if(input.description!==undefined)act.description=input.description;if(input.company!==undefined)act.company=resolveCompanyIdByName(input.company);}
       save();return 'Action updated: '+(input.new_text||a.text);}
     if(name==='delete_action'){const a=findActionByMatch(input.match_text);if(!a)return 'No matching action found';if(a.source==='standalone')state.standaloneActions=state.standaloneActions.filter(s=>s.id!==a.id);else{const m=state.meetings.find(m=>m.id===a.meetingId);m.actions.splice(a.idx,1);}save();return 'Action deleted: '+a.text;}
     if(name==='add_daily'){state.daily.push({id:genId(),text:input.text,priority:input.priority||'',done:false,addedAt:today()});save();return 'Daily activity added: '+input.text;}

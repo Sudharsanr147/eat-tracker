@@ -7,6 +7,37 @@ the app itself (login screen and sidebar footer) — see `APP_VERSION` near the
 top of the `<script>` block in `index.html`. If the number you see in the app
 matches the latest entry below, you're on the current version.
 
+## v1.9.0 — 2026-08-02
+
+- Action Items reworked: the "Owner" column is gone from the table and
+  replaced with a clickable Team Member filter-chip bar above the list
+  (plus an "All Team Members" chip and a "Clear" chip once a member is
+  selected) — the underlying assignment field is unchanged (still a Team
+  Member picker in the Add/Edit modal), it's just no longer a plain table
+  column. Clicking a member's name filters the list to their actions.
+- The confusing "Linked To" column is replaced with an optional Company
+  field, selectable from a dropdown sourced from the Company Master (same
+  pattern used elsewhere in the app); leaving it blank is fine.
+- Added an optional Description field/column (for longer context, e.g. a
+  full pasted email) and a Date Added column, both on the Add/Edit Action
+  Item modal and the Action Items table. Existing due-date sorting is
+  unchanged.
+- The Daily Activities "Today Due & Overdue Action Items" sub-table now
+  shows a Priority column and an Edit (✎) button, matching the main
+  Action Items table.
+- EATER (the AI chat assistant) can now set/read an action item's Company
+  and Description via chat — including auto-creating a new Company Master
+  entry if you name one that doesn't exist yet. When you paste or forward
+  an email and ask EATER to log it as an action item, it now files the
+  full email content into the Description field and writes a short,
+  clear heading as the action text instead of dumping the whole email
+  into the title.
+- Fixed the chat Send button sitting too close to the bottom edge on
+  iPad Chrome, making it hard to tap reliably — the page now opts into
+  `viewport-fit=cover` and pads the chat input row by the device's safe
+  area inset, so the Send button clears the home-indicator/gesture-bar
+  zone in both portrait and landscape.
+
 ## v1.8.0 — 2026-08-02
 
 - Sidebar reorganized: module buttons now have proper button styling
