@@ -121,6 +121,9 @@ table.reg-table{width:100%;border-collapse:collapse;min-width:640px;}
 .row-btn:hover{border-color:var(--accent);color:var(--accent);}
 .row-btn.rbdel:hover{border-color:var(--red);color:var(--red);}
 .empty-state{text-align:center;color:var(--muted);padding:60px 20px;}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:16px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:15px;font-weight:600;cursor:pointer;user-select:none;transition:background .15s,border-color .15s,color .15s;}
+.chip:hover{border-color:var(--accent);color:var(--accent);}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff;}
 
 .daily-quickadd{display:flex;gap:8px;padding:14px 16px;border-bottom:2px solid var(--border);background:var(--surface2);}
 .daily-quickadd input{flex:1;background:var(--surface);border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;color:var(--text);font-size:17px;outline:none;}
@@ -695,7 +698,7 @@ table.reg-table{min-width:0;}
 // redeployed, so the version shown in the app (login screen + sidebar footer)
 // always reflects what's actually live. See CHANGELOG.md for the history
 // behind each version number.
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.7.1';
 const APP_UPDATED = '2026-08-02';
 function renderAppVersion(){
   const [y,m,d] = APP_UPDATED.split('-');

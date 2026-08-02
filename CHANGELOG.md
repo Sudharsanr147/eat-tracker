@@ -7,6 +7,15 @@ the app itself (login screen and sidebar footer) — see `APP_VERSION` near the
 top of the `<script>` block in `index.html`. If the number you see in the app
 matches the latest entry below, you're on the current version.
 
+## v1.7.1 — 2026-08-02
+
+- Fixed the Library category "folders" at the top of the Library view —
+  they were already clickable (they've always filtered the file list to
+  that category) but had no styling at all, so they looked like plain text
+  with no way to tell they were buttons. They now render as proper chips
+  with a pointer cursor, hover highlight, and a filled highlight on
+  whichever category is currently selected.
+
 ## v1.7.0 — 2026-08-02
 
 - Work SOP restructured: categories can now belong to an optional Area
