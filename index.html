@@ -715,7 +715,7 @@ table.reg-table{min-width:0;}
 // redeployed, so the version shown in the app (login screen + sidebar footer)
 // always reflects what's actually live. See CHANGELOG.md for the history
 // behind each version number.
-const APP_VERSION = '1.9.2';
+const APP_VERSION = '1.9.3';
 const APP_UPDATED = '2026-08-02';
 function renderAppVersion(){
   const [y,m,d] = APP_UPDATED.split('-');
@@ -1008,10 +1008,9 @@ function renderActionsView(area){
   if(list.length===0){area.innerHTML=header+'<div class="empty-state">☑️<br>No action items.</div>';return;}
   function pill(a){if(a.done)return'<span class="pill pill-done">Done</span>';if(a.due&&a.due<today())return'<span class="pill pill-overdue">Overdue</span>';return'<span class="pill pill-open">Open</span>';}
   function priTag(a){if(!a.priority)return'—';return `<span class="pri-tag pri-${a.priority}">${a.priority.charAt(0).toUpperCase()+a.priority.slice(1)}</span>`;}
-  let html=header+`<table class="reg-table"><thead><tr><th>Action</th><th>Description</th><th>Team Member</th><th>Company</th><th>Due</th><th>Date Added</th><th>Priority</th><th>Status</th><th></th></tr></thead><tbody>`;
+  let html=header+`<table class="reg-table"><thead><tr><th>Action</th><th>Team Member</th><th>Company</th><th>Due</th><th>Date Added</th><th>Priority</th><th>Status</th><th></th></tr></thead><tbody>`;
   list.forEach(a=>{html+=`<tr>
-    <td>${esc(a.text)}</td>
-    <td style="color:var(--muted);font-size:14.5px;max-width:220px">${a.description?`<div class="notes-clamp">${esc(a.description)}</div>`:'—'}</td>
+    <td>${esc(a.text)}${a.description?` <span class="row-btn" title="${esc(a.description)}" onclick='editActionItem(${JSON.stringify(a.id)},"${a.source}")' style="font-size:12.5px;padding:1px 6px">📝</span>`:''}</td>
     <td>${esc(a.owner||'Unassigned')}</td>
     <td style="color:var(--muted);font-size:15.5px">${a.company?esc(companyName(a.company)):'—'}</td>
     <td>${fmt(a.due)}</td><td>${a.addedAt?fmt(a.addedAt):'—'}</td><td>${priTag(a)}</td><td>${pill(a)}</td>
@@ -1082,10 +1081,10 @@ function renderDailyView(area){
   if(dueList.length===0){ dueWrap.innerHTML = '<div class="empty-state" style="padding:20px 0">🎉<br>Nothing due or overdue.</div>'; }
   else{
     function priTagDaily(a){if(!a.priority)return'—';return `<span class="pri-tag pri-${a.priority}">${a.priority.charAt(0).toUpperCase()+a.priority.slice(1)}</span>`;}
-    let h = `<table class="reg-table"><thead><tr><th>Action</th><th>Owner</th><th>Linked To</th><th>Due</th><th>Priority</th><th></th></tr></thead><tbody>`;
+    let h = `<table class="reg-table"><thead><tr><th>Action</th><th>Team Member</th><th>Company</th><th>Linked To</th><th>Due</th><th>Date Added</th><th>Priority</th><th>Status</th><th></th></tr></thead><tbody>`;
     dueList.forEach(a=>{
       const overdue = a.due < today();
-      h += `<tr><td>${esc(a.text)}</td><td>${esc(a.owner||'Unassigned')}</td><td style="color:var(--muted);font-size:15.5px">${a.source==='meeting'?esc(a.meetingTitle):'Standalone'}</td><td>${overdue?`<span class="pill pill-overdue">${fmt(a.due)}</span>`:`<span class="pill pill-open">${fmt(a.due)} · Today</span>`}</td><td>${priTagDaily(a)}</td><td style="white-space:nowrap"><span class="row-btn" onclick='editActionItem(${JSON.stringify(a.id)},"${a.source}")'>✎</span> <span class="row-btn" onclick='toggleActionDone(${JSON.stringify(a.id)},"${a.source}")'>✓</span></td></tr>`;
+      h += `<tr><td>${esc(a.text)}${a.description?` <span class="row-btn" title="${esc(a.description)}" onclick='editActionItem(${JSON.stringify(a.id)},"${a.source}")' style="font-size:12.5px;padding:1px 6px">📝</span>`:''}</td><td>${esc(a.owner||'Unassigned')}</td><td style="color:var(--muted);font-size:15.5px">${a.company?esc(companyName(a.company)):'—'}</td><td style="color:var(--muted);font-size:15.5px">${a.source==='meeting'?esc(a.meetingTitle):'Standalone'}</td><td>${overdue?`<span class="pill pill-overdue">${fmt(a.due)}</span>`:`<span class="pill pill-open">${fmt(a.due)} · Today</span>`}</td><td>${a.addedAt?fmt(a.addedAt):'—'}</td><td>${priTagDaily(a)}</td><td>${overdue?'<span class="pill pill-overdue">Overdue</span>':'<span class="pill pill-open">Open</span>'}</td><td style="white-space:nowrap"><span class="row-btn" onclick='editActionItem(${JSON.stringify(a.id)},"${a.source}")'>✎</span> <span class="row-btn" onclick='toggleActionDone(${JSON.stringify(a.id)},"${a.source}")'>✓</span></td></tr>`;
     });
     h += '</tbody></table>';
     dueWrap.innerHTML = h;

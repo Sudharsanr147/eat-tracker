@@ -7,6 +7,18 @@ the app itself (login screen and sidebar footer) — see `APP_VERSION` near the
 top of the `<script>` block in `index.html`. If the number you see in the app
 matches the latest entry below, you're on the current version.
 
+## v1.9.3 — 2026-08-02
+
+- Action Items table: removed the Description column — it was crowding the
+  table for the (usually empty) common case. A 📝 icon now appears next to
+  the action text when a description exists; hover for a preview or click
+  it (or ✎) to open the full text in the edit modal.
+- Daily Activities "Due & Overdue Action Items" table: brought its columns
+  in line with the main Action Items table — added Company, Date Added,
+  and Status, renamed Owner to Team Member, and added the same 📝
+  description indicator. Linked To (meeting vs. standalone) is kept since
+  it's specific to this view.
+
 ## v1.9.2 — 2026-08-02
 
 - Fixed chat replying "Something went wrong: Cannot read properties of
