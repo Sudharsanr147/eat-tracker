@@ -715,7 +715,7 @@ table.reg-table{min-width:0;}
 // redeployed, so the version shown in the app (login screen + sidebar footer)
 // always reflects what's actually live. See CHANGELOG.md for the history
 // behind each version number.
-const APP_VERSION = '1.9.1';
+const APP_VERSION = '1.9.2';
 const APP_UPDATED = '2026-08-02';
 function renderAppVersion(){
   const [y,m,d] = APP_UPDATED.split('-');
@@ -760,8 +760,10 @@ function normalizeState(s){
   // nested `issues` list entirely (discarded, not migrated, per product decision).
   s.sop.forEach(cat=>{
     if(cat.area===undefined) cat.area='';
-    (cat.subcategories||[]).forEach(sub=>{
-      (sub.practices||[]).forEach(p=>{
+    if(!cat.subcategories) cat.subcategories=[];
+    cat.subcategories.forEach(sub=>{
+      if(!sub.practices) sub.practices=[];
+      sub.practices.forEach(p=>{
         if(p.type===undefined) p.type='info';
         if(p.companies===undefined) p.companies=[];
         if(p.issues!==undefined) delete p.issues;

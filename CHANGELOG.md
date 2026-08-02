@@ -7,6 +7,21 @@ the app itself (login screen and sidebar footer) — see `APP_VERSION` near the
 top of the `<script>` block in `index.html`. If the number you see in the app
 matches the latest entry below, you're on the current version.
 
+## v1.9.2 — 2026-08-02
+
+- Fixed chat replying "Something went wrong: Cannot read properties of
+  undefined (reading 'map')" on every message, right after the v1.9.1 fix
+  let typing/sending work again. Root cause: the same Firebase-drops-empty-
+  arrays bug (v1.3.3, v1.9.1), this time hitting Work SOP categories/
+  subcategories with no children — `normalizeState()`'s SOP migration only
+  defaulted `subcategories`/`practices` to `[]` for local iteration and
+  never wrote that empty array back onto the object, so a category/
+  subcategory that synced with no children lost the field entirely.
+  `buildStateSummary()` (built fresh for every chat turn) then called
+  `.map()` on that missing field and threw before the AI request was even
+  sent. `normalizeState()` now actually assigns `cat.subcategories=[]` /
+  `sub.practices=[]` when missing, not just a local default.
+
 ## v1.9.1 — 2026-08-02
 
 - Fixed the chat box appearing completely dead (couldn't type or send) —
