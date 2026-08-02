@@ -7,6 +7,14 @@ the app itself (login screen and sidebar footer) — see `APP_VERSION` near the
 top of the `<script>` block in `index.html`. If the number you see in the app
 matches the latest entry below, you're on the current version.
 
+## v1.9.4 — 2026-08-02
+
+- Daily Activities "Due & Overdue Action Items" table: removed the Linked
+  To column.
+- Both this table and the Action Items table: widened the Status column
+  and narrowed the trailing icon-buttons column so the row-action icons
+  aren't stranded in a wide empty cell.
+
 ## v1.9.3 — 2026-08-02
 
 - Action Items table: removed the Description column — it was crowding the
