@@ -715,7 +715,7 @@ table.reg-table{min-width:0;}
 // redeployed, so the version shown in the app (login screen + sidebar footer)
 // always reflects what's actually live. See CHANGELOG.md for the history
 // behind each version number.
-const APP_VERSION = '1.9.0';
+const APP_VERSION = '1.9.1';
 const APP_UPDATED = '2026-08-02';
 function renderAppVersion(){
   const [y,m,d] = APP_UPDATED.split('-');
@@ -747,6 +747,7 @@ function normalizeState(s){
   if(!s.appointments) s.appointments=[];
   if(!s.auditLog) s.auditLog=[];
   if(!s.chatSessions) s.chatSessions=[];
+  s.chatSessions.forEach(cs=>{ if(!cs.messages) cs.messages=[]; });
   if(!s.library) s.library={categories:['Legal Documents','Secretarial Documents','Bank Documents','Financials','MIS Data'],files:[]};
   if(!s.library.categories) s.library.categories=['Legal Documents','Secretarial Documents','Bank Documents','Financials','MIS Data'];
   if(!s.library.files) s.library.files=[];

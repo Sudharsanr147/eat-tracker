@@ -7,6 +7,18 @@ the app itself (login screen and sidebar footer) — see `APP_VERSION` near the
 top of the `<script>` block in `index.html`. If the number you see in the app
 matches the latest entry below, you're on the current version.
 
+## v1.9.1 — 2026-08-02
+
+- Fixed the chat box appearing completely dead (couldn't type or send) —
+  console showed `Cannot read properties of undefined (reading 'length'/
+  'push')` in `renderChatMessages`/`addChatMsgToSession`. Root cause:
+  Firebase silently drops empty arrays on save (the same class of bug
+  fixed in v1.3.3), so a brand-new chat's `messages: []` was dropped on
+  sync, and reloading (or a cloud pull) brought the session back with no
+  `messages` field at all. `normalizeState()` now re-fills a missing
+  `messages` array on every chat session, same as it already does for
+  every other collection.
+
 ## v1.9.0 — 2026-08-02
 
 - Action Items reworked: the "Owner" column is gone from the table and
