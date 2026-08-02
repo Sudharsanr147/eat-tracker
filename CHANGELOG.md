@@ -7,6 +7,31 @@ the app itself (login screen and sidebar footer) — see `APP_VERSION` near the
 top of the `<script>` block in `index.html`. If the number you see in the app
 matches the latest entry below, you're on the current version.
 
+## v1.7.0 — 2026-08-02
+
+- Work SOP restructured: categories can now belong to an optional Area
+  (grouped header above the category list), the "Practice" level is renamed
+  "Detail" throughout, and the separate "Issue" nesting level is gone —
+  replaced with a Type dropdown (Info / Issue) directly on each Detail. Info
+  entries display in green, Issue entries in red.
+- Each Work SOP Detail can now be tagged to one or more companies via a new
+  checkbox multi-select; leaving it blank applies the Detail to All
+  Companies.
+- Added a Company Master ("Companies" in the sidebar), seeded with an
+  uneditable, undeletable "All Companies" entry — add/edit/delete your own
+  companies here, and they're usable across the portal (currently: tagging
+  Work SOP Details).
+- Added an optional four-way filter bar (Area, Category, Subcategory,
+  Company) at the top of Work SOP — any combination can be left blank.
+- Action Items with status Done are now hidden by default; a "Show Done
+  items" toggle above the list reveals them.
+- The AI chat assistant is now named EATER throughout the app (was
+  "Sonnet"). It understands the new Work SOP shape, can create/edit/delete
+  Details (with type and company tagging) and manage the Company Master,
+  and will auto-file requests like Add info "XXX" or Add issue "XXX" into
+  the best-matching Area/Category/Subcategory — defaulting to All Companies
+  when no company is named.
+
 ## v1.6.0 — 2026-08-01
 
 - The AI chat assistant can now search the public internet (Anthropic's
